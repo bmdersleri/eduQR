@@ -266,6 +266,42 @@ final class Bootstrap
             (new Controllers\Api\SessionController())->participantCount((int) $p['id']);
         });
 
+        // ── API: Questions ────────────────────────────────────────────────────
+        // reorder must come before /{id} sub-routes to avoid ambiguity
+        $router->post('/api/v1/sessions/{id}/questions/reorder', function (array $p): void {
+            (new Controllers\Api\QuestionController())->reorder((int) $p['id']);
+        });
+
+        $router->get('/api/v1/sessions/{id}/questions', function (array $p): void {
+            (new Controllers\Api\QuestionController())->index((int) $p['id']);
+        });
+
+        $router->post('/api/v1/sessions/{id}/questions', function (array $p): void {
+            (new Controllers\Api\QuestionController())->create((int) $p['id']);
+        });
+
+        $router->patch('/api/v1/questions/{id}', function (array $p): void {
+            (new Controllers\Api\QuestionController())->update((int) $p['id']);
+        });
+
+        $router->delete('/api/v1/questions/{id}', function (array $p): void {
+            (new Controllers\Api\QuestionController())->destroy((int) $p['id']);
+        });
+
+        // activate / close must come before /{id} to avoid conflict
+        $router->post('/api/v1/questions/{id}/activate', function (array $p): void {
+            (new Controllers\Api\QuestionController())->activate((int) $p['id']);
+        });
+
+        $router->post('/api/v1/questions/{id}/close', function (array $p): void {
+            (new Controllers\Api\QuestionController())->close((int) $p['id']);
+        });
+
+        // ── API: Public active-question (student polling) ──────────────────────
+        $router->get('/api/v1/sessions/{short_code}/active-question', function (array $p): void {
+            (new Controllers\Api\PublicQuestionController())->activeQuestion($p['short_code']);
+        });
+
         // ── API: Public session resolve ────────────────────────────────────────
         $router->get('/api/v1/public/sessions/{short_code}', function (array $p): void {
             (new Controllers\Api\PublicSessionController())->resolve($p['short_code']);

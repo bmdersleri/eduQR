@@ -189,6 +189,7 @@
   "error.results_hidden": "Sonuçlar şu anda görüntülenemiyor.",
   "error.too_many_attempts": "Çok fazla deneme yapıldı. Lütfen daha sonra tekrar deneyin.",
   "error.invalid_answer_shape": "Gönderilen cevap soru türüyle uyuşmuyor.",
+  "error.session_not_active": "Oturum şu anda aktif değil.",
   "error.invalid_state_transition": "Bu işlem mevcut durumda izin verilmiyor.",
   "error.server_error": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
   "error.not_found": "Aradığınız sayfa bulunamadı.",

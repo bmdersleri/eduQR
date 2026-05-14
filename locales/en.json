@@ -189,6 +189,7 @@
   "error.results_hidden": "Results are not visible right now.",
   "error.too_many_attempts": "Too many attempts. Please try again later.",
   "error.invalid_answer_shape": "The submitted answer does not match the question type.",
+  "error.session_not_active": "The session is not currently active.",
   "error.invalid_state_transition": "That action is not allowed in the current state.",
   "error.server_error": "Something went wrong. Please try again.",
   "error.not_found": "The page you are looking for does not exist.",

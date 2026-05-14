@@ -3,7 +3,7 @@
 **Proje:** QR-Based Interactive Classroom Polling and Learning Analytics Platform
 **Sahip:** Prof. Dr. İsmail Kırbaş — Burdur Mehmet Akif Ersoy Üniversitesi
 **Başlangıç Tarihi:** 2026-05-14
-**Son Güncelleme:** 2026-05-14 (Faz 5 tamamlandı)
+**Son Güncelleme:** 2026-05-15 (Faz 6 tamamlandı)
 
 ---
 
@@ -35,14 +35,14 @@
 | 3 | Ders Yönetimi | 🟢 | 12 / 12 | 2026-05-14 | 2026-05-14 |
 | 4 | Oturum Yönetimi & QR | 🟢 | 17 / 17 | 2026-05-14 | 2026-05-14 |
 | 5 | Öğrenci Katılım Akışı | 🟢 | 14 / 14 | 2026-05-14 | 2026-05-14 |
-| 6 | Soru Yönetimi | 🔴 | 0 / 18 | — | — |
+| 6 | Soru Yönetimi | 🟢 | 18 / 18 | 2026-05-15 | 2026-05-15 |
 | 7 | Yanıt Toplama | 🔴 | 0 / 15 | — | — |
 | 8 | Canlı Sonuçlar | 🔴 | 0 / 13 | — | — |
 | 9 | Raporlama & Dışa Aktarma | 🔴 | 0 / 13 | — | — |
 | 10 | Güvenlik & Kalite Sertleştirme | 🔴 | 0 / 17 | — | — |
 | 11 | Gelecek İyileştirmeler (post-MVP) | ⏸ | 0 / 16 | — | — |
 
-**MVP Toplam (Faz 0–10):** 81 / 157 görev tamamlandı (%52)
+**MVP Toplam (Faz 0–10):** 99 / 157 görev tamamlandı (%63)
 
 ---
 
@@ -310,48 +310,59 @@
 
 ---
 
-## Faz 6 — Soru Yönetimi 🔴
+## Faz 6 — Soru Yönetimi 🟢
 
 **Hedef:** Öğretmenler soru oluşturur, etkinleştirir ve kapatır.
-**Başlangıç:** — | **Bitiş:** —
+**Başlangıç:** 2026-05-15 | **Bitiş:** 2026-05-15
 
 ### Görevler
 
 ```
-[ ] T-600  Migration 0001 (partial): questions + options tables                          [DATA_MODEL §2.4-2.5]
-[ ] T-601  QuestionRepository + OptionRepository                                         [FR-30]
-[ ] T-602  QuestionService — create, validateForType, activate, close                    [FR-30, FR-34]
-[ ] T-603  Support multiple_choice (2-8 options)                                         [FR-31, FR-32]
-[ ] T-604  Support open_text                                                             [FR-31]
-[ ] T-605  Support yes_no (auto 2 options)                                               [FR-31]
-[ ] T-606  Support likert_5 (auto 5 options)                                             [FR-31]
-[ ] T-607  POST /api/v1/sessions/{id}/questions                                          [FR-30]
-[ ] T-608  PATCH /api/v1/questions/{id} (draft only)                                     [FR-30]
-[ ] T-609  POST /api/v1/questions/{id}/activate — enforce one-active-question rule       [FR-33, FR-34]
-[ ] T-610  POST /api/v1/questions/{id}/close                                             [FR-34]
-[ ] T-611  DELETE /api/v1/questions/{id}                                                 [—]
-[ ] T-612  GET /api/v1/sessions/{id}/questions                                           [—]
-[ ] T-613  POST /api/v1/sessions/{id}/questions/reorder                                  [FR-35]
-[ ] T-614  GET /api/v1/sessions/{short_code}/active-question (public)                    [FR-45]
-[ ] T-615  Admin UI: question manager with drag-and-drop reorder                         [FR-30, FR-35]
-[ ] T-616  i18n keys for question UI + question.type.* keys                              [FR-80]
-[ ] T-617  Unit tests: one-active-question rule, type validation                         [NFR-52, FR-33]
+[x] T-600  Migration 0001 (partial): questions + options tables                          [DATA_MODEL §2.4-2.5]
+[x] T-601  QuestionRepository + OptionRepository                                         [FR-30]
+[x] T-602  QuestionService — create, validateForType, activate, close                    [FR-30, FR-34]
+[x] T-603  Support multiple_choice (2-8 options)                                         [FR-31, FR-32]
+[x] T-604  Support open_text                                                             [FR-31]
+[x] T-605  Support yes_no (auto 2 options)                                               [FR-31]
+[x] T-606  Support likert_5 (auto 5 options)                                             [FR-31]
+[x] T-607  POST /api/v1/sessions/{id}/questions                                          [FR-30]
+[x] T-608  PATCH /api/v1/questions/{id} (draft only)                                     [FR-30]
+[x] T-609  POST /api/v1/questions/{id}/activate — enforce one-active-question rule       [FR-33, FR-34]
+[x] T-610  POST /api/v1/questions/{id}/close                                             [FR-34]
+[x] T-611  DELETE /api/v1/questions/{id}                                                 [—]
+[x] T-612  GET /api/v1/sessions/{id}/questions                                           [—]
+[x] T-613  POST /api/v1/sessions/{id}/questions/reorder                                  [FR-35]
+[x] T-614  GET /api/v1/sessions/{short_code}/active-question (public)                    [FR-45]
+[x] T-615  Admin UI: question manager with drag-and-drop reorder                         [FR-30, FR-35]
+[x] T-616  i18n keys for question UI + question.type.* keys                              [FR-80]
+[x] T-617  Unit tests: one-active-question rule, type validation                         [NFR-52, FR-33]
 ```
 
 ### Kabul Kriterleri
 
 ```
-[ ] Öğretmen dört soru türünü de oluşturabilir
-[ ] multiple_choice 2-8 seçeneği zorunlu kılar; yes_no otomatik 2; likert_5 otomatik 5 oluşturur
-[ ] Öğretmen bir soruyu etkinleştirebilir ve kapatabilir
-[ ] Bir soruyu etkinleştirmek o oturumdaki diğer aktif soruyu kapatır
-[ ] Öğrenci aktif soru endpoint'i aktif soruyu döndürür
-[ ] Taslak sorular öğrencilere hiçbir zaman döndürülmez
-[ ] Soru ve seçenek metni temizlenir
+[x] Öğretmen dört soru türünü de oluşturabilir
+[x] multiple_choice 2-8 seçeneği zorunlu kılar; yes_no otomatik 2; likert_5 otomatik 5 oluşturur
+[x] Öğretmen bir soruyu etkinleştirebilir ve kapatabilir
+[x] Bir soruyu etkinleştirmek o oturumdaki diğer aktif soruyu kapatır (transaction)
+[x] Öğrenci aktif soru endpoint'i aktif soruyu döndürür (FR-45 polling)
+[x] Taslak sorular öğrencilere hiçbir zaman döndürülmez
+[x] Soru ve seçenek metni temizlenir (trim + 500/200 char limit)
 ```
 
 ### Notlar
-> _(Buraya önemli kararlar, engeller veya notlar ekleyin)_
+- `database/migrations/0007_questions.sql`: questions + options tabloları
+- `src/Contracts/QuestionRepositoryInterface.php` + `OptionRepositoryInterface.php`
+- `src/Repositories/QuestionRepository.php` + `OptionRepository.php`
+- `src/Services/QuestionService.php`: 4 tür + bir-aktif-soru kuralı (FR-33) + FR-45
+- `src/Controllers/Api/QuestionController.php`: T-607–T-613 (7 endpoint)
+- `src/Controllers/Api/PublicQuestionController.php`: T-614 (aktif soru sorgusu)
+- `templates/admin/sessions/detail.php`: drag-and-drop question manager UI
+- `locales/en.json` + `tr.json`: `error.session_not_active` anahtarı eklendi
+- `tests/Unit/QuestionServiceTest.php`: 14 test (one-active-question, tür doğrulama, seçenek sayısı)
+- Bir-aktif-soru kuralı QuestionRepository.activate() içinde PDO transaction ile çözüldü
+- yes_no/likert_5 seçenekleri oturum dili (session.language) bazında otomatik oluşturulur
+- T-614 endpoint'i Phase 5'teki wait.php polling'ini aktif eder
 
 ---
 
