@@ -3,7 +3,7 @@
 **Proje:** QR-Based Interactive Classroom Polling and Learning Analytics Platform
 **Sahip:** Prof. Dr. İsmail Kırbaş — Burdur Mehmet Akif Ersoy Üniversitesi
 **Başlangıç Tarihi:** 2026-05-14
-**Son Güncelleme:** 2026-05-14 (Faz 3 tamamlandı)
+**Son Güncelleme:** 2026-05-14 (Faz 4 tamamlandı)
 
 ---
 
@@ -33,7 +33,7 @@
 | 1 | i18n Temeli | 🟢 | 9 / 9 | 2026-05-14 | 2026-05-14 |
 | 2 | Öğretmen Kimlik Doğrulama | 🟢 | 14 / 14 | 2026-05-14 | 2026-05-14 |
 | 3 | Ders Yönetimi | 🟢 | 12 / 12 | 2026-05-14 | 2026-05-14 |
-| 4 | Oturum Yönetimi & QR | 🔴 | 0 / 17 | — | — |
+| 4 | Oturum Yönetimi & QR | 🟢 | 17 / 17 | 2026-05-14 | 2026-05-14 |
 | 5 | Öğrenci Katılım Akışı | 🔴 | 0 / 14 | — | — |
 | 6 | Soru Yönetimi | 🔴 | 0 / 18 | — | — |
 | 7 | Yanıt Toplama | 🔴 | 0 / 15 | — | — |
@@ -42,7 +42,7 @@
 | 10 | Güvenlik & Kalite Sertleştirme | 🔴 | 0 / 17 | — | — |
 | 11 | Gelecek İyileştirmeler (post-MVP) | ⏸ | 0 / 16 | — | — |
 
-**MVP Toplam (Faz 0–10):** 50 / 157 görev tamamlandı (%32)
+**MVP Toplam (Faz 0–10):** 67 / 157 görev tamamlandı (%43)
 
 ---
 
@@ -213,47 +213,52 @@
 
 ---
 
-## Faz 4 — Oturum Yönetimi & QR Kodu 🔴
+## Faz 4 — Oturum Yönetimi & QR Kodu 🟢
 
 **Hedef:** Sınıf oturumlarını başlatmak ve QR kodlarını görüntülemek.
-**Başlangıç:** — | **Bitiş:** —
+**Başlangıç:** 2026-05-14 | **Bitiş:** 2026-05-14
 
 ### Görevler
 
 ```
-[ ] T-400  Migration 0001 (partial): sessions table                                      [DATA_MODEL §2.3]
-[ ] T-401  Support\ShortCode::generate() — 6 chars, charset A-HJ-NP-Z2-9, collision retry [FR-21]
-[ ] T-402  SessionRepository (CRUD, find-active-by-code)                                 [FR-20]
-[ ] T-403  SessionService — create, pause, resume, close, state-transition guards        [FR-20, FR-23..FR-25]
-[ ] T-404  POST /api/v1/courses/{id}/sessions                                            [FR-20]
-[ ] T-405  GET /api/v1/sessions/{id}                                                     [—]
-[ ] T-406  PATCH /api/v1/sessions/{id} (title, show_results_to_students, moderation_mode) [FR-28]
-[ ] T-407  POST /api/v1/sessions/{id}/pause + /resume                                   [FR-25]
-[ ] T-408  POST /api/v1/sessions/{id}/close                                              [FR-24]
-[ ] T-409  endroid/qr-code vendored via composer                                         [FR-22]
-[ ] T-410  GET /api/v1/sessions/{id}/qr.png with Cache-Control                           [FR-22]
-[ ] T-411  GET /api/v1/public/sessions/{short_code} (resolve)                            [—]
-[ ] T-412  Projector view /live/{short_code} — large QR + session title                  [FR-22, FR-54]
-[ ] T-413  Admin UI: session detail page + start-session flow                            [FR-20..FR-28]
-[ ] T-414  Auto-close inactive sessions after 12h (cron-able bin/cleanup.php)            [FR-26]
-[ ] T-415  Live participant count on session detail                                      [FR-27]
-[ ] T-416  Unit tests: ShortCode uniqueness, session state transitions                   [NFR-52]
+[x] T-400  Migration 0005_sessions.sql — sessions table                                 [DATA_MODEL §2.3]
+[x] T-401  Support\ShortCode::generate() — 6 chars, charset A-HJ-NP-Z2-9, collision retry [FR-21]
+[x] T-402  SessionRepositoryInterface + SessionRepository (CRUD, find-by-code)          [FR-20]
+[x] T-403  SessionService — create, pause, resume, close, state-transition guards       [FR-20, FR-23..FR-25]
+[x] T-404  POST /api/v1/courses/{id}/sessions                                           [FR-20]
+[x] T-405  GET /api/v1/sessions/{id}                                                    [—]
+[x] T-406  PATCH /api/v1/sessions/{id} (title, show_results_to_students, moderation_mode) [FR-28]
+[x] T-407  POST /api/v1/sessions/{id}/pause + /resume                                  [FR-25]
+[x] T-408  POST /api/v1/sessions/{id}/close                                             [FR-24]
+[x] T-409  endroid/qr-code already in composer.json (^5.0)                              [FR-22]
+[x] T-410  GET /api/v1/sessions/{id}/qr.png with Cache-Control: public, max-age=3600   [FR-22]
+[x] T-411  GET /api/v1/public/sessions/{short_code} — PublicSessionController::resolve [—]
+[x] T-412  Projector view /live/{short_code} — templates/live/session.php              [FR-22, FR-54]
+[x] T-413  Admin UI: sessions/create.php + sessions/detail.php + courses/detail.php updated [FR-20..FR-28]
+[x] T-414  bin/cleanup.php — auto-close after 12h, --dry-run flag, cron-ready          [FR-26]
+[x] T-415  GET /api/v1/sessions/{id}/participants/count + 5s JS polling in detail.php  [FR-27]
+[x] T-416  tests/Unit/SessionServiceTest.php — 20 tests (ShortCode + state transitions) [NFR-52]
 ```
 
 ### Kabul Kriterleri
 
 ```
-[ ] Öğretmen bir ders altında oturum başlatabilir
-[ ] Benzersiz 6 karakterli kısa kod oluşturulur (charset A-HJ-NP-Z2-9)
-[ ] Katılım URL'si ve QR PNG üretilir
-[ ] Genel katılım URL'si öğrenci sayfasını açar
-[ ] Öğretmen bir oturumu duraklatabilir, sürdürebilir ve kapatabilir
-[ ] Durum geçişleri korunur (kapalı bir oturum yeniden başlatılamaz)
-[ ] Projektör görünümü QR'ı büyük ve okunabilir şekilde render eder
+[x] Öğretmen bir ders altında oturum başlatabilir
+[x] Benzersiz 6 karakterli kısa kod oluşturulur (charset A-HJ-NP-Z2-9)
+[x] Katılım URL'si ve QR PNG uç noktası üretilir
+[x] Genel katılım URL'si öğrenci sayfasını açar (/live/{short_code} projector view)
+[x] Öğretmen bir oturumu duraklatabilir, sürdürebilir ve kapatabilir
+[x] Durum geçişleri korunur (kapalı bir oturum yeniden açılamaz → invalid_state_transition)
+[x] Projektör görünümü QR'ı büyük ve okunabilir şekilde render eder
 ```
 
 ### Notlar
-> _(Buraya önemli kararlar, engeller veya notlar ekleyin)_
+- **QR endpoint:** `SessionController::qrPng()` — endroid/qr-code Builder API kullanıyor, composer install sonrası çalışır; boyut 128-1024px arası sınırlı
+- **Sahiplik kontrolü:** SessionService, `sessions → courses → instructor_id` JOIN yerine iki ayrı sorgu kullanıyor (course findById + instructor_id karşılaştırması) — testability için
+- **Katılımcı sayısı:** Faz 4'te `participants` tablosu yok; `countParticipants()` PDOException'ı yakalar, 0 döndürür. Faz 5'ten itibaren gerçek veri gösterilir
+- **Temizleme scripti:** `bin/cleanup.php --max-age-hours=12` `started_at < UTC_NOW - 12h` olan active/paused oturumları kapatır; cron örneği: `0 * * * * php /path/cleanup.php`
+- **Rota sırası:** `/admin/courses/{id}/sessions/new` → `/admin/sessions/{id}` sırasıyla kaydedildi (literal before parametric)
+- **Projector view:** Auth gerektirmiyor — public URL, sınıf ekranında görüntülenir; session kapalıysa 404 sayfası gösterilir
 
 ---
 

@@ -3,6 +3,7 @@
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
 use EduQR\Repositories\CourseRepository;
+use EduQR\Repositories\SessionRepository;
 use EduQR\Services\CourseService;
 
 $instructor = AuthMiddleware::require();
@@ -19,6 +20,9 @@ try {
     include __DIR__ . '/../../../templates/errors/' . $status . '.php';
     exit;
 }
+
+$sessionRepo = new SessionRepository();
+$sessions    = $sessionRepo->listByCourse($courseId);
 
 ob_start();
 ?>
@@ -67,8 +71,52 @@ ob_start();
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h5 class="mb-0"><?= htmlspecialchars(t('nav.sessions'), ENT_QUOTES, 'UTF-8') ?></h5>
+    <?php if ($course['status'] === 'active'): ?>
+    <a href="/admin/courses/<?= (int) $course['id'] ?>/sessions/new" class="btn btn-primary btn-sm">
+        + <?= htmlspecialchars(t('session.new.submit'), ENT_QUOTES, 'UTF-8') ?>
+    </a>
+    <?php endif; ?>
 </div>
+
+<?php if (empty($sessions)): ?>
 <p class="text-muted"><?= htmlspecialchars(t('instructor.dashboard.no_sessions'), ENT_QUOTES, 'UTF-8') ?></p>
+<?php else: ?>
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th><?= htmlspecialchars(t('session.new.field.title'), ENT_QUOTES, 'UTF-8') ?></th>
+            <th><?= htmlspecialchars(t('session.short_code.label'), ENT_QUOTES, 'UTF-8') ?></th>
+            <th><?= htmlspecialchars(t('common.status'), ENT_QUOTES, 'UTF-8') ?></th>
+            <th><?= htmlspecialchars(t('common.created_at'), ENT_QUOTES, 'UTF-8') ?></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    <?php foreach ($sessions as $s): ?>
+        <?php
+        $badgeClass = match ($s['status']) {
+            'active' => 'text-bg-success',
+            'paused' => 'text-bg-warning',
+            default  => 'text-bg-secondary',
+        };
+        ?>
+        <tr>
+            <td><?= htmlspecialchars($s['title'], ENT_QUOTES, 'UTF-8') ?></td>
+            <td><code><?= htmlspecialchars($s['short_code'], ENT_QUOTES, 'UTF-8') ?></code></td>
+            <td><span class="badge <?= $badgeClass ?>"><?= htmlspecialchars(t('session.status.' . $s['status']), ENT_QUOTES, 'UTF-8') ?></span></td>
+            <td class="text-muted small"><?= htmlspecialchars(substr($s['created_at'], 0, 10), ENT_QUOTES, 'UTF-8') ?></td>
+            <td class="text-end">
+                <a href="/admin/sessions/<?= (int) $s['id'] ?>" class="btn btn-sm btn-outline-secondary">
+                    <?= htmlspecialchars(t('common.actions'), ENT_QUOTES, 'UTF-8') ?>
+                </a>
+            </td>
+        </tr>
+    <?php endforeach; ?>
+    </tbody>
+</table>
+</div>
+<?php endif; ?>
 <?php
 $content   = ob_get_clean();
 $pageTitle = htmlspecialchars($course['title'], ENT_QUOTES, 'UTF-8') . ' — ' . t('app.name');

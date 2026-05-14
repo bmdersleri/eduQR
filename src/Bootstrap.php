@@ -178,8 +178,25 @@ final class Bootstrap
             include __DIR__ . '/../templates/admin/courses/edit.php';
         });
 
+        // /new must come before /{id} so it is matched first
+        $router->get('/admin/courses/{id}/sessions/new', function (array $p): void {
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/../templates/admin/sessions/create.php';
+        });
+
+        $router->get('/admin/sessions/{id}', function (array $p): void {
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/../templates/admin/sessions/detail.php';
+        });
+
+        // ── Public: Projector view ────────────────────────────────────────────
+        $router->get('/live/{short_code}', function (array $p): void {
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/../templates/live/session.php';
+        });
+
         // ── Public / Student ──────────────────────────────────────────────────
-        // Registered in Phase 4+
+        // Registered in Phase 5+
 
         // ── API v1 ────────────────────────────────────────────────────────────
         $router->get('/api/v1/locales', function (array $p): void {
@@ -205,6 +222,44 @@ final class Bootstrap
 
         $router->delete('/api/v1/courses/{id}', function (array $p): void {
             (new Controllers\Api\CourseController())->archive((int) $p['id']);
+        });
+
+        // ── API: Sessions ─────────────────────────────────────────────────────
+        $router->post('/api/v1/courses/{id}/sessions', function (array $p): void {
+            (new Controllers\Api\SessionController())->create((int) $p['id']);
+        });
+
+        $router->get('/api/v1/sessions/{id}', function (array $p): void {
+            (new Controllers\Api\SessionController())->show((int) $p['id']);
+        });
+
+        $router->patch('/api/v1/sessions/{id}', function (array $p): void {
+            (new Controllers\Api\SessionController())->update((int) $p['id']);
+        });
+
+        $router->post('/api/v1/sessions/{id}/pause', function (array $p): void {
+            (new Controllers\Api\SessionController())->pause((int) $p['id']);
+        });
+
+        $router->post('/api/v1/sessions/{id}/resume', function (array $p): void {
+            (new Controllers\Api\SessionController())->resume((int) $p['id']);
+        });
+
+        $router->post('/api/v1/sessions/{id}/close', function (array $p): void {
+            (new Controllers\Api\SessionController())->close((int) $p['id']);
+        });
+
+        $router->get('/api/v1/sessions/{id}/qr.png', function (array $p): void {
+            (new Controllers\Api\SessionController())->qrPng((int) $p['id']);
+        });
+
+        $router->get('/api/v1/sessions/{id}/participants/count', function (array $p): void {
+            (new Controllers\Api\SessionController())->participantCount((int) $p['id']);
+        });
+
+        // ── API: Public session resolve ────────────────────────────────────────
+        $router->get('/api/v1/public/sessions/{short_code}', function (array $p): void {
+            (new Controllers\Api\PublicSessionController())->resolve($p['short_code']);
         });
 
         $router->post('/api/v1/auth/login', function (array $p): void {
