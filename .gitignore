@@ -1,0 +1,57 @@
+# Dependencies
+/vendor/
+/node_modules/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+local.config.php
+
+# Logs
+/logs/
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# PHP build / cache
+*.phar
+composer.phar
+.php-cs-fixer.cache
+.phpunit.result.cache
+/.phpunit.cache/
+
+# Test coverage
+/coverage/
+
+# Local DB dumps & SQLite
+*.sql.gz
+*.sqlite
+*.sqlite-journal
+
+# Generated artifacts
+/dist/
+/build/
+/docs/generated/
+/docs/screenshots/
+
+# QR / upload runtime output
+/public/uploads/*
+!/public/uploads/.gitkeep
+
+# Claude Code session memory (local only)
+.claude/
+
+# Zip archives
+*.zip
+
+# Loose / redundant root-level files (canonical versions are in subdirs)
+/en.json
+/tr.json
+/schema.sql
