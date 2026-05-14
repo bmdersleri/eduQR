@@ -196,7 +196,16 @@ final class Bootstrap
         });
 
         // ── Public / Student ──────────────────────────────────────────────────
-        // Registered in Phase 5+
+        // /wait must come before /{short_code} so it is matched first
+        $router->get('/join/{short_code}/wait', function (array $p): void {
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/../templates/student/wait.php';
+        });
+
+        $router->get('/join/{short_code}', function (array $p): void {
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/../templates/student/join.php';
+        });
 
         // ── API v1 ────────────────────────────────────────────────────────────
         $router->get('/api/v1/locales', function (array $p): void {
@@ -260,6 +269,11 @@ final class Bootstrap
         // ── API: Public session resolve ────────────────────────────────────────
         $router->get('/api/v1/public/sessions/{short_code}', function (array $p): void {
             (new Controllers\Api\PublicSessionController())->resolve($p['short_code']);
+        });
+
+        // ── API: Student join ─────────────────────────────────────────────────
+        $router->post('/api/v1/sessions/{short_code}/join', function (array $p): void {
+            (new Controllers\Api\JoinController())->join($p['short_code']);
         });
 
         $router->post('/api/v1/auth/login', function (array $p): void {

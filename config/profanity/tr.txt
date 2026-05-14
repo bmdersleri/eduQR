@@ -1,0 +1,14 @@
+# Turkish profanity list — one word per line, lowercase, no leading/trailing whitespace
+# Extend as needed. Comments (#) and blank lines are ignored.
+amk
+bok
+göt
+ibne
+kahpe
+kaşar
+orospu
+piç
+sik
+sikik
+siktir
+yarrak

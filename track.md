@@ -3,7 +3,7 @@
 **Proje:** QR-Based Interactive Classroom Polling and Learning Analytics Platform
 **Sahip:** Prof. Dr. İsmail Kırbaş — Burdur Mehmet Akif Ersoy Üniversitesi
 **Başlangıç Tarihi:** 2026-05-14
-**Son Güncelleme:** 2026-05-14 (Faz 4 tamamlandı)
+**Son Güncelleme:** 2026-05-14 (Faz 5 tamamlandı)
 
 ---
 
@@ -34,7 +34,7 @@
 | 2 | Öğretmen Kimlik Doğrulama | 🟢 | 14 / 14 | 2026-05-14 | 2026-05-14 |
 | 3 | Ders Yönetimi | 🟢 | 12 / 12 | 2026-05-14 | 2026-05-14 |
 | 4 | Oturum Yönetimi & QR | 🟢 | 17 / 17 | 2026-05-14 | 2026-05-14 |
-| 5 | Öğrenci Katılım Akışı | 🔴 | 0 / 14 | — | — |
+| 5 | Öğrenci Katılım Akışı | 🟢 | 14 / 14 | 2026-05-14 | 2026-05-14 |
 | 6 | Soru Yönetimi | 🔴 | 0 / 18 | — | — |
 | 7 | Yanıt Toplama | 🔴 | 0 / 15 | — | — |
 | 8 | Canlı Sonuçlar | 🔴 | 0 / 13 | — | — |
@@ -42,7 +42,7 @@
 | 10 | Güvenlik & Kalite Sertleştirme | 🔴 | 0 / 17 | — | — |
 | 11 | Gelecek İyileştirmeler (post-MVP) | ⏸ | 0 / 16 | — | — |
 
-**MVP Toplam (Faz 0–10):** 67 / 157 görev tamamlandı (%43)
+**MVP Toplam (Faz 0–10):** 81 / 157 görev tamamlandı (%52)
 
 ---
 
@@ -262,45 +262,51 @@
 
 ---
 
-## Faz 5 — Öğrenci Katılım Akışı 🔴
+## Faz 5 — Öğrenci Katılım Akışı 🟢
 
 **Hedef:** Öğrenciler takma adla katılır, hesap gerekmez.
-**Başlangıç:** — | **Bitiş:** —
+**Başlangıç:** 2026-05-14 | **Bitiş:** 2026-05-14
 
 ### Görevler
 
 ```
-[ ] T-500  Migration 0001 (partial): participants table                                  [DATA_MODEL §2.6]
-[ ] T-501  ParticipantRepository (register, count, find-by-session)                      [FR-40]
-[ ] T-502  ParticipantService — nickname validation, normalization, uniqueness           [FR-41, FR-42]
-[ ] T-503  config/profanity/{en,tr}.txt + profanity filter                               [FR-43]
-[ ] T-504  Support\DeviceHash — SHA-256(server_secret || cookie_id || UA)                [FR-46]
-[ ] T-505  eduqr_device persistent cookie (HttpOnly, 1y)                                 [FR-46]
-[ ] T-506  GET /join/{short_code} — nickname form (mobile-first)                         [FR-40]
-[ ] T-507  POST /api/v1/sessions/{short_code}/join — set eduqr_participant cookie        [FR-40..FR-43]
-[ ] T-508  Reject joins for closed / paused sessions with localized message              [FR-47]
-[ ] T-509  Student waiting screen template                                               [FR-45]
-[ ] T-510  templates/partials/privacy-notice.php on the join page                        [FR-75]
-[ ] T-511  i18n keys for all student UI                                                  [FR-80]
-[ ] T-512  Unit tests: nickname validation, normalization, profanity                     [NFR-52]
-[ ] T-513  Integration test: full join flow                                              [—]
+[x] T-500  Migration 0001 (partial): participants table                                  [DATA_MODEL §2.6]
+[x] T-501  ParticipantRepository (register, count, find-by-session)                      [FR-40]
+[x] T-502  ParticipantService — nickname validation, normalization, uniqueness           [FR-41, FR-42]
+[x] T-503  config/profanity/{en,tr}.txt + profanity filter                               [FR-43]
+[x] T-504  Support\DeviceHash — SHA-256(server_secret || cookie_id || UA)                [FR-46]
+[x] T-505  eduqr_device persistent cookie (HttpOnly, 1y)                                 [FR-46]
+[x] T-506  GET /join/{short_code} — nickname form (mobile-first)                         [FR-40]
+[x] T-507  POST /api/v1/sessions/{short_code}/join — set eduqr_participant cookie        [FR-40..FR-43]
+[x] T-508  Reject joins for closed / paused sessions with localized message              [FR-47]
+[x] T-509  Student waiting screen template                                               [FR-45]
+[x] T-510  templates/partials/privacy-notice.php on the join page                        [FR-75]
+[x] T-511  i18n keys for all student UI                                                  [FR-80]
+[x] T-512  Unit tests: nickname validation, normalization, profanity                     [NFR-52]
+[x] T-513  Integration test: full join flow                                              [—]
 ```
 
 ### Kabul Kriterleri
 
 ```
-[ ] Öğrenci katılım bağlantısını açabilir ve takma ad formunu görebilir
-[ ] Öğrenci geçerli bir takma adla aktif bir oturuma katılabilir
-[ ] Yinelenen takma adlar (büyük/küçük harf duyarsız) reddedilir
-[ ] Uygunsuz takma adlar reddedilir
-[ ] Kapalı / duraklatılmış oturumlar net bir yerelleştirilmiş mesaj gösterir ve katılımı engeller
-[ ] Hiçbir soru aktif değilken öğrenci bekleme ekranına ulaşır
-[ ] Gizlilik bildirimi katılım sayfasında görünür
-[ ] Öğrenci UI'ı 360 piksel genişliğinde kullanılabilir
+[x] Öğrenci katılım bağlantısını açabilir ve takma ad formunu görebilir
+[x] Öğrenci geçerli bir takma adla aktif bir oturuma katılabilir
+[x] Yinelenen takma adlar (büyük/küçük harf duyarsız) reddedilir
+[x] Uygunsuz takma adlar reddedilir
+[x] Kapalı / duraklatılmış oturumlar net bir yerelleştirilmiş mesaj gösterir ve katılımı engeller
+[x] Hiçbir soru aktif değilken öğrenci bekleme ekranına ulaşır
+[x] Gizlilik bildirimi katılım sayfasında görünür
+[x] Öğrenci UI'ı 360 piksel genişliğinde kullanılabilir
 ```
 
 ### Notlar
-> _(Buraya önemli kararlar, engeller veya notlar ekleyin)_
+- **Nickname normalizasyonu:** `mb_strtolower` + `trim` + iç boşluk çöküşü — `UNIQUE KEY uk_participants_nickname(session_id, nickname_normalized)` ile veritabanı düzeyinde de korunuyor
+- **Profanity filter:** `config/profanity/{en,tr}.txt` — tam eşleşme veya alt dizgi; locale güvenliği için regex sanitize (sadece `[a-z]`)
+- **DeviceHash:** SHA-256(APP_SECRET | cookie_id | user_agent) — raporlarda veya export'ta **asla** gösterilmez (FR-73)
+- **eduqr_device cookie:** 1 yıl, HttpOnly, SameSite=Lax — cihaz kimlik tespiti için (FR-46)
+- **eduqr_participant cookie:** session-lifetime, HttpOnly — Phase 6+ için soru oynatmada kullanılacak
+- **Bekleme ekranı polling:** FR-45 gereği `/api/v1/sessions/{short_code}/active-question` her 3 saniyede sorgulanıyor; endpoint Phase 6'da ekleniyor (T-614); o zamana kadar catch bloğu sessizce başarısız olur
+- **Rota sırası:** `/join/{short_code}/wait` → `/join/{short_code}` sırasıyla kaydedildi; `([^/]+)` regex'i slash'ı geçemez, rota belirsizliği yok
 
 ---
 

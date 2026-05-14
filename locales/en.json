@@ -180,6 +180,7 @@
   "error.question_not_found": "Question not found.",
   "error.question_closed": "This question is closed.",
   "error.duplicate_nickname": "This nickname is already taken in this session.",
+  "error.profane_nickname": "Please choose a different nickname.",
   "error.duplicate_answer": "You have already answered this question.",
   "error.invalid_credentials": "Email or password is incorrect.",
   "error.not_authenticated": "Please sign in to continue.",

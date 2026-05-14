@@ -1,0 +1,28 @@
+# English profanity list — one word per line, lowercase, no leading/trailing whitespace
+# Extend as needed. Comments (#) and blank lines are ignored.
+ass
+asshole
+bastard
+bitch
+bullshit
+cock
+crap
+cunt
+damn
+dick
+douche
+fag
+fuck
+fucker
+fucking
+jackass
+jerk
+moron
+motherfucker
+nigger
+piss
+pussy
+shit
+slut
+twat
+whore

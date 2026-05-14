@@ -180,6 +180,7 @@
   "error.question_not_found": "Soru bulunamadı.",
   "error.question_closed": "Bu soru kapatılmıştır.",
   "error.duplicate_nickname": "Bu takma ad bu oturumda zaten alınmış.",
+  "error.profane_nickname": "Lütfen farklı bir takma ad seç.",
   "error.duplicate_answer": "Bu soruyu zaten cevapladınız.",
   "error.invalid_credentials": "E-posta veya parola hatalı.",
   "error.not_authenticated": "Devam etmek için lütfen giriş yapın.",
