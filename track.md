@@ -3,7 +3,7 @@
 **Proje:** QR-Based Interactive Classroom Polling and Learning Analytics Platform
 **Sahip:** Prof. Dr. İsmail Kırbaş — Burdur Mehmet Akif Ersoy Üniversitesi
 **Başlangıç Tarihi:** 2026-05-14
-**Son Güncelleme:** 2026-05-14 (Faz 2 tamamlandı)
+**Son Güncelleme:** 2026-05-14 (Faz 3 tamamlandı)
 
 ---
 
@@ -32,7 +32,7 @@
 | 0 | Proje Kurulumu | 🟢 | 15 / 15 | 2026-05-14 | 2026-05-14 |
 | 1 | i18n Temeli | 🟢 | 9 / 9 | 2026-05-14 | 2026-05-14 |
 | 2 | Öğretmen Kimlik Doğrulama | 🟢 | 14 / 14 | 2026-05-14 | 2026-05-14 |
-| 3 | Ders Yönetimi | 🔴 | 0 / 12 | — | — |
+| 3 | Ders Yönetimi | 🟢 | 12 / 12 | 2026-05-14 | 2026-05-14 |
 | 4 | Oturum Yönetimi & QR | 🔴 | 0 / 17 | — | — |
 | 5 | Öğrenci Katılım Akışı | 🔴 | 0 / 14 | — | — |
 | 6 | Soru Yönetimi | 🔴 | 0 / 18 | — | — |
@@ -42,7 +42,7 @@
 | 10 | Güvenlik & Kalite Sertleştirme | 🔴 | 0 / 17 | — | — |
 | 11 | Gelecek İyileştirmeler (post-MVP) | ⏸ | 0 / 16 | — | — |
 
-**MVP Toplam (Faz 0–10):** 38 / 157 görev tamamlandı (%24)
+**MVP Toplam (Faz 0–10):** 50 / 157 görev tamamlandı (%32)
 
 ---
 
@@ -172,39 +172,44 @@
 
 ---
 
-## Faz 3 — Ders Yönetimi 🔴
+## Faz 3 — Ders Yönetimi 🟢
 
 **Hedef:** Öğretmenler ders oluşturur ve yönetir.
-**Başlangıç:** — | **Bitiş:** —
+**Başlangıç:** 2026-05-14 | **Bitiş:** 2026-05-14
 
 ### Görevler
 
 ```
-[ ] T-300  Migration 0001 (partial): courses table                                       [DATA_MODEL §2.2]
-[ ] T-301  CourseRepository (CRUD, list-by-instructor)                                   [FR-11]
-[ ] T-302  CourseService — ownership enforcement                                         [FR-14]
-[ ] T-303  GET /api/v1/courses (paginated)                                               [FR-11]
-[ ] T-304  POST /api/v1/courses                                                          [FR-10]
-[ ] T-305  GET /api/v1/courses/{id}                                                      [FR-11]
-[ ] T-306  PATCH /api/v1/courses/{id}                                                    [FR-12]
-[ ] T-307  DELETE /api/v1/courses/{id} (archive)                                         [FR-13]
-[ ] T-308  Admin UI: course list, create form, edit form                                 [FR-10..FR-13]
-[ ] T-309  Course detail page with sessions placeholder                                  [FR-11]
-[ ] T-310  Course field validation + i18n validation messages                            [FR-87]
-[ ] T-311  Unit tests: CourseService ownership rules                                     [NFR-52]
+[x] T-300  Migration 0001 (partial): courses table                                       [DATA_MODEL §2.2]
+[x] T-301  CourseRepository (CRUD, list-by-instructor)                                   [FR-11]
+[x] T-302  CourseService — ownership enforcement                                         [FR-14]
+[x] T-303  GET /api/v1/courses (paginated)                                               [FR-11]
+[x] T-304  POST /api/v1/courses                                                          [FR-10]
+[x] T-305  GET /api/v1/courses/{id}                                                      [FR-11]
+[x] T-306  PATCH /api/v1/courses/{id}                                                    [FR-12]
+[x] T-307  DELETE /api/v1/courses/{id} (archive)                                         [FR-13]
+[x] T-308  Admin UI: course list, create form, edit form                                 [FR-10..FR-13]
+[x] T-309  Course detail page with sessions placeholder                                  [FR-11]
+[x] T-310  Course field validation + i18n validation messages                            [FR-87]
+[x] T-311  Unit tests: CourseService ownership rules                                     [NFR-52]
 ```
 
 ### Kabul Kriterleri
 
 ```
-[ ] Öğretmen kendi derslerini oluşturabilir, görüntüleyebilir, düzenleyebilir, arşivleyebilir
-[ ] Öğretmen başka bir öğretmenin dersine dokunamaz
-[ ] Tüm ders UI'ı çeviri anahtarlarını kullanır
-[ ] Ders alanı doğrulaması aralık dışı girdiyi yerelleştirilmiş mesajlarla reddeder
+[x] Öğretmen kendi derslerini oluşturabilir, görüntüleyebilir, düzenleyebilir, arşivleyebilir
+[x] Öğretmen başka bir öğretmenin dersine dokunamaz
+[x] Tüm ders UI'ı çeviri anahtarlarını kullanır
+[x] Ders alanı doğrulaması aralık dışı girdiyi yerelleştirilmiş mesajlarla reddeder
 ```
 
 ### Notlar
-> _(Buraya önemli kararlar, engeller veya notlar ekleyin)_
+- `CourseRepositoryInterface` + `CourseRepository` → `src/Contracts/` ve `src/Repositories/` desenini takip eder (Faz 2 ile tutarlı)
+- `CourseService::getCourse()` sahiplik kontrolünü merkezileştiriyor: `updateCourse` ve `archiveCourse` ikisi de önce `getCourse()` çağırıyor
+- Doğrulama hataları `\InvalidArgumentException("field:error_key")` formatında; controller ayrıştırarak `validation_error` kodu ve `field` alanını döndürüyor
+- Admin layout'a Bootstrap navbar içinde `nav.courses` bağlantısı eklendi; aktif sayfa `REQUEST_URI` karşılaştırmasıyla vurgulanıyor
+- `/admin/courses/new` rotası `/admin/courses/{id}`'den önce kaydedildi (regex çakışmasını önlemek için)
+- Tüm i18n anahtarları Faz 1'den mevcut; Faz 3 için yeni anahtar eklenmedi
 
 ---
 

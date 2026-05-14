@@ -156,12 +156,55 @@ final class Bootstrap
             include __DIR__ . '/../templates/admin/dashboard.php';
         });
 
+        // ── Admin: Courses ────────────────────────────────────────────────────
+        $router->get('/admin/courses', function (array $p): void {
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/../templates/admin/courses/list.php';
+        });
+
+        // /new must come before /{id} so it is matched first
+        $router->get('/admin/courses/new', function (array $p): void {
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/../templates/admin/courses/create.php';
+        });
+
+        $router->get('/admin/courses/{id}', function (array $p): void {
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/../templates/admin/courses/detail.php';
+        });
+
+        $router->get('/admin/courses/{id}/edit', function (array $p): void {
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/../templates/admin/courses/edit.php';
+        });
+
         // ── Public / Student ──────────────────────────────────────────────────
         // Registered in Phase 4+
 
         // ── API v1 ────────────────────────────────────────────────────────────
         $router->get('/api/v1/locales', function (array $p): void {
             (new Controllers\Api\LocaleController())->index();
+        });
+
+        // ── API: Courses ──────────────────────────────────────────────────────
+        $router->get('/api/v1/courses', function (array $p): void {
+            (new Controllers\Api\CourseController())->index();
+        });
+
+        $router->post('/api/v1/courses', function (array $p): void {
+            (new Controllers\Api\CourseController())->create();
+        });
+
+        $router->get('/api/v1/courses/{id}', function (array $p): void {
+            (new Controllers\Api\CourseController())->show((int) $p['id']);
+        });
+
+        $router->patch('/api/v1/courses/{id}', function (array $p): void {
+            (new Controllers\Api\CourseController())->update((int) $p['id']);
+        });
+
+        $router->delete('/api/v1/courses/{id}', function (array $p): void {
+            (new Controllers\Api\CourseController())->archive((int) $p['id']);
         });
 
         $router->post('/api/v1/auth/login', function (array $p): void {

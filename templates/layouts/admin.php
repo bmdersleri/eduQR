@@ -11,8 +11,18 @@
 </head>
 <body class="eduqr-admin">
 
-<nav class="navbar navbar-dark bg-dark px-3">
+<nav class="navbar navbar-expand navbar-dark bg-dark px-3">
     <a class="navbar-brand fw-bold" href="/admin"><?= t('app.name') ?></a>
+    <div class="collapse navbar-collapse mx-3">
+        <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+                <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/courses') ? 'active' : '' ?>"
+                   href="/admin/courses">
+                    <?= htmlspecialchars(t('nav.courses'), ENT_QUOTES, 'UTF-8') ?>
+                </a>
+            </li>
+        </ul>
+    </div>
     <div class="d-flex align-items-center gap-3">
         <?php include __DIR__ . '/../partials/language-switcher.php'; ?>
         <?php if (isset($instructor)): ?>
