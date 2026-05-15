@@ -85,6 +85,40 @@ Full step-by-step instructions: [`deploy/cpanel-notes.md`](./deploy/cpanel-notes
 
 ---
 
+## Quick Start (Ubuntu + Nginx + MariaDB — Interactive Wizard)
+
+The interactive wizard handles the entire installation in one command.
+It assumes Nginx and MariaDB are **already installed** on the server.
+
+```bash
+# 1. Upload / clone the project and install dependencies
+composer install --no-dev --optimize-autoloader
+
+# 2. Launch the wizard — it guides you through every step interactively
+php bin/wizard.php
+```
+
+The wizard covers:
+
+| Step | What it does |
+| --- | --- |
+| **[1] Requirements** | PHP 8.2+, required extensions, `vendor/` — prints exact `apt install` hints on failure |
+| **[2] App config** | Creates `.env` from `.env.example`; auto-generates `APP_SECRET` |
+| **[3] Database** | Tests MariaDB connection, writes DB credentials to `.env`, runs all migrations |
+| **[4] Nginx config** | Renders `deploy/nginx.conf.template` → `deploy/nginx.conf` with your domain, FPM socket and TLS paths |
+| **[5] Admin account** | Creates the first admin user (validates password policy) |
+| **[6] Smoke tests** | Checks 5 endpoints: `/`, `/login`, `/api/v1/locales`, auth/me, courses |
+
+After the wizard finishes it prints the exact `systemctl` commands to activate the Nginx config.
+
+**Resuming a failed install** — skip completed steps with flags:
+
+```bash
+php bin/wizard.php --skip-nginx --skip-admin --skip-verify
+```
+
+---
+
 ## Locked Decisions (Read Before Coding)
 
 These choices are **not up for debate during MVP implementation**. They are restated in each spec document but are listed here so an agent reading only the README still gets them right.
@@ -228,12 +262,21 @@ eduqr/
 │   ├── Repositories/
 │   ├── Middleware/
 │   └── Support/
+│       └── Wizard/          # interactive setup wizard classes
+│           ├── Console.php  # injectable I/O helper
+│           ├── Step.php     # abstract base
+│           └── Steps/       # RequirementsStep, EnvStep, DatabaseStep,
+│                            # NginxStep, AdminStep, VerifyStep
 ├── templates/{layouts,admin,student,live}
 ├── locales/{en.json, tr.json, ...}
 ├── database/{schema.sql, migrations/, seeds/}
-├── bin/{install.php, migrate.php, seed.php, locale-check.php, user-add.php}
+├── bin/{install.php, migrate.php, seed.php, locale-check.php,
+│        user-add.php, rotate-secret.php, smoke.php, backup.php,
+│        wizard.php}         # interactive Nginx setup wizard
 ├── tests/{Unit, Integration}
-├── deploy/{apache.htaccess.example, nginx.conf.example, cpanel-notes.md}
+├── deploy/{apache.htaccess.example, nginx.conf.example,
+│           nginx.conf.template,     # wizard renders this
+│           cpanel-notes.md}
 ├── docs/adr/                # architecture decision records
 ├── .env.example
 ├── .gitignore
