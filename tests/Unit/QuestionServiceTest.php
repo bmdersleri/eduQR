@@ -370,6 +370,7 @@ class QuestionServiceTest extends TestCase
             public function update(int $id, array $fields): void {}
             public function listByCourse(int $courseId): array { return []; }
             public function countParticipants(int $sessionId): int { return 0; }
+            public function anonymize(int $sessionId): void {}
         };
 
         $courseRepo = new class implements CourseRepositoryInterface {

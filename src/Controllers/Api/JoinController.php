@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Middleware\RateLimitMiddleware;
 use EduQR\Repositories\ParticipantRepository;
 use EduQR\Repositories\SessionRepository;
 use EduQR\Services\ParticipantService;
@@ -24,6 +25,10 @@ final class JoinController
 
     public function join(string $shortCode): void
     {
+        // Rate limit: max 20 join attempts per IP per 10 minutes (SEC §14)
+        $ipHash = hash('sha256', ($_SERVER['REMOTE_ADDR'] ?? '') . '|join');
+        RateLimitMiddleware::check("join:{$ipHash}", 20, 600);
+
         // T-505: Ensure eduqr_device persistent cookie exists
         $cookieId = $this->ensureDeviceCookie();
 

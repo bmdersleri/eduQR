@@ -7,6 +7,7 @@ namespace EduQR\Controllers\Api;
 use EduQR\Config;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
+use EduQR\Repositories\AuditLogRepository;
 use EduQR\Repositories\CourseRepository;
 use EduQR\Repositories\SessionRepository;
 use EduQR\Services\SessionService;
@@ -18,10 +19,12 @@ use Endroid\QrCode\Writer\PngWriter;
 final class SessionController
 {
     private SessionService $service;
+    private AuditLogRepository $auditLog;
 
     public function __construct()
     {
-        $this->service = new SessionService(new SessionRepository(), new CourseRepository());
+        $this->service  = new SessionService(new SessionRepository(), new CourseRepository());
+        $this->auditLog = new AuditLogRepository();
     }
 
     // ── POST /api/v1/courses/{id}/sessions ────────────────────────────────────
@@ -40,6 +43,11 @@ final class SessionController
         } catch (\InvalidArgumentException $e) {
             $this->handleValidationException($e);
         }
+
+        // Audit: FR-90
+        try {
+            $this->auditLog->write('instructor', (int) $user['id'], 'session.create', 'session', (int) $result['id']);
+        } catch (\Throwable) {}
 
         $this->json(201, [
             'success' => true,
@@ -146,6 +154,11 @@ final class SessionController
             $this->handleRuntimeException($e);
         }
 
+        // Audit: FR-90
+        try {
+            $this->auditLog->write('instructor', (int) $user['id'], 'session.close', 'session', $id);
+        } catch (\Throwable) {}
+
         $this->json(200, [
             'success' => true,
             'data'    => null,
@@ -183,6 +196,56 @@ final class SessionController
         header('Cache-Control: public, max-age=3600');
         echo $result->getString();
         exit;
+    }
+
+    // ── POST /api/v1/sessions/{id}/anonymize (T-906) ─────────────────────────
+
+    public function anonymize(int $id): void
+    {
+        $user = AuthMiddleware::require();
+        CsrfMiddleware::verify();
+
+        try {
+            $this->service->anonymizeSession($id, (int) $user['id']);
+        } catch (\RuntimeException $e) {
+            $this->handleRuntimeException($e);
+        }
+
+        // Audit: FR-90
+        try {
+            $this->auditLog->write('instructor', (int) $user['id'], 'session.anonymize', 'session', $id);
+        } catch (\Throwable) {}
+
+        $this->json(200, [
+            'success' => true,
+            'data'    => null,
+            'message' => t('session.anonymized'),
+        ]);
+    }
+
+    // ── DELETE /api/v1/sessions/{id} (T-907) ─────────────────────────────────
+
+    public function delete(int $id): void
+    {
+        $user = AuthMiddleware::require();
+        CsrfMiddleware::verify();
+
+        try {
+            $this->service->requestDeletion($id, (int) $user['id']);
+        } catch (\RuntimeException $e) {
+            $this->handleRuntimeException($e);
+        }
+
+        // Audit: FR-90
+        try {
+            $this->auditLog->write('instructor', (int) $user['id'], 'session.delete_request', 'session', $id);
+        } catch (\Throwable) {}
+
+        $this->json(200, [
+            'success' => true,
+            'data'    => null,
+            'message' => t('session.delete_requested'),
+        ]);
     }
 
     // ── GET /api/v1/sessions/{id}/participants/count ──────────────────────────
@@ -228,11 +291,12 @@ final class SessionController
     private function handleRuntimeException(\RuntimeException $e): never
     {
         match ($e->getMessage()) {
-            'session_not_found'       => $this->error(404, 'session_not_found',       t('error.session_not_found')),
-            'course_not_found'        => $this->error(404, 'course_not_found',         t('error.course_not_found')),
-            'forbidden'               => $this->error(403, 'forbidden',                t('error.forbidden')),
-            'invalid_state_transition'=> $this->error(422, 'invalid_state_transition', t('error.invalid_state_transition')),
-            default                   => $this->error(500, 'server_error',             t('error.server_error')),
+            'session_not_found'        => $this->error(404, 'session_not_found',        t('error.session_not_found')),
+            'course_not_found'         => $this->error(404, 'course_not_found',          t('error.course_not_found')),
+            'forbidden'                => $this->error(403, 'forbidden',                 t('error.forbidden')),
+            'invalid_state_transition' => $this->error(422, 'invalid_state_transition',  t('error.invalid_state_transition')),
+            'already_anonymized'       => $this->error(409, 'already_anonymized',        t('common.error')),
+            default                    => $this->error(500, 'server_error',              t('error.server_error')),
         };
     }
 

@@ -1,0 +1,92 @@
+# ─────────────────────────────────────────────────────────────
+# eduQR — Nginx server block example
+#
+# Adjust: server_name, root path, SSL certificate paths,
+# PHP-FPM socket, and log paths for your environment.
+# ─────────────────────────────────────────────────────────────
+
+# HTTP → HTTPS redirect
+server {
+    listen      80;
+    listen      [::]:80;
+    server_name eduqr.example.org;
+
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# Main HTTPS server
+server {
+    listen      443 ssl;
+    listen      [::]:443 ssl;
+    http2       on;
+    server_name eduqr.example.org;
+
+    root  /var/www/eduqr/public;
+    index index.php;
+
+    # ── TLS ───────────────────────────────────────────────────
+    ssl_certificate     /etc/letsencrypt/live/eduqr.example.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/eduqr.example.org/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_session_timeout 1d;
+    ssl_session_cache   shared:SSL:10m;
+
+    # ── Logging ───────────────────────────────────────────────
+    access_log /var/log/nginx/eduqr-access.log;
+    error_log  /var/log/nginx/eduqr-error.log;
+
+    # ── Security headers ──────────────────────────────────────
+    # Bootstrap.php also sends these; nginx headers take precedence.
+    add_header X-Frame-Options            "DENY"                                  always;
+    add_header X-Content-Type-Options     "nosniff"                               always;
+    add_header Referrer-Policy            "strict-origin-when-cross-origin"       always;
+    add_header Permissions-Policy         "geolocation=(), microphone=(), camera=()" always;
+    add_header Strict-Transport-Security  "max-age=31536000; includeSubDomains"   always;
+    # add_header Content-Security-Policy  "..." always;  # handled by PHP
+
+    # Remove fingerprinting headers
+    more_clear_headers Server X-Powered-By;  # requires ngx_headers_more
+
+    # ── Front controller ──────────────────────────────────────
+    location / {
+        try_files $uri $uri/ /index.php$is_args$args;
+    }
+
+    # ── PHP-FPM ───────────────────────────────────────────────
+    location ~ \.php$ {
+        # Protect against Nginx PHP path-info exploit
+        try_files $uri =404;
+
+        fastcgi_pass  unix:/run/php/php8.2-fpm.sock;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include       fastcgi_params;
+
+        fastcgi_connect_timeout 10s;
+        fastcgi_read_timeout    60s;
+    }
+
+    # ── Deny sensitive files ──────────────────────────────────
+    location ~* \.(env|log|sql|json|lock|sh|bak|old|pem|key)$ {
+        deny all;
+    }
+
+    # ── Deny dot-files (except ACME) ─────────────────────────
+    location ~ /\.(?!well-known) {
+        deny all;
+    }
+
+    # ── Static asset caching ──────────────────────────────────
+    location ~* \.(css|js|png|jpg|jpeg|ico|svg|woff2|webp)$ {
+        expires    1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+}

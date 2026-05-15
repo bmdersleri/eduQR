@@ -19,4 +19,7 @@ interface SessionRepositoryInterface
     public function listByCourse(int $courseId): array;
 
     public function countParticipants(int $sessionId): int;
+
+    /** Strip nicknames + device_hash from all participants; set anonymized = 1. */
+    public function anonymize(int $sessionId): void;
 }

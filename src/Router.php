@@ -13,8 +13,10 @@ namespace EduQR;
 final class Router
 {
     private array $routes = [];
-    private ?callable $notFoundHandler = null;
-    private ?callable $errorHandler = null;
+    /** @var callable|null */
+    private $notFoundHandler = null;
+    /** @var callable|null */
+    private $errorHandler = null;
 
     // ── Registration ───────────────────────────────────────────────────────────
 
@@ -130,14 +132,19 @@ final class Router
 
     private function patternToRegex(string $pattern): string
     {
-        // Escape everything except {param} segments
-        $regex = preg_replace_callback(
-            '/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/',
-            fn($m) => '([^/]+)',
-            preg_quote($pattern, '#')
-        );
-        // Undo the preg_quote on our replacement
-        $regex = str_replace('\\(\\[\\^/\\]\\+\\)', '([^/]+)', $regex);
+        // Split on {param} tokens, capturing the delimiters.
+        // preg_quote() is applied only to the static segments so that
+        // regex-special chars (dots, slashes, etc.) are escaped correctly
+        // without accidentally escaping the param braces before replacement.
+        $parts = preg_split('/(\{[a-zA-Z_][a-zA-Z0-9_]*\})/', $pattern, -1, PREG_SPLIT_DELIM_CAPTURE);
+        $regex = '';
+        foreach ($parts as $part) {
+            if ($part !== '' && $part[0] === '{') {
+                $regex .= '([^/]+)';
+            } else {
+                $regex .= preg_quote($part, '#');
+            }
+        }
         return '#^' . $regex . '$#';
     }
 

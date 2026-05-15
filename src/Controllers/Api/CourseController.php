@@ -6,16 +6,19 @@ namespace EduQR\Controllers\Api;
 
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
+use EduQR\Repositories\AuditLogRepository;
 use EduQR\Repositories\CourseRepository;
 use EduQR\Services\CourseService;
 
 final class CourseController
 {
     private CourseService $service;
+    private AuditLogRepository $auditLog;
 
     public function __construct()
     {
-        $this->service = new CourseService(new CourseRepository());
+        $this->service  = new CourseService(new CourseRepository());
+        $this->auditLog = new AuditLogRepository();
     }
 
     // ── GET /api/v1/courses ────────────────────────────────────────────────────
@@ -49,6 +52,11 @@ final class CourseController
         } catch (\InvalidArgumentException $e) {
             $this->handleValidationException($e);
         }
+
+        // Audit: FR-90
+        try {
+            $this->auditLog->write('instructor', (int) $user['id'], 'course.create', 'course', $id);
+        } catch (\Throwable) {}
 
         $this->json(201, [
             'success' => true,
@@ -111,6 +119,11 @@ final class CourseController
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);
         }
+
+        // Audit: FR-90
+        try {
+            $this->auditLog->write('instructor', (int) $user['id'], 'course.archive', 'course', $id);
+        } catch (\Throwable) {}
 
         $this->json(200, [
             'success' => true,

@@ -160,6 +160,40 @@ final class SessionService
         return $this->sessions->countParticipants($id);
     }
 
+    // ── Anonymize (T-906) ─────────────────────────────────────────────────────
+
+    /**
+     * Strips nicknames + device_hash from all participants of this session.
+     * Replaces nicknames with "Participant 1", "Participant 2", … in join order.
+     * Sets sessions.anonymized = 1.
+     *
+     * @throws \RuntimeException  session_not_found | forbidden | already_anonymized
+     */
+    public function anonymizeSession(int $id, int $instructorId): void
+    {
+        $session = $this->getSession($id, $instructorId);
+        if ((bool) $session['anonymized']) {
+            throw new \RuntimeException('already_anonymized');
+        }
+        $this->sessions->anonymize($id);
+    }
+
+    // ── Soft-delete (T-907) ───────────────────────────────────────────────────
+
+    /**
+     * Marks the session for deletion by setting delete_requested_at = NOW().
+     * bin/cleanup.php hard-deletes after a 7-day grace period.
+     *
+     * @throws \RuntimeException  session_not_found | forbidden
+     */
+    public function requestDeletion(int $id, int $instructorId): void
+    {
+        $this->getSession($id, $instructorId);
+        $this->sessions->update($id, [
+            'delete_requested_at' => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s'),
+        ]);
+    }
+
     // ── Cleanup (called by bin/cleanup.php) ────────────────────────────────────
 
     public function closeInactiveSessions(int $maxAgeHours = 12): int

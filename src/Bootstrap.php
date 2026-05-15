@@ -59,7 +59,7 @@ final class Bootstrap
         header("Referrer-Policy: strict-origin-when-cross-origin");
         header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
 
-        // Content-Security-Policy — tightened in Phase 10
+        // Content-Security-Policy
         $csp  = "default-src 'self'; ";
         $csp .= "script-src 'self'; ";
         $csp .= "style-src 'self' 'unsafe-inline'; ";
@@ -207,6 +207,23 @@ final class Bootstrap
             include __DIR__ . '/../templates/student/join.php';
         });
 
+        // ── Student answer page (T-709) ───────────────────────────────────────
+        // answered must come before /{short_code} so it is matched first
+        $router->get('/play/{short_code}/answered', function (array $p): void {
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/../templates/student/answered.php';
+        });
+
+        $router->get('/play/{short_code}', function (array $p): void {
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/../templates/student/play.php';
+        });
+
+        // No-JS fallback: form POST to /play/{short_code} (T-710)
+        $router->post('/play/{short_code}', function (array $p): void {
+            include __DIR__ . '/../templates/student/play.php';
+        });
+
         // ── API v1 ────────────────────────────────────────────────────────────
         $router->get('/api/v1/locales', function (array $p): void {
             (new Controllers\Api\LocaleController())->index();
@@ -310,6 +327,72 @@ final class Bootstrap
         // ── API: Student join ─────────────────────────────────────────────────
         $router->post('/api/v1/sessions/{short_code}/join', function (array $p): void {
             (new Controllers\Api\JoinController())->join($p['short_code']);
+        });
+
+        // ── API: Answer submission (T-703) ────────────────────────────────────
+        $router->post('/api/v1/answers', function (array $p): void {
+            (new Controllers\Api\AnswerController())->submit();
+        });
+
+        // ── API: Answer hide / unhide (T-810) ─────────────────────────────────
+        // hide must come before unhide to avoid mis-matching
+        $router->post('/api/v1/answers/{id}/hide', function (array $p): void {
+            (new Controllers\Api\AnswerModerationController())->hide((int) $p['id']);
+        });
+
+        $router->post('/api/v1/answers/{id}/unhide', function (array $p): void {
+            (new Controllers\Api\AnswerModerationController())->unhide((int) $p['id']);
+        });
+
+        // ── API: Reports (T-901, T-902, T-904) ────────────────────────────────
+        // .csv and .html must come before the plain /report route
+        $router->get('/api/v1/sessions/{id}/report.csv', function (array $p): void {
+            (new Controllers\Api\ReportController())->csv((int) $p['id']);
+        });
+
+        $router->get('/api/v1/sessions/{id}/report.html', function (array $p): void {
+            (new Controllers\Api\ReportController())->html((int) $p['id']);
+        });
+
+        $router->get('/api/v1/sessions/{id}/report', function (array $p): void {
+            (new Controllers\Api\ReportController())->json((int) $p['id']);
+        });
+
+        // ── API: Session anonymize + delete (T-906, T-907) ────────────────────
+        $router->post('/api/v1/sessions/{id}/anonymize', function (array $p): void {
+            (new Controllers\Api\SessionController())->anonymize((int) $p['id']);
+        });
+
+        $router->delete('/api/v1/sessions/{id}', function (array $p): void {
+            (new Controllers\Api\SessionController())->delete((int) $p['id']);
+        });
+
+        // ── API: Results — instructor (T-803) ─────────────────────────────────
+        $router->get('/api/v1/sessions/{id}/results', function (array $p): void {
+            (new Controllers\Api\ResultsController())->instructorResults((int) $p['id']);
+        });
+
+        // ── API: Results — student, gated (T-804) ─────────────────────────────
+        $router->get('/api/v1/sessions/{short_code}/student-results', function (array $p): void {
+            (new Controllers\Api\ResultsController())->studentResults($p['short_code']);
+        });
+
+        // ── Admin: Live results page (T-805) ──────────────────────────────────
+        $router->get('/admin/sessions/{id}/results', function (array $p): void {
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/../templates/admin/sessions/results.php';
+        });
+
+        // ── Admin: Report page (T-905) ────────────────────────────────────────
+        $router->get('/admin/sessions/{id}/report', function (array $p): void {
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/../templates/admin/sessions/report.php';
+        });
+
+        // ── Projector: Live results (T-807) ──────────────────────────────────
+        $router->get('/live/{short_code}/results', function (array $p): void {
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/../templates/live/results.php';
         });
 
         $router->post('/api/v1/auth/login', function (array $p): void {

@@ -143,6 +143,7 @@ class SessionServiceTest extends TestCase
 
             public function listByCourse(int $courseId): array { return []; }
             public function countParticipants(int $sessionId): int { return 0; }
+            public function anonymize(int $sessionId): void {}
         };
     }
 

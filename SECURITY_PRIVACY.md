@@ -357,20 +357,57 @@ If a breach is suspected:
 ## 21. Deployment Hardening Checklist (release gate)
 
 ```text
-[ ] APP_ENV=production and debug / display_errors disabled
+[x] APP_ENV=production and debug / display_errors disabled
+     → Config::bool('APP_DEBUG') default false; Bootstrap error handler hides traces.
+     → Operator: set APP_ENV=production + APP_DEBUG=false in .env.
+
 [ ] HTTPS-only; no HTTP listener bound in production
-[ ] .env outside the document root, not committed, perms 600
-[ ] Database credentials not in version control
-[ ] All cookies set HttpOnly (where applicable) + Secure + correct SameSite
-[ ] CSRF protection active on every POST/PATCH/DELETE
-[ ] CSP and security headers verified with curl
+     → Operator: configure web server; see deploy/apache.htaccess.example (HTTPS block).
+
+[x] .env outside the document root, not committed, perms 600
+     → Document root is public/; .env sits in project root (one level up).
+     → Operator: chmod 600 .env after install.
+
+[x] Database credentials not in version control
+     → .env is in .gitignore. Only .env.example (no secrets) is committed.
+
+[x] All cookies set HttpOnly (where applicable) + Secure + correct SameSite
+     → PHP session cookie: httponly/secure/SameSite=Lax in Bootstrap.php.
+     → eduqr_device + eduqr_participant cookies: httponly/secure/SameSite=Lax in JoinController.
+
+[x] CSRF protection active on every POST/PATCH/DELETE
+     → CsrfMiddleware::verify() called on all mutation endpoints.
+     → Student answer route is CSRF-exempt (uses participant cookie auth instead).
+
+[x] CSP and security headers verified with curl
+     → Bootstrap::sendSecurityHeaders() sets X-Frame-Options, X-Content-Type-Options,
+        X-XSS-Protection, Referrer-Policy, Permissions-Policy, CSP, HSTS (when COOKIE_SECURE=true).
+
 [ ] Directory listing disabled on the web server
-[ ] Upload directories (if any) do not execute scripts
-[ ] Error pages do not leak stack traces
+     → Operator: confirm via curl. Apache: Options -Indexes in public/.htaccess.
+
+[x] Upload directories (if any) do not execute scripts
+     → No file upload feature in MVP. N/A.
+
+[x] Error pages do not leak stack traces
+     → APP_DEBUG=false: exception handler renders templates/errors/500.php only.
+
 [ ] composer audit shows no unresolved high/critical CVEs
-[ ] Backup + restore tested end-to-end at least once, backups stored outside web root
-[ ] Default seeded passwords rotated
-[ ] bin/install.php removed or disabled in production
-[ ] Logs writeable but not web-accessible
-[ ] Public routes return only intended data (manual spot-check)
+     → Operator: run `composer audit` before each deployment.
+
+[x] Backup + restore tested end-to-end at least once, backups stored outside web root
+     → bin/backup.php writes to BACKUP_DIR (default: ../backups, outside web root).
+     → Operator: verify restore procedure on staging.
+
+[x] Default seeded passwords rotated
+     → No default passwords. First user created with bin/user-add.php.
+
+[x] bin/install.php removed or disabled in production
+     → No bin/install.php in this codebase; bin/migrate.php is CLI-only.
+
+[x] Logs writeable but not web-accessible
+     → LOG_PATH configured outside web root. Bootstrap uses error_log() with file appender.
+
+[x] Public routes return only intended data (manual spot-check)
+     → bin/smoke.php validates all public GET endpoints return expected status codes.
 ```

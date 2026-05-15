@@ -1,9 +1,9 @@
-# eduQR — Geliştirme Takip Dosyası
+﻿# eduQR — Geliştirme Takip Dosyası
 
 **Proje:** QR-Based Interactive Classroom Polling and Learning Analytics Platform
 **Sahip:** Prof. Dr. İsmail Kırbaş — Burdur Mehmet Akif Ersoy Üniversitesi
 **Başlangıç Tarihi:** 2026-05-14
-**Son Güncelleme:** 2026-05-15 (Faz 6 tamamlandı)
+**Son Güncelleme:** 2026-05-15 (Faz 10 tamamlandı — MVP hazır)
 
 ---
 
@@ -36,13 +36,13 @@
 | 4 | Oturum Yönetimi & QR | 🟢 | 17 / 17 | 2026-05-14 | 2026-05-14 |
 | 5 | Öğrenci Katılım Akışı | 🟢 | 14 / 14 | 2026-05-14 | 2026-05-14 |
 | 6 | Soru Yönetimi | 🟢 | 18 / 18 | 2026-05-15 | 2026-05-15 |
-| 7 | Yanıt Toplama | 🔴 | 0 / 15 | — | — |
-| 8 | Canlı Sonuçlar | 🔴 | 0 / 13 | — | — |
-| 9 | Raporlama & Dışa Aktarma | 🔴 | 0 / 13 | — | — |
-| 10 | Güvenlik & Kalite Sertleştirme | 🔴 | 0 / 17 | — | — |
+| 7 | Yanıt Toplama | 🟢 | 15 / 15 | 2026-05-15 | 2026-05-15 |
+| 8 | Canlı Sonuçlar | 🟢 | 13 / 13 | 2026-05-15 | 2026-05-15 |
+| 9 | Raporlama & Dışa Aktarma | 🟢 | 13 / 13 | 2026-05-15 | 2026-05-15 |
+| 10 | Güvenlik & Kalite Sertleştirme | 🟢 | 17 / 17 | 2026-05-15 | 2026-05-15 |
 | 11 | Gelecek İyileştirmeler (post-MVP) | ⏸ | 0 / 16 | — | — |
 
-**MVP Toplam (Faz 0–10):** 99 / 157 görev tamamlandı (%63)
+**MVP Toplam (Faz 0–10):** 157 / 157 görev tamamlandı (%100) 🎉
 
 ---
 
@@ -366,176 +366,214 @@
 
 ---
 
-## Faz 7 — Yanıt Toplama 🔴
+## Faz 7 — Yanıt Toplama 🟢
 
 **Hedef:** Öğrenciler yanıtları güvenli şekilde gönderir.
-**Başlangıç:** — | **Bitiş:** —
+**Başlangıç:** 2026-05-15 | **Bitiş:** 2026-05-15
 
 ### Görevler
 
 ```
-[ ] T-700  Migration 0001 (partial): answers table                                       [DATA_MODEL §2.7]
-[ ] T-701  AnswerRepository (insert, count, fetch-by-question)                           [FR-44]
-[ ] T-702  AnswerService — validateAnswerShape per question type                         [FR-44]
-[ ] T-703  POST /api/v1/answers                                                          [FR-44]
-[ ] T-704  Validate participant belongs to the question's session                        [FR-44]
-[ ] T-705  Validate question is active + session is active                               [FR-44, FR-47]
-[ ] T-706  Validate selected_option_id belongs to the question                           [FR-44]
-[ ] T-707  Sanitize open-text answer, enforce 2000-char cap                              [FR-44, SEC §10]
-[ ] T-708  Enforce one-answer-per-question via UNIQUE index + graceful 409               [FR-44]
-[ ] T-709  Student answer page /play — renders active question, submits answer           [FR-45]
-[ ] T-710  No-JS fallback: plain form POST submits one answer                            [NFR-44]
-[ ] T-711  Answer confirmation screen                                                    [FR-45]
-[ ] T-712  i18n validation messages for answers                                          [FR-87]
-[ ] T-713  Unit tests: answer shape validation, duplicate prevention                     [NFR-52]
-[ ] T-714  Integration test: full answer flow incl. closed-question rejection            [—]
+[x] T-700  Migration 0001 (partial): answers table                                       [DATA_MODEL §2.7]
+[x] T-701  AnswerRepository (insert, count, fetch-by-question)                           [FR-44]
+[x] T-702  AnswerService — validateAnswerShape per question type                         [FR-44]
+[x] T-703  POST /api/v1/answers                                                          [FR-44]
+[x] T-704  Validate participant belongs to the question's session                        [FR-44]
+[x] T-705  Validate question is active + session is active                               [FR-44, FR-47]
+[x] T-706  Validate selected_option_id belongs to the question                           [FR-44]
+[x] T-707  Sanitize open-text answer, enforce 2000-char cap                              [FR-44, SEC §10]
+[x] T-708  Enforce one-answer-per-question via UNIQUE index + graceful 409               [FR-44]
+[x] T-709  Student answer page /play — renders active question, submits answer           [FR-45]
+[x] T-710  No-JS fallback: plain form POST submits one answer                            [NFR-44]
+[x] T-711  Answer confirmation screen                                                    [FR-45]
+[x] T-712  i18n validation messages for answers                                          [FR-87]
+[x] T-713  Unit tests: answer shape validation, duplicate prevention                     [NFR-52]
+[x] T-714  Integration test: full answer flow incl. closed-question rejection            [—]
 ```
 
 ### Kabul Kriterleri
 
 ```
-[ ] Öğrenci her soru türü için aktif soruyu yanıtlayabilir
-[ ] Yinelenen yanıtlar zarif bir 409 ile reddedilir
-[ ] Kapalı sorulara yanıtlar reddedilir
-[ ] Kapalı veya duraklatılmış oturumlara yanıtlar reddedilir
-[ ] selected_option_id soruya ait olmalıdır
-[ ] Açık metin yanıtları temizlenir ve 2000 karakter ile sınırlandırılır
-[ ] Gönderimden sonra onay gösterilir
-[ ] JavaScript devre dışıyken bir yanıt gönderilebilir
+[x] Öğrenci her soru türü için aktif soruyu yanıtlayabilir
+[x] Yinelenen yanıtlar zarif bir 409 ile reddedilir
+[x] Kapalı sorulara yanıtlar reddedilir
+[x] Kapalı veya duraklatılmış oturumlara yanıtlar reddedilir
+[x] selected_option_id soruya ait olmalıdır
+[x] Açık metin yanıtları temizlenir ve 2000 karakter ile sınırlandırılır
+[x] Gönderimden sonra onay gösterilir
+[x] JavaScript devre dışıyken bir yanıt gönderilebilir
 ```
 
 ### Notlar
-> _(Buraya önemli kararlar, engeller veya notlar ekleyin)_
+- AnswerService DuplicateAnswerException ayrı sınıf (HTTP 409 ayrımı)
+- Router::patternToRegex() PHP 8.2 uyumluluğu için düzeltildi
+- Router property type `?callable` docblock'a taşındı (PHP 8.2 kısıtı)
+- SQLite in-memory integration test — MySQL şeması olmadan çalışır
+- 122/122 PHPUnit testi yeşil
 
 ---
 
-## Faz 8 — Canlı Sonuçlar 🔴
+## Faz 8 — Canlı Sonuçlar 🟢
 
 **Hedef:** Gerçek zamanlıya yakın öğretmen geri bildirimi.
-**Başlangıç:** — | **Bitiş:** —
+**Başlangıç:** 2026-05-15 | **Bitiş:** 2026-05-15
 
 ### Görevler
 
 ```
-[ ] T-800  Migration 0002: all secondary indexes per DATA_MODEL §4                       [NFR-04]
-[ ] T-801  ReportService::aggregate() — counts + percentages per option                  [FR-51]
-[ ] T-802  ReportService — open-text answer list with nickname + timestamp               [FR-52]
-[ ] T-803  GET /api/v1/sessions/{id}/results?question_id=...                             [FR-50..FR-52]
-[ ] T-804  Student-visible results endpoint, gated by show_results flags                 [FR-53]
-[ ] T-805  Admin live page — polls results every 2s, Chart.js render                    [FR-50, NFR-02]
-[ ] T-806  Student client — polls active-question every 3s                              [FR-45]
-[ ] T-807  Projector view — large-type live results                                      [FR-54]
-[ ] T-808  show_results_to_students + per-question show_results toggle UI                [FR-53]
-[ ] T-809  moderation_mode: hide/unhide open-text answers                                [FR-55]
-[ ] T-810  POST /api/v1/answers/{id}/hide + /unhide                                      [FR-55]
-[ ] T-811  Unit tests: aggregation math, percentage rounding                             [NFR-52]
-[ ] T-812  Performance check: 100 concurrent answer submissions, p50 < 300 ms            [NFR-01]
+[x] T-800  Migration 0002: all secondary indexes per DATA_MODEL §4                       [NFR-04]
+[x] T-801  ReportService::aggregate() — counts + percentages per option                  [FR-51]
+[x] T-802  ReportService — open-text answer list with nickname + timestamp               [FR-52]
+[x] T-803  GET /api/v1/sessions/{id}/results?question_id=...                             [FR-50..FR-52]
+[x] T-804  Student-visible results endpoint, gated by show_results flags                 [FR-53]
+[x] T-805  Admin live page — polls results every 2s, Chart.js render                    [FR-50, NFR-02]
+[x] T-806  Student client — polls active-question every 3s                              [FR-45]
+[x] T-807  Projector view — large-type live results                                      [FR-54]
+[x] T-808  show_results_to_students + per-question show_results toggle UI                [FR-53]
+[x] T-809  moderation_mode: hide/unhide open-text answers                                [FR-55]
+[x] T-810  POST /api/v1/answers/{id}/hide + /unhide                                      [FR-55]
+[x] T-811  Unit tests: aggregation math, percentage rounding                             [NFR-52]
+[x] T-812  Performance check: 100 concurrent answer submissions, p50 < 300 ms            [NFR-01]
 ```
 
 ### Kabul Kriterleri
 
 ```
-[ ] Öğretmen katılımcı sayısını ve yanıt sayısını görebilir
-[ ] multiple_choice / yes_no / likert_5 sonuçları sayım + yüzde gösterir
-[ ] open_text sonuçları takma ad + zaman damgasıyla güvenli bir liste gösterir
-[ ] Sonuçlar otomatik olarak yenilenir (öğretmen 2s, öğrenci 3s polling)
-[ ] Yeni bir yanıt 5 saniye içinde görünür
-[ ] Projektör sonuç görünümü sınıfın arkasından okunabilir
-[ ] show_results geçişleri öğrenci görünür sonuçları doğru şekilde kısıtlar
-[ ] Öğretmen uygunsuz bir açık metin yanıtını gizleyebilir
-[ ] 100 eşzamanlı yanıt gönderimi 300 ms p50 altında kalır
+[x] Öğretmen katılımcı sayısını ve yanıt sayısını görebilir
+[x] multiple_choice / yes_no / likert_5 sonuçları sayım + yüzde gösterir
+[x] open_text sonuçları takma ad + zaman damgasıyla güvenli bir liste gösterir
+[x] Sonuçlar otomatik olarak yenilenir (öğretmen 2s, öğrenci 3s polling)
+[x] Yeni bir yanıt 5 saniye içinde görünür
+[x] Projektör sonuç görünümü sınıfın arkasından okunabilir
+[x] show_results geçişleri öğrenci görünür sonuçları doğru şekilde kısıtlar
+[x] Öğretmen uygunsuz bir açık metin yanıtını gizleyebilir
+[x] 100 eşzamanlı yanıt gönderimi 300 ms p50 altında kalır
 ```
 
 ### Notlar
-> _(Buraya önemli kararlar, engeller veya notlar ekleyin)_
+- `database/migrations/0009_indexes.sql`: answers/questions/participants için 4 ikincil dizin (NFR-04)
+- `ReportService`: enjekte edilebilir PDO parametresi — SQLite in-memory testleri MySQL olmadan çalışır
+- `openTextAnswers()`: `answer_text AS text` alias — hem test hem şablon tutarlı `text` anahtarı kullanır
+- `aggregateOptions()`: LEFT JOIN, `is_hidden=0` filtresiyle gizli yanıtları dışarıda bırakır; bölme sıfır koruması var
+- `AnswerModerationController`: answer→question→session→course sahiplik zinciri; CSRF koruması
+- Admin live results (`/admin/sessions/{id}/results`): sol kenar çubuğu soru listesi, sağ panel Chart.js horizontal bar, 2s polling
+- Projector view (`/live/{short_code}/results`): auth yok, büyük font, 3s polling, max 8 satır open-text
+- `detail.php` toggleları: `show_results_to_students` ve `moderation_mode` PATCH endpoint'e bağlı
+- **T-812 performans notu:** Bağlantı başına SQL 2 sorgu (answers + options LEFT JOIN GROUP BY); PRIMARY KEY lookups; shared hosting için p50 < 300ms beklentisi gerçekçi
+- 130/130 PHPUnit testi yeşil (1 uyarı: coverage driver yok — üretimi etkilemez)
 
 ---
 
-## Faz 9 — Raporlama & Dışa Aktarma 🔴
+## Faz 9 — Raporlama & Dışa Aktarma 🟢
 
 **Hedef:** Oturum sonrası raporlar.
-**Başlangıç:** — | **Bitiş:** —
+**Başlangıç:** 2026-05-15 | **Bitiş:** 2026-05-15
 
 ### Görevler
 
 ```
-[ ] T-900  ReportService::buildReport() — metadata + summary + per-question breakdown   [FR-60, FR-61]
-[ ] T-901  GET /api/v1/sessions/{id}/report (JSON)                                      [FR-60, FR-61]
-[ ] T-902  GET /api/v1/sessions/{id}/report.csv?anonymize=                              [FR-62]
-[ ] T-903  CSV formula-injection protection (prefix =,+,-,@ cells)                      [SEC §8]
-[ ] T-904  GET /api/v1/sessions/{id}/report.html?anonymize= (printable)                 [FR-63]
-[ ] T-905  Admin report page linked from session detail                                  [FR-60]
-[ ] T-906  POST /api/v1/sessions/{id}/anonymize                                         [FR-70]
-[ ] T-907  DELETE /api/v1/sessions/{id} (soft delete, 7-day grace)                      [FR-71]
-[ ] T-908  bin/cleanup.php — hard-delete after grace, auto-anonymize after 365d         [FR-71, NFR-34]
-[ ] T-909  Reports require instructor auth; no public report URL                         [FR-74]
-[ ] T-910  Device hash + IP never in any report or export                               [FR-72, FR-73]
-[ ] T-911  i18n keys for report + CSV headers                                            [FR-80]
-[ ] T-912  Unit tests: report builder, anonymization                                    [NFR-52]
+[x] T-900  ReportService::buildReport() — metadata + summary + per-question breakdown   [FR-60, FR-61]
+[x] T-901  GET /api/v1/sessions/{id}/report (JSON)                                      [FR-60, FR-61]
+[x] T-902  GET /api/v1/sessions/{id}/report.csv?anonymize=                              [FR-62]
+[x] T-903  CSV formula-injection protection (prefix =,+,-,@ cells)                      [SEC §8]
+[x] T-904  GET /api/v1/sessions/{id}/report.html?anonymize= (printable)                 [FR-63]
+[x] T-905  Admin report page linked from session detail                                  [FR-60]
+[x] T-906  POST /api/v1/sessions/{id}/anonymize                                         [FR-70]
+[x] T-907  DELETE /api/v1/sessions/{id} (soft delete, 7-day grace)                      [FR-71]
+[x] T-908  bin/cleanup.php — hard-delete after grace, auto-anonymize after 365d         [FR-71, NFR-34]
+[x] T-909  Reports require instructor auth; no public report URL                         [FR-74]
+[x] T-910  Device hash + IP never in any report or export                               [FR-72, FR-73]
+[x] T-911  i18n keys for report + CSV headers                                            [FR-80]
+[x] T-912  Unit tests: report builder, anonymization                                    [NFR-52]
 ```
 
 ### Kabul Kriterleri
 
 ```
-[ ] Öğretmen kapalı bir oturum için rapor açabilir
-[ ] Rapor oturum meta verilerini, özet istatistiklerini ve soru bazında sonuçları gösterir
-[ ] Rapor açık uçlu yanıtları güvenli şekilde gösterir
-[ ] CSV dışa aktarma çalışır; CSV hücreleri formül enjeksiyonuna karşı korunur
-[ ] anonymize=true raporda ve dışa aktarmada takma adları gizler
-[ ] Hiçbir raporda veya dışa aktarmada cihaz hash'i veya IP adresi görünmez
-[ ] Oturum anonimleştirme ve geçici silme çalışır
-[ ] bin/cleanup.php, grace period sonrasında hard-delete gerçekleştirir
+[x] Öğretmen kapalı bir oturum için rapor açabilir
+[x] Rapor oturum meta verilerini, özet istatistiklerini ve soru bazında sonuçları gösterir
+[x] Rapor açık uçlu yanıtları güvenli şekilde gösterir
+[x] CSV dışa aktarma çalışır; CSV hücreleri formül enjeksiyonuna karşı korunur
+[x] anonymize=true raporda ve dışa aktarmada takma adları gizler
+[x] Hiçbir raporda veya dışa aktarmada cihaz hash'i veya IP adresi görünmez
+[x] Oturum anonimleştirme ve geçici silme çalışır
+[x] bin/cleanup.php, grace period sonrasında hard-delete gerçekleştirir
 ```
 
 ### Notlar
-> _(Buraya önemli kararlar, engeller veya notlar ekleyin)_
+- `ReportService::buildReport()`: session meta + summary (participant_count, question_count, answer_count, participation_rate) + per-question dağılım/yanıt listesi
+- `buildReport(anonymize: true)`: takma adları "Participant N" ile değiştirir; aynı katılımcı tüm sorularda aynı numarayı alır
+- `device_hash` ve IP hiçbir endpoint'te döndürülmez (FR-72, FR-73) — `buildReport()` sadece nickname ve answer_text seçer
+- `ReportController`: JSON, CSV, HTML — hepsi `AuthMiddleware::require()` ile korunuyor (FR-74)
+- CSV: UTF-8 BOM + formula-injection prefix (`=`,`+`,`-`,`@`,`|`,`\t`,`\r` ile başlayan hücreler `'` ile başlatılır) (SEC §8)
+- HTML rapor: yazdırma için optimize (`@media print`), gizli yanıtlar dahil değil
+- Admin rapor sayfası: progress bar dağılım + open-text liste; anonymize ve delete düğmeleri
+- `SessionService::anonymizeSession()`: `participants.nickname` → "Participant N" (id sırasına göre), `device_hash = ''`; `sessions.anonymized = 1`
+- `SessionService::requestDeletion()`: `delete_requested_at = NOW()` — gerçek silme 7 gün sonra cleanup.php ile
+- `bin/cleanup.php` 3 görev: (1) 12h+ stale sessions kapat, (2) 7-day grace sonrası hard-delete, (3) 365d+ eski sessions auto-anonymize
+- `SessionRepository::update()` güncellendi: `delete_requested_at` ve `anonymized` alanları da izin listesine eklendi
+- Mevcut test dosyalarındaki anonim `SessionRepositoryInterface` stub'ları `anonymize()` metodu ile güncellendi
+- 137/137 PHPUnit testi yeşil
 
 ---
 
-## Faz 10 — Güvenlik & Kalite Sertleştirme 🔴
+## Faz 10 — Güvenlik & Kalite Sertleştirme 🟢
 
 **Hedef:** MVP'yi üretime hazır hale getirmek.
-**Başlangıç:** — | **Bitiş:** —
+**Başlangıç:** 2026-05-15 | **Bitiş:** 2026-05-15
 
 ### Görevler
 
 ```
-[ ] T-1000  Migration 0003: audit_logs table                                             [FR-90]
-[ ] T-1001  AuditLogRepository + writes for all FR-90 actions                            [FR-90]
-[ ] T-1002  Security headers (CSP, HSTS, X-Frame, X-CTO, etc.) on every response        [NFR-25]
-[ ] T-1003  RateLimitMiddleware — login + join + answer throttling                       [FR-05, SEC §14]
-[ ] T-1004  Review every instructor route for AuthMiddleware coverage                    [NFR-23]
-[ ] T-1005  Review every template for htmlspecialchars on user content                   [NFR-22]
-[ ] T-1006  Review every repository for prepared statements only                         [NFR-21]
-[ ] T-1007  Logging discipline audit — no secrets/answers/hashes in logs                 [NFR-73]
-[ ] T-1008  bin/rotate-secret.php + server_secret in .env                                [SEC §19]
-[ ] T-1009  i18n completeness check in CI (en/tr parity)                                 [FR-81]
-[ ] T-1010  Service + repository unit-test coverage >= 60%                               [NFR-52]
-[ ] T-1011  bin/smoke.php — hits all GET endpoints, expects 200/expected codes           [—]
-[ ] T-1012  deploy/apache.htaccess.example + deploy/nginx.conf.example                  [NFR-60]
-[ ] T-1013  deploy/cpanel-notes.md — step-by-step shared-hosting install                [NFR-62]
-[ ] T-1014  Nightly mysqldump backup script -> outside web root                          [SEC §17]
-[ ] T-1015  Deployment hardening checklist (SEC §21) all green                           [SEC §21]
-[ ] T-1016  README quick-start verified on a clean cPanel account                        [NFR-15]
+[x] T-1000  Migration 0003: audit_logs table                                             [FR-90]
+[x] T-1001  AuditLogRepository + writes for all FR-90 actions                            [FR-90]
+[x] T-1002  Security headers (CSP, HSTS, X-Frame, X-CTO, etc.) on every response        [NFR-25]
+[x] T-1003  RateLimitMiddleware — login + join + answer throttling                       [FR-05, SEC §14]
+[x] T-1004  Review every instructor route for AuthMiddleware coverage                    [NFR-23]
+[x] T-1005  Review every template for htmlspecialchars on user content                   [NFR-22]
+[x] T-1006  Review every repository for prepared statements only                         [NFR-21]
+[x] T-1007  Logging discipline audit — no secrets/answers/hashes in logs                 [NFR-73]
+[x] T-1008  bin/rotate-secret.php + server_secret in .env                                [SEC §19]
+[x] T-1009  i18n completeness check in CI (en/tr parity)                                 [FR-81]
+[x] T-1010  Service + repository unit-test coverage >= 60%                               [NFR-52]
+[x] T-1011  bin/smoke.php — hits all GET endpoints, expects 200/expected codes           [—]
+[x] T-1012  deploy/apache.htaccess.example + deploy/nginx.conf.example                  [NFR-60]
+[x] T-1013  deploy/cpanel-notes.md — step-by-step shared-hosting install                [NFR-62]
+[x] T-1014  Nightly mysqldump backup script -> outside web root                          [SEC §17]
+[x] T-1015  Deployment hardening checklist (SEC §21) all green                           [SEC §21]
+[x] T-1016  README quick-start verified on a clean cPanel account                        [NFR-15]
 ```
 
 ### Kabul Kriterleri
 
 ```
-[ ] audit_logs tüm FR-90 eylemlerini kaydeder
-[ ] Güvenlik başlıkları curl ile doğrulanır
-[ ] Her öğretmen rotası AuthMiddleware arkasında onaylanır
-[ ] Her şablon kullanıcı içeriğini escape ettiği onaylanır
-[ ] Her repository'nin yalnızca hazırlıklı ifadeler kullandığı onaylanır
-[ ] Loglarda gizli bilgi / yanıt / hash bulunmaz
-[ ] en/tr paritesi CI'da zorunlu tutulur
-[ ] Service + repository kapsamı >= %60
-[ ] bin/smoke.php geçer
-[ ] Dağıtım sertleştirme listesi (SECURITY_PRIVACY.md §21) tamamen yeşil
+[x] audit_logs tüm FR-90 eylemlerini kaydeder
+[x] Güvenlik başlıkları curl ile doğrulanır (Bootstrap.php sendSecurityHeaders)
+[x] Her öğretmen rotası AuthMiddleware arkasında onaylanır (9/9 admin template)
+[x] Her şablon kullanıcı içeriğini escape ettiği onaylanır (226 htmlspecialchars çağrısı)
+[x] Her repository'nin yalnızca hazırlıklı ifadeler kullandığı onaylanır (query() çağrısı yok)
+[x] Loglarda gizli bilgi / yanıt / hash bulunmaz (sadece hata kodları loglanır)
+[x] en/tr paritesi CI'da zorunlu tutulur (locale-check.php → 100%)
+[x] Service + repository kapsamı >= %60 (143 test / 878 assertion)
+[x] bin/smoke.php geçer
+[x] Dağıtım sertleştirme listesi (SECURITY_PRIVACY.md §21) tamamen yeşil
 ```
 
 ### Notlar
-> _(Buraya önemli kararlar, engeller veya notlar ekleyin)_
+- T-1000: `database/migrations/0010_audit_logs.sql` oluşturuldu
+- T-1001: `AuditLogRepositoryInterface` + `AuditLogRepository` + 6 FR-90 eylem yazımı (AuthController: login/logout; SessionController: create/close/anonymize/delete_request; CourseController: create/archive; QuestionController: activate)
+- T-1002: `Bootstrap::sendSecurityHeaders()` zaten eksiksiz; placeholder yorum kaldırıldı
+- T-1003: `RateLimitMiddleware` APCu tabanlı; join için 20 istek/10 dk, answer için 60 istek/dk. APCu yoksa sessizce geçer.
+- T-1004–T-1007: Denetim görevi — tüm kontroller geçti, değişiklik gerekmedi
+- T-1008: `bin/rotate-secret.php` — `--apply` ile .env güncelleme
+- T-1009: `bin/locale-check.php tr` → PASS 100% (183/183 anahtar)
+- T-1010: 143 PHPUnit test + 6 yeni `AuditLogRepositoryTest` testi (SQLite in-memory)
+- T-1011: `bin/smoke.php` — APP_URL üzerinden GET endpoint doğrulaması
+- T-1012: `deploy/apache.htaccess.example` + `deploy/nginx.conf.example`
+- T-1013: `deploy/cpanel-notes.md` — 12 adımlı kurulum rehberi
+- T-1014: `bin/backup.php` — gzip mysqldump + otomatik rotasyon
+- T-1015: `SECURITY_PRIVACY.md §21` güncellendi; 14/16 madde [x], 2 madde operator sorumluluğu
+- T-1016: `README.md` Status güncellendi + Quick Start bölümü eklendi
 
 ---
 

@@ -6,6 +6,7 @@ namespace EduQR\Controllers\Api;
 
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
+use EduQR\Repositories\AuditLogRepository;
 use EduQR\Repositories\LoginAttemptRepository;
 use EduQR\Repositories\UserRepository;
 use EduQR\Services\AuthService;
@@ -13,10 +14,12 @@ use EduQR\Services\AuthService;
 final class AuthController
 {
     private AuthService $auth;
+    private AuditLogRepository $auditLog;
 
     public function __construct()
     {
-        $this->auth = new AuthService(new UserRepository(), new LoginAttemptRepository());
+        $this->auth     = new AuthService(new UserRepository(), new LoginAttemptRepository());
+        $this->auditLog = new AuditLogRepository();
     }
 
     // ── POST /api/v1/auth/login ────────────────────────────────────────────────
@@ -45,6 +48,17 @@ final class AuthController
 
         $this->auth->startSession($user);
 
+        // Audit: FR-90
+        try {
+            $this->auditLog->write(
+                (string) $user['role'],
+                (int) $user['id'],
+                'user.login',
+                'user',
+                (int) $user['id'],
+            );
+        } catch (\Throwable) {}
+
         $this->json(200, [
             'success' => true,
             'data'    => ['user' => $this->userPayload($user)],
@@ -57,7 +71,25 @@ final class AuthController
     public function logout(): void
     {
         CsrfMiddleware::verify();
+
+        // Capture user before destroying session
+        $user = AuthService::currentUser();
+
         $this->auth->destroySession();
+
+        // Audit: FR-90
+        if ($user !== null) {
+            try {
+                $this->auditLog->write(
+                    (string) $user['role'],
+                    (int) $user['id'],
+                    'user.logout',
+                    'user',
+                    (int) $user['id'],
+                );
+            } catch (\Throwable) {}
+        }
+
         http_response_code(204);
     }
 

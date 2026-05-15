@@ -6,6 +6,7 @@ namespace EduQR\Controllers\Api;
 
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
+use EduQR\Repositories\AuditLogRepository;
 use EduQR\Repositories\CourseRepository;
 use EduQR\Repositories\OptionRepository;
 use EduQR\Repositories\QuestionRepository;
@@ -15,15 +16,17 @@ use EduQR\Services\QuestionService;
 final class QuestionController
 {
     private QuestionService $service;
+    private AuditLogRepository $auditLog;
 
     public function __construct()
     {
-        $this->service = new QuestionService(
+        $this->service  = new QuestionService(
             new QuestionRepository(),
             new OptionRepository(),
             new SessionRepository(),
             new CourseRepository(),
         );
+        $this->auditLog = new AuditLogRepository();
     }
 
     // ── GET /api/v1/sessions/{id}/questions ───────────────────────────────────
@@ -97,6 +100,11 @@ final class QuestionController
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);
         }
+
+        // Audit: FR-90
+        try {
+            $this->auditLog->write('instructor', (int) $user['id'], 'question.activate', 'question', $questionId);
+        } catch (\Throwable) {}
 
         $this->json(200, [
             'success' => true,

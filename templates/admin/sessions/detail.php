@@ -95,6 +95,35 @@ ob_start();
         </div>
         <?php endif; ?>
 
+        <!-- ── show_results + moderation toggles (T-808, T-809) ─────────────── -->
+        <div class="d-flex flex-wrap gap-3 mb-3 align-items-center">
+            <!-- Live results link -->
+            <a href="/admin/sessions/<?= $sessionId ?>/results"
+               class="btn btn-sm btn-outline-success">
+                📊 <?= htmlspecialchars(t('session.action.view_live'), ENT_QUOTES, 'UTF-8') ?>
+            </a>
+
+            <!-- show_results_to_students toggle (T-808) -->
+            <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       id="toggle-show-results"
+                       <?= (bool) $session['show_results_to_students'] ? 'checked' : '' ?>>
+                <label class="form-check-label" for="toggle-show-results">
+                    <?= htmlspecialchars(t('results.show_to_students'), ENT_QUOTES, 'UTF-8') ?>
+                </label>
+            </div>
+
+            <!-- moderation_mode toggle (T-809) -->
+            <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       id="toggle-moderation"
+                       <?= (bool) $session['moderation_mode'] ? 'checked' : '' ?>>
+                <label class="form-check-label" for="toggle-moderation">
+                    Moderation
+                </label>
+            </div>
+        </div>
+
         <div id="session-feedback" class="alert d-none" role="alert"></div>
 
         <hr>
@@ -241,6 +270,37 @@ document.getElementById('btn-resume') ?.addEventListener('click', () => sendSess
 document.getElementById('btn-close')  ?.addEventListener('click', function () {
     if (!confirm(MSG_CONFIRM)) return;
     sendSessionAction('close');
+});
+
+// ── show_results_to_students toggle (T-808) ──────────────────────────────────
+const toggleShowResults = document.getElementById('toggle-show-results');
+const toggleModeration  = document.getElementById('toggle-moderation');
+
+async function patchSession(fields) {
+    try {
+        const res  = await fetch('/api/v1/sessions/' + SESSION_ID, {
+            method:  'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': CSRF_TOKEN,
+            },
+            body: JSON.stringify(fields),
+        });
+        const data = await res.json();
+        if (!data.success) {
+            showFeedback(data.error?.message || MSG_SERVER, 'danger');
+        }
+    } catch {
+        showFeedback(MSG_SERVER, 'danger');
+    }
+}
+
+toggleShowResults?.addEventListener('change', function () {
+    patchSession({ show_results_to_students: this.checked ? 1 : 0 });
+});
+
+toggleModeration?.addEventListener('change', function () {
+    patchSession({ moderation_mode: this.checked ? 1 : 0 });
 });
 
 // ── Participant count ─────────────────────────────────────────────────────────

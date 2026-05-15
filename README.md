@@ -18,7 +18,7 @@ If you are a human evaluating the spec, read in this order: this README → `PRO
 
 | Item | Value |
 | --- | --- |
-| Phase | Specification frozen, implementation not yet started |
+| Phase | MVP complete — all Phase 0–10 tasks shipped (2026-05-15) |
 | Spec version | 3.0 |
 | Owner | Prof. Dr. İsmail Kırbaş — `ismailkirbas@mehmetakif.edu.tr` |
 | Institution | Burdur Mehmet Akif Ersoy University, Computer Engineering |
@@ -53,6 +53,35 @@ Starter files (drop into the repository as-is):
 | `database/schema.sql` | Reference schema; canonical SQL. |
 | `locales/en.json` | English UI strings, ~110 keys. |
 | `locales/tr.json` | Turkish UI strings, same keys. |
+
+---
+
+## Quick Start (cPanel Shared Hosting)
+
+```bash
+# 1. Upload project to ~/eduqr-app/ (DocumentRoot → ~/eduqr-app/public/)
+# 2. Install dependencies
+php8.2 composer install --no-dev --optimize-autoloader
+
+# 3. Configure environment
+cp .env.example .env && chmod 600 .env
+# Edit .env: DB_*, APP_URL, LOG_PATH, BACKUP_DIR
+php8.2 bin/rotate-secret.php --apply   # generate APP_SECRET
+
+# 4. Run migrations
+php8.2 bin/migrate.php
+
+# 5. Create first instructor account
+php8.2 bin/user-add.php --email=you@example.org --name="Your Name" --password=...
+
+# 6. Copy .htaccess
+cp deploy/apache.htaccess.example public/.htaccess
+
+# 7. Verify
+php8.2 bin/smoke.php --url=https://yourdomain.example.org
+```
+
+Full step-by-step instructions: [`deploy/cpanel-notes.md`](./deploy/cpanel-notes.md)
 
 ---
 
