@@ -195,5 +195,23 @@
   "error.not_found": "Aradığınız sayfa bulunamadı.",
 
   "privacy.notice.link": "Tam gizlilik bildirimini okuyun",
-  "privacy.notice.body": "eduQR takma adınızı yalnızca bu oturum süresince ders katılımı için kullanır. Gerçek adınızı girmeniz gerekmez. Cevaplarınız, eğitsel geri bildirim ve öğrenme analitiği amacıyla öğretim elemanı tarafından incelenebilir."
+  "privacy.notice.body": "eduQR takma adınızı yalnızca bu oturum süresince ders katılımı için kullanır. Gerçek adınızı girmeniz gerekmez. Cevaplarınız, eğitsel geri bildirim ve öğrenme analitiği amacıyla öğretim elemanı tarafından incelenebilir.",
+
+  "nav.audit_logs": "Denetim Günlüğü",
+
+  "audit.title": "Denetim Günlüğü",
+  "audit.description": "Tüm öğretmen ve sistem eylemlerinin kaydı.",
+  "audit.loading": "Yükleniyor…",
+  "audit.empty": "Kayıt bulunamadı.",
+  "audit.total": "Toplam",
+  "audit.col.time": "Zaman",
+  "audit.col.actor": "Aktör",
+  "audit.col.action": "Eylem",
+  "audit.col.entity": "Varlık",
+  "audit.col.metadata": "Ayrıntılar",
+  "audit.filter.all": "Tüm aktörler",
+  "audit.filter.instructor": "Öğretmenler",
+  "audit.filter.admin": "Yöneticiler",
+  "audit.filter.system": "Sistem",
+  "audit.filter.apply": "Filtrele"
 }

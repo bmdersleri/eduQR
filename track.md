@@ -577,10 +577,10 @@
 
 ---
 
-## Faz 11 — Gelecek İyileştirmeler (post-MVP) ⏸
+## Faz 11 — Gelecek İyileştirmeler (post-MVP) 🔄 (2/16)
 
 **Hedef:** MVP sonrası geliştirmeler — her görev başlamadan önce proje sahibi onayı gerektirir.
-**Başlangıç:** — | **Bitiş:** —
+**Başlangıç:** 2026-05-15 | **Bitiş:** —
 
 > **Not:** Bu fazın herhangi bir görevi başlatılmadan önce Prof. Dr. İsmail Kırbaş'ın onayı alınmalıdır.
 
@@ -598,8 +598,8 @@
 [ ] T-1108  Add de.json, fr.json (>= 95% coverage each)                                  [FR-86]
 [ ] T-1109  RTL support + ar.json                                                        [FR-86]
 [ ] T-1110  WebSocket / Socket.IO real-time (replaces polling)                           [NFR-02]
-[ ] T-1111  Health-check endpoint /api/v1/health                                         [NFR-72]
-[ ] T-1112  Admin audit-log viewer UI                                                    [FR-91]
+[x] T-1111  Health-check endpoint /api/v1/health                                         [NFR-72]
+[x] T-1112  Admin audit-log viewer UI                                                    [FR-91]
 [ ] T-1113  LMS integration (Moodle / Canvas export)                                    [—]
 [ ] T-1114  Multi-instructor course ownership                                            [—]
 [ ] T-1115  Containerize (docker-compose: PHP + MySQL [+ Node later])                   [—]

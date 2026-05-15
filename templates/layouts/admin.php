@@ -21,6 +21,14 @@
                     <?= htmlspecialchars(t('nav.courses'), ENT_QUOTES, 'UTF-8') ?>
                 </a>
             </li>
+            <?php if (($instructor['role'] ?? '') === 'admin'): ?>
+            <li class="nav-item">
+                <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/audit-logs') ? 'active' : '' ?>"
+                   href="/admin/audit-logs">
+                    <?= htmlspecialchars(t('nav.audit_logs'), ENT_QUOTES, 'UTF-8') ?>
+                </a>
+            </li>
+            <?php endif; ?>
         </ul>
     </div>
     <div class="d-flex align-items-center gap-3">

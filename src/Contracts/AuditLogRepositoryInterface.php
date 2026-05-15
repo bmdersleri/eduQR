@@ -30,4 +30,14 @@ interface AuditLogRepositoryInterface
         ?int    $entityId   = null,
         ?array  $metadata   = null,
     ): void;
+
+    /**
+     * Retrieve audit-log entries ordered by created_at DESC.
+     *
+     * @return list<array<string,mixed>>
+     */
+    public function list(int $limit = 50, int $offset = 0, ?string $actorType = null): array;
+
+    /** Total number of rows, optionally filtered by actor type. */
+    public function count(?string $actorType = null): int;
 }

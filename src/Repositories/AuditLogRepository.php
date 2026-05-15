@@ -45,4 +45,40 @@ final class AuditLogRepository implements AuditLogRepositoryInterface
             $metadata !== null ? json_encode($metadata, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) : null,
         ]);
     }
+
+    public function list(int $limit = 50, int $offset = 0, ?string $actorType = null): array
+    {
+        if ($actorType !== null) {
+            $stmt = $this->pdo->prepare(
+                'SELECT id, actor_type, actor_id, action, entity_type, entity_id, metadata_json, created_at
+                 FROM audit_logs
+                 WHERE actor_type = ?
+                 ORDER BY created_at DESC
+                 LIMIT ? OFFSET ?'
+            );
+            $stmt->execute([$actorType, $limit, $offset]);
+        } else {
+            $stmt = $this->pdo->prepare(
+                'SELECT id, actor_type, actor_id, action, entity_type, entity_id, metadata_json, created_at
+                 FROM audit_logs
+                 ORDER BY created_at DESC
+                 LIMIT ? OFFSET ?'
+            );
+            $stmt->execute([$limit, $offset]);
+        }
+
+        return $stmt->fetchAll();
+    }
+
+    public function count(?string $actorType = null): int
+    {
+        if ($actorType !== null) {
+            $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM audit_logs WHERE actor_type = ?');
+            $stmt->execute([$actorType]);
+        } else {
+            $stmt = $this->pdo->query('SELECT COUNT(*) FROM audit_logs');
+        }
+
+        return (int) $stmt->fetchColumn();
+    }
 }

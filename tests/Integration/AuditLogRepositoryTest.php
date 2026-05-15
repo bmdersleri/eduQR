@@ -105,4 +105,82 @@ class AuditLogRepositoryTest extends TestCase
         $count = $this->pdo->query('SELECT COUNT(*) FROM audit_logs')->fetchColumn();
         $this->assertSame('3', (string) $count);
     }
+
+    // ── list() ────────────────────────────────────────────────────────────────
+
+    public function testListReturnsAllRowsWhenNoFilter(): void
+    {
+        $this->repo->write('instructor', 1, 'course.create', 'course', 10);
+        $this->repo->write('admin', 2, 'user.login', 'user', 2);
+        $this->repo->write('system', null, 'cleanup.run');
+
+        $rows = $this->repo->list(50, 0);
+
+        $this->assertCount(3, $rows);
+    }
+
+    public function testListFiltersByActorType(): void
+    {
+        $this->repo->write('instructor', 1, 'course.create');
+        $this->repo->write('admin', 2, 'user.login');
+        $this->repo->write('system', null, 'cleanup.run');
+
+        $rows = $this->repo->list(50, 0, 'instructor');
+
+        $this->assertCount(1, $rows);
+        $this->assertSame('instructor', $rows[0]['actor_type']);
+    }
+
+    public function testListRespectsLimitAndOffset(): void
+    {
+        for ($i = 1; $i <= 5; $i++) {
+            $this->repo->write('system', null, 'cleanup.run');
+        }
+
+        $page1 = $this->repo->list(3, 0);
+        $page2 = $this->repo->list(3, 3);
+
+        $this->assertCount(3, $page1);
+        $this->assertCount(2, $page2);
+    }
+
+    public function testListRowsContainExpectedFields(): void
+    {
+        $this->repo->write('instructor', 7, 'session.close', 'session', 42, ['reason' => 'manual']);
+
+        $row = $this->repo->list(1, 0)[0];
+
+        $this->assertArrayHasKey('id', $row);
+        $this->assertArrayHasKey('actor_type', $row);
+        $this->assertArrayHasKey('actor_id', $row);
+        $this->assertArrayHasKey('action', $row);
+        $this->assertArrayHasKey('entity_type', $row);
+        $this->assertArrayHasKey('entity_id', $row);
+        $this->assertArrayHasKey('metadata_json', $row);
+        $this->assertArrayHasKey('created_at', $row);
+    }
+
+    // ── count() ───────────────────────────────────────────────────────────────
+
+    public function testCountReturnsZeroWhenEmpty(): void
+    {
+        $this->assertSame(0, $this->repo->count());
+    }
+
+    public function testCountReturnsAllRows(): void
+    {
+        $this->repo->write('instructor', 1, 'session.create');
+        $this->repo->write('admin', 2, 'user.login');
+
+        $this->assertSame(2, $this->repo->count());
+    }
+
+    public function testCountFiltersByActorType(): void
+    {
+        $this->repo->write('instructor', 1, 'session.create');
+        $this->repo->write('admin', 2, 'user.login');
+        $this->repo->write('system', null, 'cleanup.run');
+
+        $this->assertSame(1, $this->repo->count('admin'));
+    }
 }
