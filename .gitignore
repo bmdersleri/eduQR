@@ -25,7 +25,7 @@ Thumbs.db
 composer.phar
 .php-cs-fixer.cache
 .phpunit.result.cache
-/.phpunit.cache/
+.phpunit.cache/
 
 # Test coverage
 /coverage/
