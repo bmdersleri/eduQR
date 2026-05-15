@@ -1,0 +1,104 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# eduQR — Nginx yapılandırması
+# Oluşturma tarihi : {{GENERATED_AT}}
+# Oluşturan        : bin/wizard.php (Ubuntu + MariaDB ortamı)
+#
+# Bu dosyayı etkinleştirmek için:
+#   sudo cp {{OUTPUT_PATH}} /etc/nginx/sites-available/eduqr
+#   sudo ln -s /etc/nginx/sites-available/eduqr /etc/nginx/sites-enabled/eduqr
+#   sudo nginx -t && sudo systemctl reload nginx
+# ─────────────────────────────────────────────────────────────────────────────
+
+# HTTP → HTTPS yönlendirmesi
+server {
+    listen      80;
+    listen      [::]:80;
+    server_name {{DOMAIN}};
+
+    # Let's Encrypt ACME doğrulama (Certbot webroot modu)
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# Ana HTTPS sunucusu
+server {
+    listen      443 ssl;
+    listen      [::]:443 ssl;
+    http2       on;
+    server_name {{DOMAIN}};
+
+    root  {{PROJECT_ROOT}}/public;
+    index index.php;
+
+    # ── TLS ──────────────────────────────────────────────────────────────────
+    ssl_certificate     {{SSL_CERT}};
+    ssl_certificate_key {{SSL_KEY}};
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_session_timeout 1d;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_stapling        on;
+    ssl_stapling_verify on;
+
+    # ── Loglama ──────────────────────────────────────────────────────────────
+    access_log /var/log/nginx/eduqr-access.log;
+    error_log  /var/log/nginx/eduqr-error.log warn;
+
+    # ── Güvenlik başlıkları ───────────────────────────────────────────────────
+    # Bootstrap.php da bu başlıkları gönderir; nginx başlıkları önce uygulanır.
+    add_header X-Frame-Options            "DENY"                                    always;
+    add_header X-Content-Type-Options     "nosniff"                                 always;
+    add_header Referrer-Policy            "strict-origin-when-cross-origin"         always;
+    add_header Permissions-Policy         "geolocation=(), microphone=(), camera=()" always;
+    add_header Strict-Transport-Security  "max-age=31536000; includeSubDomains"     always;
+    # Content-Security-Policy PHP tarafında Bootstrap::sendSecurityHeaders() ile ayarlanır.
+
+    # Parmak izi başlıklarını gizle (ngx_headers_more modülü gerektirir)
+    # Ubuntu: sudo apt install libnginx-mod-http-headers-more-filter
+    # more_clear_headers Server X-Powered-By;
+
+    # ── Front controller ──────────────────────────────────────────────────────
+    location / {
+        try_files $uri $uri/ /index.php$is_args$args;
+    }
+
+    # ── PHP-FPM ───────────────────────────────────────────────────────────────
+    # Ubuntu'da varsayılan socket: unix:/run/php/php8.2-fpm.sock
+    # Kontrol: systemctl status php8.2-fpm
+    location ~ \.php$ {
+        # Path traversal koruması
+        try_files $uri =404;
+
+        fastcgi_pass  {{FPM_SOCKET}};
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include       fastcgi_params;
+
+        fastcgi_connect_timeout 10s;
+        fastcgi_read_timeout    60s;
+        fastcgi_buffer_size     16k;
+        fastcgi_buffers         4 16k;
+    }
+
+    # ── Hassas dosya erişimini engelle ────────────────────────────────────────
+    location ~* \.(env|log|sql|json|lock|sh|bak|old|pem|key)$ {
+        deny all;
+    }
+
+    # ── Nokta-dosyalarını engelle (ACME hariç) ────────────────────────────────
+    location ~ /\.(?!well-known) {
+        deny all;
+    }
+
+    # ── Statik varlık önbelleği ───────────────────────────────────────────────
+    location ~* \.(css|js|png|jpg|jpeg|ico|svg|woff2|webp|ttf|otf)$ {
+        expires    1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+}
