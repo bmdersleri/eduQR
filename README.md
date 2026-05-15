@@ -222,8 +222,8 @@ These commands assume the implementation repo has been initialized following `SY
 
 ```bash
 # 1. Clone the implementation repo (separate from this spec repo)
-git clone https://github.com/<your-org>/eduqr.git
-cd eduqr
+git clone https://github.com/bmdersleri/eduQR.git
+cd eduQR
 
 # 2. Install dependencies
 composer install
