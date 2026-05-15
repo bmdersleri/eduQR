@@ -225,6 +225,12 @@ final class Bootstrap
         });
 
         // ── API v1 ────────────────────────────────────────────────────────────
+
+        // ── API: Health-check (T-1111) ────────────────────────────────────────────
+        $router->get('/api/v1/health', function (array $p): void {
+            (new Controllers\Api\HealthController())->check();
+        });
+
         $router->get('/api/v1/locales', function (array $p): void {
             (new Controllers\Api\LocaleController())->index();
         });
