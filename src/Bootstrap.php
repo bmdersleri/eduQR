@@ -395,6 +395,17 @@ final class Bootstrap
             include __DIR__ . '/../templates/admin/sessions/report.php';
         });
 
+        // ── Admin: Audit log viewer (T-1112) ──────────────────────────────────
+        $router->get('/admin/audit-logs', function (array $p): void {
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/../templates/admin/audit-logs.php';
+        });
+
+        // ── API: Audit logs JSON (T-1112) ─────────────────────────────────────
+        $router->get('/api/v1/audit-logs', function (array $p): void {
+            (new Controllers\Api\AuditLogController())->index();
+        });
+
         // ── Projector: Live results (T-807) ──────────────────────────────────
         $router->get('/live/{short_code}/results', function (array $p): void {
             header('Content-Type: text/html; charset=utf-8');
