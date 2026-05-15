@@ -17,21 +17,21 @@ This is the working backlog. Tasks are grouped into **phases**; phases ship in o
 Goal: a runnable skeleton.
 
 ```text
-[ ] T-001  Initialize repo structure per SYSTEM_ARCHITECTURE.md §4                       [NFR-50]
-[ ] T-002  composer.json with PSR-4 autoload (src/ -> EduQR\), dev + prod deps           [NFR-50]
-[ ] T-003  .env.example with every required key (no real secrets)                        [NFR-60]
-[ ] T-004  Config.php — tiny .env parser, fails loud if .env missing in production       [NFR-60]
-[ ] T-005  public/index.php front controller + src/Router.php (thin custom router)       [NFR-50]
-[ ] T-006  Database.php — PDO factory with locked settings (EMULATE_PREPARES=false etc.) [NFR-26]
-[ ] T-007  PHP-CS-Fixer config (PSR-12) + composer lint script                           [NFR-50]
-[ ] T-008  PHPUnit setup + tests/Unit and tests/Integration scaffolding + phpunit.xml    [NFR-52]
-[ ] T-009  bin/install.php — checks PHP 8.2+, intl/mbstring/gd/json, scaffolds .env      [NFR-61]
-[ ] T-010  bin/migrate.php — applies database/migrations/*.sql idempotently              [NFR-53]
-[ ] T-011  .gitignore (vendor/, .env, logs/, *.log, IDE files)                           [NFR-60]
-[ ] T-012  Base layouts: templates/layouts/{admin,public,projector}.php                  [NFR-50]
-[ ] T-013  Global error handler -> localized 500 page, server-side stack trace log       [NFR-70]
-[ ] T-014  ADRs 0001-0004 written under docs/adr/                                        [—]
-[ ] T-015  README quick-start verified to produce a running home page                    [—]
+[x] T-001  Initialize repo structure per SYSTEM_ARCHITECTURE.md §4                       [NFR-50]
+[x] T-002  composer.json with PSR-4 autoload (src/ -> EduQR\), dev + prod deps           [NFR-50]
+[x] T-003  .env.example with every required key (no real secrets)                        [NFR-60]
+[x] T-004  Config.php — tiny .env parser, fails loud if .env missing in production       [NFR-60]
+[x] T-005  public/index.php front controller + src/Router.php (thin custom router)       [NFR-50]
+[x] T-006  Database.php — PDO factory with locked settings (EMULATE_PREPARES=false etc.) [NFR-26]
+[x] T-007  PHP-CS-Fixer config (PSR-12) + composer lint script                           [NFR-50]
+[x] T-008  PHPUnit setup + tests/Unit and tests/Integration scaffolding + phpunit.xml    [NFR-52]
+[x] T-009  bin/install.php — checks PHP 8.2+, intl/mbstring/gd/json, scaffolds .env      [NFR-61]
+[x] T-010  bin/migrate.php — applies database/migrations/*.sql idempotently              [NFR-53]
+[x] T-011  .gitignore (vendor/, .env, logs/, *.log, IDE files)                           [NFR-60]
+[x] T-012  Base layouts: templates/layouts/{admin,public,projector}.php                  [NFR-50]
+[x] T-013  Global error handler -> localized 500 page, server-side stack trace log       [NFR-70]
+[x] T-014  ADRs 0001-0004 written under docs/adr/                                        [—]
+[x] T-015  README quick-start verified to produce a running home page                    [—]
 ```
 
 Acceptance checkpoint: the app serves a home page; `bin/migrate.php` runs cleanly against an empty database.
@@ -43,15 +43,15 @@ Acceptance checkpoint: the app serves a home page; `bin/migrate.php` runs cleanl
 Goal: i18n exists before any UI is built, so no string is ever hardcoded.
 
 ```text
-[ ] T-100  I18nService with t() + tn() helpers, fallback chain locale -> en -> key       [FR-80, FR-83]
-[ ] T-101  I18nMiddleware resolves locale per request (URL > query > cookie > header)    [FR-82, FR-84]
-[ ] T-102  locales/en.json — reference set, all MVP keys                                 [FR-80, FR-81]
-[ ] T-103  locales/tr.json — full Turkish translation, same keys                         [FR-81]
-[ ] T-104  Locale-aware fmt_date / fmt_number / fmt_percent helpers (intl)               [FR-85]
-[ ] T-105  bin/locale-check.php — coverage gate (>= 95%)                                 [FR-81]
-[ ] T-106  templates/partials/language-switcher.php wired into all layouts               [FR-88]
-[ ] T-107  GET /api/v1/locales endpoint                                                  [FR-88]
-[ ] T-108  locales table + seed rows for en, tr                                          [FR-81]
+[x] T-100  I18nService with t() + tn() helpers, fallback chain locale -> en -> key       [FR-80, FR-83]
+[x] T-101  I18nMiddleware resolves locale per request (URL > query > cookie > header)    [FR-82, FR-84]
+[x] T-102  locales/en.json — reference set, all MVP keys                                 [FR-80, FR-81]
+[x] T-103  locales/tr.json — full Turkish translation, same keys                         [FR-81]
+[x] T-104  Locale-aware fmt_date / fmt_number / fmt_percent helpers (intl)               [FR-85]
+[x] T-105  bin/locale-check.php — coverage gate (>= 95%)                                 [FR-81]
+[x] T-106  templates/partials/language-switcher.php wired into all layouts               [FR-88]
+[x] T-107  GET /api/v1/locales endpoint                                                  [FR-88]
+[x] T-108  locales table + seed rows for en, tr                                          [FR-81]
 ```
 
 Acceptance checkpoint: the home page renders in both `en` and `tr`; `bin/locale-check.php tr` reports ≥ 95 %.
@@ -63,20 +63,20 @@ Acceptance checkpoint: the home page renders in both `en` and `tr`; `bin/locale-
 Goal: secure instructor access.
 
 ```text
-[ ] T-200  Migration 0001 (partial): users table                                        [DATA_MODEL §2.1]
-[ ] T-201  UserRepository (find by email, create, touch last_login)                      [FR-01]
-[ ] T-202  AuthService — password_verify, rehash check, session creation                 [FR-01, FR-02]
-[ ] T-203  POST /api/v1/auth/login                                                       [FR-01, FR-08]
-[ ] T-204  POST /api/v1/auth/logout                                                      [FR-04]
-[ ] T-205  GET /api/v1/auth/me                                                           [—]
-[ ] T-206  Instructor login page (HTML) + language switcher                              [FR-01, FR-88]
-[ ] T-207  AuthMiddleware — protects /admin/* and instructor API routes                  [NFR-23]
-[ ] T-208  Migration 0003 (partial): login_attempts table                                [FR-05]
-[ ] T-209  LoginAttemptRepository + rate-limit logic (5 fails / 10 min -> 15 min lock)    [FR-05]
-[ ] T-210  Session cookie flags: HttpOnly + Secure + SameSite=Lax                        [NFR-23]
-[ ] T-211  CsrfMiddleware — double-submit cookie pattern                                 [NFR-24]
-[ ] T-212  bin/user-add.php — create instructor/admin accounts from CLI                  [FR-09]
-[ ] T-213  Unit tests: AuthService, rate limiting                                        [NFR-52]
+[x] T-200  Migration 0001 (partial): users table                                        [DATA_MODEL §2.1]
+[x] T-201  UserRepository (find by email, create, touch last_login)                      [FR-01]
+[x] T-202  AuthService — password_verify, rehash check, session creation                 [FR-01, FR-02]
+[x] T-203  POST /api/v1/auth/login                                                       [FR-01, FR-08]
+[x] T-204  POST /api/v1/auth/logout                                                      [FR-04]
+[x] T-205  GET /api/v1/auth/me                                                           [—]
+[x] T-206  Instructor login page (HTML) + language switcher                              [FR-01, FR-88]
+[x] T-207  AuthMiddleware — protects /admin/* and instructor API routes                  [NFR-23]
+[x] T-208  Migration 0003 (partial): login_attempts table                                [FR-05]
+[x] T-209  LoginAttemptRepository + rate-limit logic (5 fails / 10 min -> 15 min lock)    [FR-05]
+[x] T-210  Session cookie flags: HttpOnly + Secure + SameSite=Lax                        [NFR-23]
+[x] T-211  CsrfMiddleware — double-submit cookie pattern                                 [NFR-24]
+[x] T-212  bin/user-add.php — create instructor/admin accounts from CLI                  [FR-09]
+[x] T-213  Unit tests: AuthService, rate limiting                                        [NFR-52]
 ```
 
 Acceptance checkpoint: instructor can log in and out; protected routes redirect when unauthenticated; no plain-text passwords; rate limiting works.
@@ -88,18 +88,18 @@ Acceptance checkpoint: instructor can log in and out; protected routes redirect 
 Goal: instructors create and manage courses.
 
 ```text
-[ ] T-300  Migration 0001 (partial): courses table                                       [DATA_MODEL §2.2]
-[ ] T-301  CourseRepository (CRUD, list-by-instructor)                                    [FR-11]
-[ ] T-302  CourseService — ownership enforcement                                          [FR-14]
-[ ] T-303  GET /api/v1/courses (paginated)                                                [FR-11]
-[ ] T-304  POST /api/v1/courses                                                           [FR-10]
-[ ] T-305  GET /api/v1/courses/{id}                                                       [FR-11]
-[ ] T-306  PATCH /api/v1/courses/{id}                                                     [FR-12]
-[ ] T-307  DELETE /api/v1/courses/{id} (archive)                                          [FR-13]
-[ ] T-308  Admin UI: course list, create form, edit form                                  [FR-10..FR-13]
-[ ] T-309  Course detail page with sessions placeholder                                   [FR-11]
-[ ] T-310  Course field validation + i18n validation messages                             [FR-87]
-[ ] T-311  Unit tests: CourseService ownership rules                                      [NFR-52]
+[x] T-300  Migration 0001 (partial): courses table                                       [DATA_MODEL §2.2]
+[x] T-301  CourseRepository (CRUD, list-by-instructor)                                    [FR-11]
+[x] T-302  CourseService — ownership enforcement                                          [FR-14]
+[x] T-303  GET /api/v1/courses (paginated)                                                [FR-11]
+[x] T-304  POST /api/v1/courses                                                           [FR-10]
+[x] T-305  GET /api/v1/courses/{id}                                                       [FR-11]
+[x] T-306  PATCH /api/v1/courses/{id}                                                     [FR-12]
+[x] T-307  DELETE /api/v1/courses/{id} (archive)                                          [FR-13]
+[x] T-308  Admin UI: course list, create form, edit form                                  [FR-10..FR-13]
+[x] T-309  Course detail page with sessions placeholder                                   [FR-11]
+[x] T-310  Course field validation + i18n validation messages                             [FR-87]
+[x] T-311  Unit tests: CourseService ownership rules                                      [NFR-52]
 ```
 
 Acceptance checkpoint: instructor can create, view, edit, archive their own courses; cannot touch another instructor's course; all UI uses translation keys.
@@ -111,23 +111,23 @@ Acceptance checkpoint: instructor can create, view, edit, archive their own cour
 Goal: start classroom sessions and display QR codes.
 
 ```text
-[ ] T-400  Migration 0001 (partial): sessions table                                       [DATA_MODEL §2.3]
-[ ] T-401  Support\ShortCode::generate() — 6 chars, charset A-HJ-NP-Z2-9, collision retry [FR-21]
-[ ] T-402  SessionRepository (CRUD, find-active-by-code)                                  [FR-20]
-[ ] T-403  SessionService — create, pause, resume, close, state-transition guards         [FR-20, FR-23..FR-25]
-[ ] T-404  POST /api/v1/courses/{id}/sessions                                             [FR-20]
-[ ] T-405  GET /api/v1/sessions/{id}                                                      [—]
-[ ] T-406  PATCH /api/v1/sessions/{id} (title, show_results_to_students, moderation_mode) [FR-28]
-[ ] T-407  POST /api/v1/sessions/{id}/pause + /resume                                     [FR-25]
-[ ] T-408  POST /api/v1/sessions/{id}/close                                               [FR-24]
-[ ] T-409  endroid/qr-code vendored via composer                                          [FR-22]
-[ ] T-410  GET /api/v1/sessions/{id}/qr.png with Cache-Control                            [FR-22]
-[ ] T-411  GET /api/v1/public/sessions/{short_code} (resolve)                             [—]
-[ ] T-412  Projector view /live/{short_code} — large QR + session title                   [FR-22, FR-54]
-[ ] T-413  Admin UI: session detail page + start-session flow                             [FR-20..FR-28]
-[ ] T-414  Auto-close inactive sessions after 12h (cron-able bin/cleanup.php)             [FR-26]
-[ ] T-415  Live participant count on session detail                                       [FR-27]
-[ ] T-416  Unit tests: ShortCode uniqueness, session state transitions                    [NFR-52]
+[x] T-400  Migration 0001 (partial): sessions table                                       [DATA_MODEL §2.3]
+[x] T-401  Support\ShortCode::generate() — 6 chars, charset A-HJ-NP-Z2-9, collision retry [FR-21]
+[x] T-402  SessionRepository (CRUD, find-active-by-code)                                  [FR-20]
+[x] T-403  SessionService — create, pause, resume, close, state-transition guards         [FR-20, FR-23..FR-25]
+[x] T-404  POST /api/v1/courses/{id}/sessions                                             [FR-20]
+[x] T-405  GET /api/v1/sessions/{id}                                                      [—]
+[x] T-406  PATCH /api/v1/sessions/{id} (title, show_results_to_students, moderation_mode) [FR-28]
+[x] T-407  POST /api/v1/sessions/{id}/pause + /resume                                     [FR-25]
+[x] T-408  POST /api/v1/sessions/{id}/close                                               [FR-24]
+[x] T-409  endroid/qr-code vendored via composer                                          [FR-22]
+[x] T-410  GET /api/v1/sessions/{id}/qr.png with Cache-Control                            [FR-22]
+[x] T-411  GET /api/v1/public/sessions/{short_code} (resolve)                             [—]
+[x] T-412  Projector view /live/{short_code} — large QR + session title                   [FR-22, FR-54]
+[x] T-413  Admin UI: session detail page + start-session flow                             [FR-20..FR-28]
+[x] T-414  Auto-close inactive sessions after 12h (cron-able bin/cleanup.php)             [FR-26]
+[x] T-415  Live participant count on session detail                                       [FR-27]
+[x] T-416  Unit tests: ShortCode uniqueness, session state transitions                    [NFR-52]
 ```
 
 Acceptance checkpoint: instructor starts a session, sees a QR + join URL, can pause/resume/close; the public join URL opens a student page; projector view renders the QR large.
@@ -139,20 +139,20 @@ Acceptance checkpoint: instructor starts a session, sees a QR + join URL, can pa
 Goal: students join with a nickname, no account.
 
 ```text
-[ ] T-500  Migration 0001 (partial): participants table                                  [DATA_MODEL §2.6]
-[ ] T-501  ParticipantRepository (register, count, find-by-session)                       [FR-40]
-[ ] T-502  ParticipantService — nickname validation, normalization, uniqueness            [FR-41, FR-42]
-[ ] T-503  config/profanity/{en,tr}.txt + profanity filter                                [FR-43]
-[ ] T-504  Support\DeviceHash — SHA-256(server_secret || cookie_id || UA)                 [FR-46]
-[ ] T-505  eduqr_device persistent cookie (HttpOnly, 1y)                                  [FR-46]
-[ ] T-506  GET /join/{short_code} — nickname form (mobile-first)                          [FR-40]
-[ ] T-507  POST /api/v1/sessions/{short_code}/join — set eduqr_participant cookie         [FR-40..FR-43]
-[ ] T-508  Reject joins for closed / paused sessions with localized message               [FR-47]
-[ ] T-509  Student waiting screen template                                                [FR-45]
-[ ] T-510  templates/partials/privacy-notice.php on the join page                         [FR-75]
-[ ] T-511  i18n keys for all student UI                                                   [FR-80]
-[ ] T-512  Unit tests: nickname validation, normalization, profanity                      [NFR-52]
-[ ] T-513  Integration test: full join flow                                               [—]
+[x] T-500  Migration 0001 (partial): participants table                                  [DATA_MODEL §2.6]
+[x] T-501  ParticipantRepository (register, count, find-by-session)                       [FR-40]
+[x] T-502  ParticipantService — nickname validation, normalization, uniqueness            [FR-41, FR-42]
+[x] T-503  config/profanity/{en,tr}.txt + profanity filter                                [FR-43]
+[x] T-504  Support\DeviceHash — SHA-256(server_secret || cookie_id || UA)                 [FR-46]
+[x] T-505  eduqr_device persistent cookie (HttpOnly, 1y)                                  [FR-46]
+[x] T-506  GET /join/{short_code} — nickname form (mobile-first)                          [FR-40]
+[x] T-507  POST /api/v1/sessions/{short_code}/join — set eduqr_participant cookie         [FR-40..FR-43]
+[x] T-508  Reject joins for closed / paused sessions with localized message               [FR-47]
+[x] T-509  Student waiting screen template                                                [FR-45]
+[x] T-510  templates/partials/privacy-notice.php on the join page                         [FR-75]
+[x] T-511  i18n keys for all student UI                                                   [FR-80]
+[x] T-512  Unit tests: nickname validation, normalization, profanity                      [NFR-52]
+[x] T-513  Integration test: full join flow                                               [—]
 ```
 
 Acceptance checkpoint: student opens the join link, enters a nickname, joins an active session, lands on a waiting screen; closed/paused sessions show a clear message; the privacy notice is visible.
@@ -164,24 +164,24 @@ Acceptance checkpoint: student opens the join link, enters a nickname, joins an 
 Goal: instructors create, activate, and close questions.
 
 ```text
-[ ] T-600  Migration 0001 (partial): questions + options tables                           [DATA_MODEL §2.4-2.5]
-[ ] T-601  QuestionRepository + OptionRepository                                          [FR-30]
-[ ] T-602  QuestionService — create, validateForType, activate, close                     [FR-30, FR-34]
-[ ] T-603  Support multiple_choice (2-8 options)                                          [FR-31, FR-32]
-[ ] T-604  Support open_text                                                              [FR-31]
-[ ] T-605  Support yes_no (auto 2 options)                                                [FR-31]
-[ ] T-606  Support likert_5 (auto 5 options)                                              [FR-31]
-[ ] T-607  POST /api/v1/sessions/{id}/questions                                           [FR-30]
-[ ] T-608  PATCH /api/v1/questions/{id} (draft only)                                      [FR-30]
-[ ] T-609  POST /api/v1/questions/{id}/activate — enforce one-active-question rule        [FR-33, FR-34]
-[ ] T-610  POST /api/v1/questions/{id}/close                                              [FR-34]
-[ ] T-611  DELETE /api/v1/questions/{id}                                                  [—]
-[ ] T-612  GET /api/v1/sessions/{id}/questions                                            [—]
-[ ] T-613  POST /api/v1/sessions/{id}/questions/reorder                                   [FR-35]
-[ ] T-614  GET /api/v1/sessions/{short_code}/active-question (public)                     [FR-45]
-[ ] T-615  Admin UI: question manager with drag-and-drop reorder                          [FR-30, FR-35]
-[ ] T-616  i18n keys for question UI + question.type.* keys                               [FR-80]
-[ ] T-617  Unit tests: one-active-question rule, type validation                          [NFR-52, FR-33]
+[x] T-600  Migration 0001 (partial): questions + options tables                           [DATA_MODEL §2.4-2.5]
+[x] T-601  QuestionRepository + OptionRepository                                          [FR-30]
+[x] T-602  QuestionService — create, validateForType, activate, close                     [FR-30, FR-34]
+[x] T-603  Support multiple_choice (2-8 options)                                          [FR-31, FR-32]
+[x] T-604  Support open_text                                                              [FR-31]
+[x] T-605  Support yes_no (auto 2 options)                                                [FR-31]
+[x] T-606  Support likert_5 (auto 5 options)                                              [FR-31]
+[x] T-607  POST /api/v1/sessions/{id}/questions                                           [FR-30]
+[x] T-608  PATCH /api/v1/questions/{id} (draft only)                                      [FR-30]
+[x] T-609  POST /api/v1/questions/{id}/activate — enforce one-active-question rule        [FR-33, FR-34]
+[x] T-610  POST /api/v1/questions/{id}/close                                              [FR-34]
+[x] T-611  DELETE /api/v1/questions/{id}                                                  [—]
+[x] T-612  GET /api/v1/sessions/{id}/questions                                            [—]
+[x] T-613  POST /api/v1/sessions/{id}/questions/reorder                                   [FR-35]
+[x] T-614  GET /api/v1/sessions/{short_code}/active-question (public)                     [FR-45]
+[x] T-615  Admin UI: question manager with drag-and-drop reorder                          [FR-30, FR-35]
+[x] T-616  i18n keys for question UI + question.type.* keys                               [FR-80]
+[x] T-617  Unit tests: one-active-question rule, type validation                          [NFR-52, FR-33]
 ```
 
 Acceptance checkpoint: instructor creates all four question types, activates and closes them; activating one closes any other active question; the student endpoint returns the active question.
