@@ -187,6 +187,7 @@ final class ReportService
                 o.option_text,
                 o.option_value,
                 o.order_no,
+                o.is_correct,
                 COUNT(a.id) AS cnt
              FROM options o
              LEFT JOIN answers a
@@ -212,6 +213,7 @@ final class ReportService
                 'text' => $row['option_text'],
                 'value' => $row['option_value'],
                 'order_no' => (int) $row['order_no'],
+                'is_correct' => (bool) $row['is_correct'],
                 'count' => $count,
                 'percent' => $percent,
             ];
@@ -316,7 +318,7 @@ final class ReportService
             }
         }
 
-        return [
+        $report = [
             'session' => [
                 'id' => (int) $session['id'],
                 'title' => $session['title'],
@@ -325,6 +327,7 @@ final class ReportService
                 'started_at' => $session['started_at'],
                 'closed_at' => $session['closed_at'],
                 'anonymized' => (bool) $session['anonymized'],
+                'is_quiz' => (bool) $session['is_quiz'],
             ],
             'summary' => [
                 'participant_count' => $participantCount,
@@ -334,6 +337,58 @@ final class ReportService
             ],
             'questions' => $questionResults,
         ];
+
+        if ((bool)$session['is_quiz']) {
+            $scores = $this->computeScores($sessionId, $pdo);
+            if ($anonymize) {
+                foreach ($scores as &$scoreRow) {
+                    $nick = $scoreRow['nickname'];
+                    if (! isset($nicknameMap[$nick])) {
+                        $nicknameMap[$nick] = $counter++;
+                    }
+                    $scoreRow['nickname'] = 'Participant ' . $nicknameMap[$nick];
+                }
+                unset($scoreRow);
+            }
+            $report['scores'] = $scores;
+        }
+
+        return $report;
+    }
+
+    private function computeScores(int $sessionId, PDO $pdo): array
+    {
+        $stmt = $pdo->prepare(
+            'SELECT p.id AS participant_id, p.nickname, COUNT(o.id) AS score
+             FROM participants p
+             LEFT JOIN answers a ON a.participant_id = p.id
+             LEFT JOIN options o ON o.id = a.selected_option_id AND o.is_correct = 1
+             WHERE p.session_id = ?
+             GROUP BY p.id, p.nickname
+             ORDER BY score DESC'
+        );
+        $stmt->execute([$sessionId]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $scores = [];
+        $rank = 0;
+        $prevScore = null;
+        for ($i = 0; $i < count($rows); $i++) {
+            $row = $rows[$i];
+            $score = (int) $row['score'];
+            if ($score !== $prevScore) {
+                $rank = $i + 1;
+                $prevScore = $score;
+            }
+            $scores[] = [
+                'participant_id' => (int) $row['participant_id'],
+                'nickname' => $row['nickname'],
+                'score' => $score,
+                'rank' => $rank,
+            ];
+        }
+
+        return $scores;
     }
 
     private function requireSession(int $sessionId, int $userId): array

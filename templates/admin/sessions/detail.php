@@ -122,6 +122,16 @@ ob_start();
                     Moderation
                 </label>
             </div>
+
+            <!-- quiz mode toggle (T-1104) -->
+            <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       id="toggle-quiz"
+                       <?= (bool) $session['is_quiz'] ? 'checked' : '' ?>>
+                <label class="form-check-label" for="toggle-quiz">
+                    <?= htmlspecialchars(t('session.quiz_mode'), ENT_QUOTES, 'UTF-8') ?>
+                </label>
+            </div>
         </div>
 
         <div id="session-feedback" class="alert d-none" role="alert"></div>
@@ -222,6 +232,7 @@ const SESSION_ID  = <?= (int) $session['id'] ?>;
 const CSRF_TOKEN  = <?= json_encode($csrfToken) ?>;
 const IS_ACTIVE   = <?= $isActive ? 'true' : 'false' ?>;
 const IS_CLOSED   = <?= $isClosed ? 'true' : 'false' ?>;
+const IS_QUIZ     = <?= (bool) $session['is_quiz'] ? 'true' : 'false' ?>;
 const MSG_CONFIRM = <?= json_encode(t('common.confirm')) ?>;
 const MSG_SERVER  = <?= json_encode(t('error.server_error')) ?>;
 const L = {
@@ -231,6 +242,7 @@ const L = {
     activate:    <?= json_encode(t('question.action.activate')) ?>,
     closeQ:      <?= json_encode(t('question.action.close')) ?>,
     del:         <?= json_encode(t('common.delete')) ?>,
+    correctAnswer: <?= json_encode(t('question.correct_answer')) ?>,
     types: {
         multiple_choice: <?= json_encode(t('question.type.multiple_choice')) ?>,
         open_text:       <?= json_encode(t('question.type.open_text')) ?>,
@@ -301,6 +313,13 @@ toggleShowResults?.addEventListener('change', function () {
 
 toggleModeration?.addEventListener('change', function () {
     patchSession({ moderation_mode: this.checked ? 1 : 0 });
+});
+
+const toggleQuiz = document.getElementById('toggle-quiz');
+toggleQuiz?.addEventListener('change', function () {
+    patchSession({ is_quiz: this.checked ? 1 : 0 }).then(() => {
+        window.location.reload();
+    });
 });
 
 // ── Participant count ─────────────────────────────────────────────────────────
@@ -527,7 +546,22 @@ function addOptionInput() {
     const index = list.children.length;
     const row   = document.createElement('div');
     row.className = 'input-group input-group-sm mb-1 option-row';
+    
+    let correctRadio = '';
+    if (IS_QUIZ) {
+        const checked = index === 0 ? 'checked' : '';
+        correctRadio = `
+            <div class="input-group-text gap-1">
+                <input class="form-check-input mt-0 correct-radio" type="radio" name="correct_option" id="correct_opt_${index}" value="${index}" ${checked}>
+                <label class="form-check-label small mb-0" style="font-size:0.75rem; cursor:pointer;" for="correct_opt_${index}">
+                    ${L.correctAnswer}
+                </label>
+            </div>
+        `;
+    }
+
     row.innerHTML = `
+        ${correctRadio}
         <input type="text" class="form-control option-input" placeholder="Option ${index + 1}" maxlength="200">
         <button type="button" class="btn btn-outline-secondary" onclick="removeOptionInput(this)">×</button>`;
     list.appendChild(row);
@@ -538,6 +572,29 @@ function removeOptionInput(btn) {
     if (list.children.length <= 2) return;
     btn.closest('.option-row').remove();
     optionCount--;
+
+    if (IS_QUIZ) {
+        const radios = list.querySelectorAll('.correct-radio');
+        const anyChecked = Array.from(radios).some(r => r.checked);
+        if (!anyChecked && radios.length > 0) {
+            radios[0].checked = true;
+        }
+        Array.from(list.children).forEach((row, idx) => {
+            const radio = row.querySelector('.correct-radio');
+            const label = row.querySelector('.form-check-label');
+            const input = row.querySelector('.option-input');
+            if (radio) {
+                radio.id = `correct_opt_${idx}`;
+                radio.value = idx;
+            }
+            if (label) {
+                label.setAttribute('for', `correct_opt_${idx}`);
+            }
+            if (input) {
+                input.placeholder = `Option ${idx + 1}`;
+            }
+        });
+    }
 }
 
 document.getElementById('btn-add-option')?.addEventListener('click', () => {
@@ -564,7 +621,15 @@ document.getElementById('btn-create-question')?.addEventListener('click', async 
 
     if (type === 'multiple_choice') {
         const inputs = document.querySelectorAll('#options-list .option-input');
-        body.options = Array.from(inputs).map(i => ({ option_text: i.value.trim() }));
+        if (IS_QUIZ) {
+            const radios = document.querySelectorAll('#options-list .correct-radio');
+            body.options = Array.from(inputs).map((i, idx) => ({
+                option_text: i.value.trim(),
+                is_correct: (radios[idx] && radios[idx].checked) ? 1 : 0
+            }));
+        } else {
+            body.options = Array.from(inputs).map(i => ({ option_text: i.value.trim() }));
+        }
     }
 
     btn.disabled = true;

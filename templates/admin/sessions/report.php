@@ -99,6 +99,47 @@ ob_start();
     </div>
 </div>
 
+<!-- Quiz scores table (T-1104) -->
+<?php if ((bool) $session['is_quiz']): ?>
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <h5 class="mb-0 text-primary fw-bold">
+            🏆 <?= htmlspecialchars(t('report.quiz_scores'), ENT_QUOTES, 'UTF-8') ?>
+        </h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 100px;"><?= htmlspecialchars(t('report.quiz_rank'), ENT_QUOTES, 'UTF-8') ?></th>
+                        <th><?= htmlspecialchars(t('report.csv.header.nickname'), ENT_QUOTES, 'UTF-8') ?></th>
+                        <th style="width: 150px;" class="text-end"><?= htmlspecialchars(t('report.quiz_score'), ENT_QUOTES, 'UTF-8') ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($report['scores'])): ?>
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-3">
+                                <em><?= htmlspecialchars(t('results.no_answers'), ENT_QUOTES, 'UTF-8') ?></em>
+                            </td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($report['scores'] as $scoreRow): ?>
+                            <tr>
+                                <td><strong>#<?= (int) $scoreRow['rank'] ?></strong></td>
+                                <td><?= htmlspecialchars($scoreRow['nickname'], ENT_QUOTES, 'UTF-8') ?></td>
+                                <td class="text-end"><strong><?= (int) $scoreRow['score'] ?></strong></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Per-question breakdown -->
 <?php foreach ($report['questions'] as $qi => $q): ?>
 <div class="card mb-3">

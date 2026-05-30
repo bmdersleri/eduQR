@@ -266,7 +266,7 @@ final class QuestionService
             $result[] = [
                 'option_text' => $text,
                 'option_value' => (string) ($i + 1),
-                'is_correct' => 0,
+                'is_correct' => (int) (bool) ($opt['is_correct'] ?? false),
                 'order_no' => $i + 1,
             ];
         }

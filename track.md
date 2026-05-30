@@ -40,7 +40,7 @@
 | 8 | Canlı Sonuçlar | 🟢 | 13 / 13 | 2026-05-15 | 2026-05-15 |
 | 9 | Raporlama & Dışa Aktarma | 🟢 | 13 / 13 | 2026-05-15 | 2026-05-15 |
 | 10 | Güvenlik & Kalite Sertleştirme | 🟢 | 17 / 17 | 2026-05-15 | 2026-05-15 |
-| 11 | Gelecek İyileştirmeler (post-MVP) | ⏸ | 0 / 16 | — | — |
+| 11 | Gelecek İyileştirmeler (post-MVP) | ⏸ | 4 / 16 | — | — |
 
 **MVP Toplam (Faz 0–10):** 157 / 157 görev tamamlandı (%100) 🎉
 
@@ -577,7 +577,7 @@
 
 ---
 
-## Faz 11 — Gelecek İyileştirmeler (post-MVP) 🔄 (3/16)
+## Faz 11 — Gelecek İyileştirmeler (post-MVP) 🔄 (4/16)
 
 **Hedef:** MVP sonrası geliştirmeler — her görev başlamadan önce proje sahibi onayı gerektirir.
 **Başlangıç:** 2026-05-15 | **Bitiş:** —
@@ -591,7 +591,7 @@
 [ ] T-1101  Word cloud generation from open-text answers                                 [—]
 [x] T-1102  PDF report export (locale-aware fonts)                                       [FR-63]
 [ ] T-1103  Cross-session course-level analytics                                         [FR-64]
-[ ] T-1104  Quiz mode with scoring (uses options.is_correct)                             [—]
+[x] T-1104  Quiz mode with scoring (uses options.is_correct)                             [FR-92]
 [ ] T-1105  Light gamification (badges, streaks)                                         [FR-48]
 [ ] T-1106  Question image attachments                                                   [FR-39]
 [ ] T-1107  Email-based password reset                                                   [FR-06]

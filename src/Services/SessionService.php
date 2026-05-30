@@ -35,10 +35,11 @@ final class SessionService
 
         $title = $this->validateTitle($data['title'] ?? null);
         $language = $this->validateLanguage($data['language'] ?? $course['default_language']);
+        $isQuiz = (int)(bool)($data['is_quiz'] ?? false);
 
         $shortCode = $this->generateUniqueCode();
 
-        $id = $this->sessions->create($courseId, $title, $shortCode, $language);
+        $id = $this->sessions->create($courseId, $title, $shortCode, $language, $isQuiz);
 
         $appUrl = rtrim(Config::get('APP_URL', ''), '/');
         $joinUrl = $appUrl . '/join/' . $shortCode;
@@ -49,6 +50,7 @@ final class SessionService
             'join_url' => $joinUrl,
             'qr_url' => '/api/v1/sessions/' . $id . '/qr.png',
             'status' => 'active',
+            'is_quiz' => (bool)$isQuiz,
         ];
     }
 
@@ -90,6 +92,7 @@ final class SessionService
             'status' => $session['status'],
             'language' => $session['language'],
             'join_url' => $joinUrl,
+            'is_quiz' => (bool) $session['is_quiz'],
         ];
     }
 
@@ -109,6 +112,9 @@ final class SessionService
         }
         if (array_key_exists('moderation_mode', $data)) {
             $fields['moderation_mode'] = $data['moderation_mode'] ? 1 : 0;
+        }
+        if (array_key_exists('is_quiz', $data)) {
+            $fields['is_quiz'] = (int)(bool)$data['is_quiz'];
         }
 
         if (! empty($fields)) {

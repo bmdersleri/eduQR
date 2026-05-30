@@ -299,7 +299,7 @@ Not part of the MVP. Each item must be escalated to the human owner before work 
 [ ] T-1101  Word cloud generation from open-text answers                                    [—]
 [x] T-1102  PDF report export (locale-aware fonts)                                          [FR-63]
 [ ] T-1103  Cross-session course-level analytics                                            [FR-64]
-[ ] T-1104  Quiz mode with scoring (uses options.is_correct)                                [—]
+[x] T-1104  Quiz mode with scoring (uses options.is_correct)                                [FR-92]
 [ ] T-1105  Light gamification (badges, streaks)                                            [FR-48]
 [ ] T-1106  Question image attachments                                                      [FR-39]
 [ ] T-1107  Email-based password reset                                                      [FR-06]

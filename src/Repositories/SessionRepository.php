@@ -43,20 +43,20 @@ final class SessionRepository implements SessionRepositoryInterface
         return $stmt->fetchColumn() !== false;
     }
 
-    public function create(int $courseId, string $title, string $shortCode, string $language): int
+    public function create(int $courseId, string $title, string $shortCode, string $language, int $isQuiz = 0): int
     {
         $stmt = $this->pdo->prepare(
-            'INSERT INTO sessions (course_id, title, short_code, language, status, started_at)
-             VALUES (?, ?, ?, ?, \'active\', UTC_TIMESTAMP())'
+            'INSERT INTO sessions (course_id, title, short_code, language, status, is_quiz, started_at)
+             VALUES (?, ?, ?, ?, \'active\', ?, UTC_TIMESTAMP())'
         );
-        $stmt->execute([$courseId, $title, $shortCode, $language]);
+        $stmt->execute([$courseId, $title, $shortCode, $language, $isQuiz]);
 
         return (int) $this->pdo->lastInsertId();
     }
 
     public function update(int $id, array $fields): void
     {
-        $allowed = ['title', 'status', 'show_results_to_students', 'moderation_mode',
+        $allowed = ['title', 'status', 'show_results_to_students', 'moderation_mode', 'is_quiz',
                     'started_at', 'paused_at', 'closed_at', 'delete_requested_at', 'anonymized'];
         $sets = [];
         $values = [];
