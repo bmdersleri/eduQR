@@ -498,6 +498,7 @@ Open-text response:
 | GET | `/api/v1/sessions/{id}/report` | Structured session report (JSON) |
 | GET | `/api/v1/sessions/{id}/report.csv?anonymize=true\|false` | CSV download |
 | GET | `/api/v1/sessions/{id}/report.html?anonymize=true\|false` | Printable HTML |
+| GET | `/api/v1/sessions/{id}/report.pdf?anonymize=true\|false` | PDF download |
 
 JSON report shape:
 
