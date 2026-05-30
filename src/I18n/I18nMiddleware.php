@@ -7,7 +7,7 @@ namespace EduQR\I18n;
 final class I18nMiddleware
 {
     private const SUPPORTED = ['en', 'tr'];
-    private const COOKIE    = 'locale';
+    private const COOKIE = 'locale';
     private const COOKIE_TTL = 365 * 24 * 3600; // 1 year
 
     /**
@@ -23,13 +23,13 @@ final class I18nMiddleware
             ?? self::fromAcceptLanguage()
             ?? 'en';
 
-        if (!headers_sent()) {
+        if (! headers_sent()) {
             setcookie(self::COOKIE, $locale, [
-                'expires'  => time() + self::COOKIE_TTL,
-                'path'     => '/',
+                'expires' => time() + self::COOKIE_TTL,
+                'path' => '/',
                 'httponly' => true,
                 'samesite' => 'Lax',
-                'secure'   => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+                'secure' => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
             ]);
         }
 
@@ -42,18 +42,21 @@ final class I18nMiddleware
     {
         $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
         $first = explode('/', ltrim((string) $path, '/'))[0] ?? '';
+
         return in_array($first, self::SUPPORTED, true) ? $first : null;
     }
 
     private static function fromQuery(): ?string
     {
         $lang = $_GET['lang'] ?? '';
+
         return in_array($lang, self::SUPPORTED, true) ? $lang : null;
     }
 
     private static function fromCookie(): ?string
     {
         $cookie = $_COOKIE[self::COOKIE] ?? '';
+
         return in_array($cookie, self::SUPPORTED, true) ? $cookie : null;
     }
 
@@ -70,6 +73,7 @@ final class I18nMiddleware
                 return $base;
             }
         }
+
         return null;
     }
 }

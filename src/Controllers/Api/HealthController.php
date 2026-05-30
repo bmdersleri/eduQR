@@ -17,9 +17,9 @@ final class HealthController
         header('Content-Type: application/json; charset=utf-8');
         header('Cache-Control: no-cache, no-store');
         echo json_encode([
-            'status'    => $status,
-            'checks'    => $checks,
-            'php'       => PHP_VERSION,
+            'status' => $status,
+            'checks' => $checks,
+            'php' => PHP_VERSION,
             'timestamp' => gmdate('c'),
         ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         exit;
@@ -28,6 +28,7 @@ final class HealthController
     public static function buildStatus(): array
     {
         $checks = (new self())->runChecks();
+
         return ['status' => self::aggregateStatus($checks), 'checks' => $checks];
     }
 

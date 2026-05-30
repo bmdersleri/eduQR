@@ -29,33 +29,33 @@ class AnswerServiceTest extends TestCase
      * All parameters are optional; pass only what your test needs.
      */
     private function makeService(
-        ?array $participantRow  = null,
-        ?array $questionRow     = null,
-        ?array $sessionRow      = null,
-        ?array $optionRow       = null,
+        ?array $participantRow = null,
+        ?array $questionRow = null,
+        ?array $sessionRow = null,
+        ?array $optionRow = null,
         bool   $alreadyAnswered = false,
-        bool   $throwDuplicate  = false,
+        bool   $throwDuplicate = false,
     ): AnswerService {
         // Defaults that represent a valid, happy-path state
         $participant = $participantRow ?? [
-            'id'         => 1,
+            'id' => 1,
             'session_id' => 10,
         ];
 
         $question = $questionRow ?? [
-            'id'            => 99,
-            'session_id'    => 10,
+            'id' => 99,
+            'session_id' => 10,
             'question_type' => 'multiple_choice',
-            'status'        => 'active',
+            'status' => 'active',
         ];
 
         $session = $sessionRow ?? [
-            'id'     => 10,
+            'id' => 10,
             'status' => 'active',
         ];
 
         $option = $optionRow ?? [
-            'id'          => 5,
+            'id' => 5,
             'question_id' => 99,
         ];
 
@@ -99,13 +99,14 @@ class AnswerServiceTest extends TestCase
     private function makeDuplicatePdoException(): PDOException
     {
         // PDOException stores SQLSTATE as the exception's "code" property
-        $e = new class('Duplicate entry', 0) extends PDOException {
+        $e = new class ('Duplicate entry', 0) extends PDOException {
             public function __construct(string $msg, int $code)
             {
                 parent::__construct($msg, $code);
                 $this->code = '23000'; // Override string SQLSTATE
             }
         };
+
         return $e;
     }
 
@@ -127,7 +128,7 @@ class AnswerServiceTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('selected_option_id:required');
 
-        $service  = $this->makeService();
+        $service = $this->makeService();
         $question = ['id' => 99, 'question_type' => 'multiple_choice', 'session_id' => 10, 'status' => 'active'];
         $service->validateAnswerShape($question, []);
     }
@@ -139,7 +140,7 @@ class AnswerServiceTest extends TestCase
 
         // Return an option that belongs to a DIFFERENT question
         $wrongOption = ['id' => 5, 'question_id' => 999];
-        $service     = $this->makeService(optionRow: $wrongOption);
+        $service = $this->makeService(optionRow: $wrongOption);
 
         $question = ['id' => 99, 'question_type' => 'multiple_choice', 'session_id' => 10, 'status' => 'active'];
         $service->validateAnswerShape($question, ['selected_option_id' => 5]);
@@ -150,11 +151,11 @@ class AnswerServiceTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('answer:invalid_shape');
 
-        $service  = $this->makeService();
+        $service = $this->makeService();
         $question = ['id' => 99, 'question_type' => 'multiple_choice', 'session_id' => 10, 'status' => 'active'];
         $service->validateAnswerShape($question, [
             'selected_option_id' => 5,
-            'answer_text'        => 'should not be here',
+            'answer_text' => 'should not be here',
         ]);
     }
 
@@ -178,7 +179,7 @@ class AnswerServiceTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('answer_text:required');
 
-        $service  = $this->makeService();
+        $service = $this->makeService();
         $question = ['id' => 99, 'question_type' => 'open_text', 'session_id' => 10, 'status' => 'active'];
         $service->validateAnswerShape($question, ['answer_text' => '   ']);
     }
@@ -188,7 +189,7 @@ class AnswerServiceTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('answer_text:too_long');
 
-        $service  = $this->makeService();
+        $service = $this->makeService();
         $question = ['id' => 99, 'question_type' => 'open_text', 'session_id' => 10, 'status' => 'active'];
         $service->validateAnswerShape($question, ['answer_text' => str_repeat('x', 2001)]);
     }
@@ -198,7 +199,7 @@ class AnswerServiceTest extends TestCase
         // strip_tags() removes HTML tags but keeps their text content.
         // XSS protection is the output layer's job (htmlspecialchars).
         // Here we verify that inline tags like <b> are stripped from the stored text.
-        $service  = $this->makeService();
+        $service = $this->makeService();
         $question = ['id' => 99, 'question_type' => 'open_text', 'session_id' => 10, 'status' => 'active'];
         [, $text] = $service->validateAnswerShape($question, [
             'answer_text' => '<b>Great</b> lecture!',
@@ -212,10 +213,10 @@ class AnswerServiceTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('answer:invalid_shape');
 
-        $service  = $this->makeService();
+        $service = $this->makeService();
         $question = ['id' => 99, 'question_type' => 'open_text', 'session_id' => 10, 'status' => 'active'];
         $service->validateAnswerShape($question, [
-            'answer_text'        => 'some text',
+            'answer_text' => 'some text',
             'selected_option_id' => 5,
         ]);
     }
@@ -243,10 +244,10 @@ class AnswerServiceTest extends TestCase
         $this->expectExceptionMessage('question_not_active');
 
         $service = $this->makeService(questionRow: [
-            'id'            => 99,
-            'session_id'    => 10,
+            'id' => 99,
+            'session_id' => 10,
             'question_type' => 'multiple_choice',
-            'status'        => 'closed',
+            'status' => 'closed',
         ]);
 
         $service->submit(1, ['question_id' => 99, 'selected_option_id' => 5]);
@@ -287,7 +288,7 @@ class AnswerServiceTest extends TestCase
 
     public function testSuccessfulOptionSubmitReturnsId(): void
     {
-        $service  = $this->makeService();
+        $service = $this->makeService();
         $answerId = $service->submit(1, ['question_id' => 99, 'selected_option_id' => 5]);
 
         $this->assertSame(42, $answerId);
@@ -296,10 +297,10 @@ class AnswerServiceTest extends TestCase
     public function testSuccessfulOpenTextSubmitReturnsId(): void
     {
         $service = $this->makeService(questionRow: [
-            'id'            => 99,
-            'session_id'    => 10,
+            'id' => 99,
+            'session_id' => 10,
             'question_type' => 'open_text',
-            'status'        => 'active',
+            'status' => 'active',
         ]);
 
         $answerId = $service->submit(1, ['question_id' => 99, 'answer_text' => 'My thoughts']);

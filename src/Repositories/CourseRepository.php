@@ -22,16 +22,18 @@ final class CourseRepository implements CourseRepositoryInterface
         $stmt = $this->pdo->prepare('SELECT * FROM courses WHERE id = ? LIMIT 1');
         $stmt->execute([$id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
         return $row !== false ? $row : null;
     }
 
     public function listByInstructor(int $instructorId, int $page, int $perPage): array
     {
         $offset = ($page - 1) * $perPage;
-        $stmt   = $this->pdo->prepare(
+        $stmt = $this->pdo->prepare(
             'SELECT * FROM courses WHERE instructor_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?'
         );
         $stmt->execute([$instructorId, $perPage, $offset]);
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -39,6 +41,7 @@ final class CourseRepository implements CourseRepositoryInterface
     {
         $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM courses WHERE instructor_id = ?');
         $stmt->execute([$instructorId]);
+
         return (int) $stmt->fetchColumn();
     }
 
@@ -55,18 +58,19 @@ final class CourseRepository implements CourseRepositoryInterface
              VALUES (?, ?, ?, ?, ?, ?)'
         );
         $stmt->execute([$instructorId, $title, $code, $semester, $description, $defaultLanguage]);
+
         return (int) $this->pdo->lastInsertId();
     }
 
     public function update(int $id, array $fields): void
     {
         $allowed = ['title', 'code', 'semester', 'description', 'default_language'];
-        $sets    = [];
-        $values  = [];
+        $sets = [];
+        $values = [];
 
         foreach ($allowed as $col) {
             if (array_key_exists($col, $fields)) {
-                $sets[]   = "{$col} = ?";
+                $sets[] = "{$col} = ?";
                 $values[] = $fields[$col];
             }
         }

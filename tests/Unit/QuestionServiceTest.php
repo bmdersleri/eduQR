@@ -31,14 +31,14 @@ class QuestionServiceTest extends TestCase
     public function testAllValidTypesAccepted(string $type): void
     {
         $service = $this->makeService();
-        $opts    = $type === 'multiple_choice'
+        $opts = $type === 'multiple_choice'
             ? [['option_text' => 'A'], ['option_text' => 'B']]
             : [];
 
         $id = $service->create(1, 1, [
             'question_text' => 'Test?',
             'question_type' => $type,
-            'options'       => $opts,
+            'options' => $opts,
         ]);
 
         $this->assertGreaterThan(0, $id);
@@ -91,7 +91,7 @@ class QuestionServiceTest extends TestCase
         $service->create(1, 1, [
             'question_text' => 'Pick one?',
             'question_type' => 'multiple_choice',
-            'options'       => [['option_text' => 'Only one']],
+            'options' => [['option_text' => 'Only one']],
         ]);
     }
 
@@ -105,7 +105,7 @@ class QuestionServiceTest extends TestCase
         $service->create(1, 1, [
             'question_text' => 'Pick one?',
             'question_type' => 'multiple_choice',
-            'options'       => $options,
+            'options' => $options,
         ]);
     }
 
@@ -117,7 +117,7 @@ class QuestionServiceTest extends TestCase
         $service->create(1, 1, [
             'question_text' => 'Pick one?',
             'question_type' => 'multiple_choice',
-            'options'       => [
+            'options' => [
                 ['option_text' => 'Alpha'],
                 ['option_text' => 'Beta'],
                 ['option_text' => 'Gamma'],
@@ -142,7 +142,7 @@ class QuestionServiceTest extends TestCase
 
         $this->assertCount(2, $capturedOptions);
         $this->assertSame('yes', $capturedOptions[0]['option_value']);
-        $this->assertSame('no',  $capturedOptions[1]['option_value']);
+        $this->assertSame('no', $capturedOptions[1]['option_value']);
     }
 
     public function testYesNoTurkishLabels(): void
@@ -197,23 +197,44 @@ class QuestionServiceTest extends TestCase
     {
         $activateCalls = [];
 
-        $questionRepo = new class($activateCalls) implements QuestionRepositoryInterface {
+        $questionRepo = new class ($activateCalls) implements QuestionRepositoryInterface {
             private int $nextId = 1;
-            public function __construct(private array &$calls) {}
+            public function __construct(private array &$calls)
+            {
+            }
 
-            public function create(int $s, string $t, string $tp, bool $sr, bool $am): int { return $this->nextId++; }
-            public function findById(int $id): ?array {
+            public function create(int $s, string $t, string $tp, bool $sr, bool $am): int
+            {
+                return $this->nextId++;
+            }
+            public function findById(int $id): ?array
+            {
                 return ['id' => $id, 'session_id' => 1, 'status' => 'draft', 'question_type' => 'open_text'];
             }
-            public function findBySession(int $s): array { return []; }
-            public function findActiveBySessionCode(string $c): ?array { return null; }
-            public function update(int $id, array $fields): void {}
-            public function delete(int $id): void {}
-            public function activate(int $id, int $sessionId): void {
+            public function findBySession(int $s): array
+            {
+                return [];
+            }
+            public function findActiveBySessionCode(string $c): ?array
+            {
+                return null;
+            }
+            public function update(int $id, array $fields): void
+            {
+            }
+            public function delete(int $id): void
+            {
+            }
+            public function activate(int $id, int $sessionId): void
+            {
                 $this->calls[] = ['id' => $id, 'session_id' => $sessionId];
             }
-            public function close(int $id): void {}
-            public function reorder(int $s, array $ids): void {}
+            public function close(int $id): void
+            {
+            }
+            public function reorder(int $s, array $ids): void
+            {
+            }
         };
 
         $service = $this->makeServiceWithRepo($questionRepo);
@@ -229,18 +250,38 @@ class QuestionServiceTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('invalid_state_transition');
 
-        $questionRepo = new class implements QuestionRepositoryInterface {
-            public function create(int $s, string $t, string $tp, bool $sr, bool $am): int { return 1; }
-            public function findById(int $id): ?array {
+        $questionRepo = new class () implements QuestionRepositoryInterface {
+            public function create(int $s, string $t, string $tp, bool $sr, bool $am): int
+            {
+                return 1;
+            }
+            public function findById(int $id): ?array
+            {
                 return ['id' => $id, 'session_id' => 1, 'status' => 'closed', 'question_type' => 'open_text'];
             }
-            public function findBySession(int $s): array { return []; }
-            public function findActiveBySessionCode(string $c): ?array { return null; }
-            public function update(int $id, array $fields): void {}
-            public function delete(int $id): void {}
-            public function activate(int $id, int $sessionId): void {}
-            public function close(int $id): void {}
-            public function reorder(int $s, array $ids): void {}
+            public function findBySession(int $s): array
+            {
+                return [];
+            }
+            public function findActiveBySessionCode(string $c): ?array
+            {
+                return null;
+            }
+            public function update(int $id, array $fields): void
+            {
+            }
+            public function delete(int $id): void
+            {
+            }
+            public function activate(int $id, int $sessionId): void
+            {
+            }
+            public function close(int $id): void
+            {
+            }
+            public function reorder(int $s, array $ids): void
+            {
+            }
         };
 
         $service = $this->makeServiceWithRepo($questionRepo);
@@ -252,18 +293,38 @@ class QuestionServiceTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('session_not_active');
 
-        $questionRepo = new class implements QuestionRepositoryInterface {
-            public function create(int $s, string $t, string $tp, bool $sr, bool $am): int { return 1; }
-            public function findById(int $id): ?array {
+        $questionRepo = new class () implements QuestionRepositoryInterface {
+            public function create(int $s, string $t, string $tp, bool $sr, bool $am): int
+            {
+                return 1;
+            }
+            public function findById(int $id): ?array
+            {
                 return ['id' => $id, 'session_id' => 1, 'status' => 'draft', 'question_type' => 'open_text'];
             }
-            public function findBySession(int $s): array { return []; }
-            public function findActiveBySessionCode(string $c): ?array { return null; }
-            public function update(int $id, array $fields): void {}
-            public function delete(int $id): void {}
-            public function activate(int $id, int $sessionId): void {}
-            public function close(int $id): void {}
-            public function reorder(int $s, array $ids): void {}
+            public function findBySession(int $s): array
+            {
+                return [];
+            }
+            public function findActiveBySessionCode(string $c): ?array
+            {
+                return null;
+            }
+            public function update(int $id, array $fields): void
+            {
+            }
+            public function delete(int $id): void
+            {
+            }
+            public function activate(int $id, int $sessionId): void
+            {
+            }
+            public function close(int $id): void
+            {
+            }
+            public function reorder(int $s, array $ids): void
+            {
+            }
         };
 
         $service = $this->makeServiceWithRepo($questionRepo, sessionStatus: 'paused');
@@ -277,18 +338,38 @@ class QuestionServiceTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('question_not_draft');
 
-        $questionRepo = new class implements QuestionRepositoryInterface {
-            public function create(int $s, string $t, string $tp, bool $sr, bool $am): int { return 1; }
-            public function findById(int $id): ?array {
+        $questionRepo = new class () implements QuestionRepositoryInterface {
+            public function create(int $s, string $t, string $tp, bool $sr, bool $am): int
+            {
+                return 1;
+            }
+            public function findById(int $id): ?array
+            {
                 return ['id' => $id, 'session_id' => 1, 'status' => 'active', 'question_type' => 'open_text'];
             }
-            public function findBySession(int $s): array { return []; }
-            public function findActiveBySessionCode(string $c): ?array { return null; }
-            public function update(int $id, array $fields): void {}
-            public function delete(int $id): void {}
-            public function activate(int $id, int $sessionId): void {}
-            public function close(int $id): void {}
-            public function reorder(int $s, array $ids): void {}
+            public function findBySession(int $s): array
+            {
+                return [];
+            }
+            public function findActiveBySessionCode(string $c): ?array
+            {
+                return null;
+            }
+            public function update(int $id, array $fields): void
+            {
+            }
+            public function delete(int $id): void
+            {
+            }
+            public function activate(int $id, int $sessionId): void
+            {
+            }
+            public function close(int $id): void
+            {
+            }
+            public function reorder(int $s, array $ids): void
+            {
+            }
         };
 
         $service = $this->makeServiceWithRepo($questionRepo);
@@ -298,38 +379,73 @@ class QuestionServiceTest extends TestCase
     // ── Stub factories ─────────────────────────────────────────────────────────
 
     private function makeService(
-        string $language       = 'en',
+        string $language = 'en',
         array  &$capturedOptions = [],
     ): QuestionService {
         $session = [
-            'id'          => 1,
-            'course_id'   => 10,
-            'status'      => 'active',
-            'language'    => $language,
+            'id' => 1,
+            'course_id' => 10,
+            'status' => 'active',
+            'language' => $language,
         ];
 
-        $questionRepo = new class implements QuestionRepositoryInterface {
+        $questionRepo = new class () implements QuestionRepositoryInterface {
             private int $nextId = 1;
-            public function create(int $s, string $t, string $tp, bool $sr, bool $am): int { return $this->nextId++; }
-            public function findById(int $id): ?array { return null; }
-            public function findBySession(int $s): array { return []; }
-            public function findActiveBySessionCode(string $c): ?array { return null; }
-            public function update(int $id, array $fields): void {}
-            public function delete(int $id): void {}
-            public function activate(int $id, int $sessionId): void {}
-            public function close(int $id): void {}
-            public function reorder(int $s, array $ids): void {}
+            public function create(int $s, string $t, string $tp, bool $sr, bool $am): int
+            {
+                return $this->nextId++;
+            }
+            public function findById(int $id): ?array
+            {
+                return null;
+            }
+            public function findBySession(int $s): array
+            {
+                return [];
+            }
+            public function findActiveBySessionCode(string $c): ?array
+            {
+                return null;
+            }
+            public function update(int $id, array $fields): void
+            {
+            }
+            public function delete(int $id): void
+            {
+            }
+            public function activate(int $id, int $sessionId): void
+            {
+            }
+            public function close(int $id): void
+            {
+            }
+            public function reorder(int $s, array $ids): void
+            {
+            }
         };
 
         $opts = &$capturedOptions;
-        $optionRepo = new class($opts) implements OptionRepositoryInterface {
-            public function __construct(private array &$captured) {}
-            public function createBulk(int $questionId, array $options): void {
-                foreach ($options as $o) $this->captured[] = $o;
+        $optionRepo = new class ($opts) implements OptionRepositoryInterface {
+            public function __construct(private array &$captured)
+            {
             }
-            public function findByQuestion(int $questionId): array { return []; }
-            public function deleteByQuestion(int $questionId): void {}
-            public function findById(int $id): ?array { return null; }
+            public function createBulk(int $questionId, array $options): void
+            {
+                foreach ($options as $o) {
+                    $this->captured[] = $o;
+                }
+            }
+            public function findByQuestion(int $questionId): array
+            {
+                return [];
+            }
+            public function deleteByQuestion(int $questionId): void
+            {
+            }
+            public function findById(int $id): ?array
+            {
+                return null;
+            }
         };
 
         return $this->buildService($session, $questionRepo, $optionRepo);
@@ -340,17 +456,27 @@ class QuestionServiceTest extends TestCase
         string $sessionStatus = 'active',
     ): QuestionService {
         $session = [
-            'id'        => 1,
+            'id' => 1,
             'course_id' => 10,
-            'status'    => $sessionStatus,
-            'language'  => 'en',
+            'status' => $sessionStatus,
+            'language' => 'en',
         ];
 
-        $optionRepo = new class implements OptionRepositoryInterface {
-            public function createBulk(int $questionId, array $options): void {}
-            public function findByQuestion(int $questionId): array { return []; }
-            public function deleteByQuestion(int $questionId): void {}
-            public function findById(int $id): ?array { return null; }
+        $optionRepo = new class () implements OptionRepositoryInterface {
+            public function createBulk(int $questionId, array $options): void
+            {
+            }
+            public function findByQuestion(int $questionId): array
+            {
+                return [];
+            }
+            public function deleteByQuestion(int $questionId): void
+            {
+            }
+            public function findById(int $id): ?array
+            {
+                return null;
+            }
         };
 
         return $this->buildService($session, $questionRepo, $optionRepo);
@@ -361,27 +487,65 @@ class QuestionServiceTest extends TestCase
         QuestionRepositoryInterface $questionRepo,
         OptionRepositoryInterface $optionRepo,
     ): QuestionService {
-        $sessionRepo = new class($session) implements SessionRepositoryInterface {
-            public function __construct(private array $session) {}
-            public function findById(int $id): ?array { return $this->session; }
-            public function findByShortCode(string $code): ?array { return $this->session; }
-            public function shortCodeExists(string $code): bool { return false; }
-            public function create(int $courseId, string $title, string $shortCode, string $language): int { return 1; }
-            public function update(int $id, array $fields): void {}
-            public function listByCourse(int $courseId): array { return []; }
-            public function countParticipants(int $sessionId): int { return 0; }
-            public function anonymize(int $sessionId): void {}
+        $sessionRepo = new class ($session) implements SessionRepositoryInterface {
+            public function __construct(private array $session)
+            {
+            }
+            public function findById(int $id): ?array
+            {
+                return $this->session;
+            }
+            public function findByShortCode(string $code): ?array
+            {
+                return $this->session;
+            }
+            public function shortCodeExists(string $code): bool
+            {
+                return false;
+            }
+            public function create(int $courseId, string $title, string $shortCode, string $language): int
+            {
+                return 1;
+            }
+            public function update(int $id, array $fields): void
+            {
+            }
+            public function listByCourse(int $courseId): array
+            {
+                return [];
+            }
+            public function countParticipants(int $sessionId): int
+            {
+                return 0;
+            }
+            public function anonymize(int $sessionId): void
+            {
+            }
         };
 
-        $courseRepo = new class implements CourseRepositoryInterface {
-            public function findById(int $id): ?array {
+        $courseRepo = new class () implements CourseRepositoryInterface {
+            public function findById(int $id): ?array
+            {
                 return ['id' => 10, 'instructor_id' => 1, 'title' => 'Test', 'status' => 'active', 'default_language' => 'en'];
             }
-            public function listByInstructor(int $instructorId, int $page, int $perPage): array { return []; }
-            public function countByInstructor(int $instructorId): int { return 0; }
-            public function create(int $instructorId, string $title, ?string $code, ?string $semester, ?string $description, string $defaultLanguage): int { return 10; }
-            public function update(int $id, array $fields): void {}
-            public function archive(int $id): void {}
+            public function listByInstructor(int $instructorId, int $page, int $perPage): array
+            {
+                return [];
+            }
+            public function countByInstructor(int $instructorId): int
+            {
+                return 0;
+            }
+            public function create(int $instructorId, string $title, ?string $code, ?string $semester, ?string $description, string $defaultLanguage): int
+            {
+                return 10;
+            }
+            public function update(int $id, array $fields): void
+            {
+            }
+            public function archive(int $id): void
+            {
+            }
         };
 
         return new QuestionService($questionRepo, $optionRepo, $sessionRepo, $courseRepo);

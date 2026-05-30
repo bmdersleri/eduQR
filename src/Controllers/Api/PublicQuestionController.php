@@ -33,7 +33,7 @@ final class PublicQuestionController
         if ($participantId <= 0) {
             $this->json(401, [
                 'success' => false,
-                'error'   => ['code' => 'not_joined', 'message' => t('error.not_joined')],
+                'error' => ['code' => 'not_joined', 'message' => t('error.not_joined')],
             ]);
         }
 
@@ -43,22 +43,22 @@ final class PublicQuestionController
             match ($e->getMessage()) {
                 'session_not_found' => $this->json(404, [
                     'success' => false,
-                    'error'   => ['code' => 'session_not_found', 'message' => t('error.session_not_found')],
+                    'error' => ['code' => 'session_not_found', 'message' => t('error.session_not_found')],
                 ]),
                 'session_closed' => $this->json(410, [
                     'success' => false,
-                    'error'   => ['code' => 'session_closed', 'message' => t('error.session_closed')],
+                    'error' => ['code' => 'session_closed', 'message' => t('error.session_closed')],
                 ]),
                 default => $this->json(500, [
                     'success' => false,
-                    'error'   => ['code' => 'server_error', 'message' => t('error.server_error')],
+                    'error' => ['code' => 'server_error', 'message' => t('error.server_error')],
                 ]),
             };
         }
 
         $this->json(200, [
             'success' => true,
-            'data'    => ['question' => $question],
+            'data' => ['question' => $question],
         ]);
     }
 

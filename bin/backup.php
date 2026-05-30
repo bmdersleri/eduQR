@@ -30,7 +30,7 @@ $root = dirname(__DIR__);
 require_once $root . '/vendor/autoload.php';
 \EduQR\Config::load($root . '/.env');
 
-$dryRun  = in_array('--dry-run', $argv, true);
+$dryRun = in_array('--dry-run', $argv, true);
 $keepDays = 30;
 
 foreach ($argv as $arg) {
@@ -39,19 +39,19 @@ foreach ($argv as $arg) {
     }
 }
 
-$host    = \EduQR\Config::get('DB_HOST', 'localhost');
-$port    = \EduQR\Config::get('DB_PORT', '3306');
-$dbName  = \EduQR\Config::get('DB_NAME', 'eduqr');
-$dbUser  = \EduQR\Config::get('DB_USER', '');
-$dbPass  = \EduQR\Config::get('DB_PASS', '');
+$host = \EduQR\Config::get('DB_HOST', 'localhost');
+$port = \EduQR\Config::get('DB_PORT', '3306');
+$dbName = \EduQR\Config::get('DB_NAME', 'eduqr');
+$dbUser = \EduQR\Config::get('DB_USER', '');
+$dbPass = \EduQR\Config::get('DB_PASS', '');
 $backDir = \EduQR\Config::get('BACKUP_DIR', realpath($root . '/..') . '/backups');
 
 // ── Ensure backup directory exists ────────────────────────────────────────────
-if (!is_dir($backDir)) {
+if (! is_dir($backDir)) {
     if ($dryRun) {
         echo "[backup] Would create: {$backDir}\n";
     } else {
-        if (!mkdir($backDir, 0700, true)) {
+        if (! mkdir($backDir, 0700, true)) {
             fwrite(STDERR, "[backup] Cannot create backup directory: {$backDir}\n");
             exit(1);
         }
@@ -60,7 +60,7 @@ if (!is_dir($backDir)) {
 }
 
 // ── Build filename ────────────────────────────────────────────────────────────
-$stamp    = date('Y-m-d_His');
+$stamp = date('Y-m-d_His');
 $filename = "{$backDir}/eduqr_{$stamp}.sql.gz";
 
 echo "[backup] Database  : {$dbName}@{$host}:{$port}\n";
@@ -102,7 +102,7 @@ if ($dryRun) {
 
 // ── Rotate old backups ─────────────────────────────────────────────────────────
 $cutoff = time() - $keepDays * 86400;
-$found  = glob("{$backDir}/eduqr_*.sql.gz") ?: [];
+$found = glob("{$backDir}/eduqr_*.sql.gz") ?: [];
 $pruned = 0;
 
 foreach ($found as $file) {

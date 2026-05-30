@@ -18,7 +18,7 @@ final class AuthController
 
     public function __construct()
     {
-        $this->auth     = new AuthService(new UserRepository(), new LoginAttemptRepository());
+        $this->auth = new AuthService(new UserRepository(), new LoginAttemptRepository());
         $this->auditLog = new AuditLogRepository();
     }
 
@@ -28,9 +28,9 @@ final class AuthController
     {
         CsrfMiddleware::verify();
 
-        $body  = $this->jsonBody();
+        $body = $this->jsonBody();
         $email = trim((string) ($body['email'] ?? ''));
-        $pass  = (string) ($body['password'] ?? '');
+        $pass = (string) ($body['password'] ?? '');
 
         if ($email === '' || $pass === '') {
             $this->error(400, 'missing_fields', t('auth.login.error.missing_fields'));
@@ -57,11 +57,12 @@ final class AuthController
                 'user',
                 (int) $user['id'],
             );
-        } catch (\Throwable) {}
+        } catch (\Throwable) {
+        }
 
         $this->json(200, [
             'success' => true,
-            'data'    => ['user' => $this->userPayload($user)],
+            'data' => ['user' => $this->userPayload($user)],
             'message' => t('auth.login.success'),
         ]);
     }
@@ -87,7 +88,8 @@ final class AuthController
                     'user',
                     (int) $user['id'],
                 );
-            } catch (\Throwable) {}
+            } catch (\Throwable) {
+            }
         }
 
         http_response_code(204);
@@ -100,7 +102,7 @@ final class AuthController
         $user = AuthMiddleware::require();
         $this->json(200, [
             'success' => true,
-            'data'    => ['user' => $user],
+            'data' => ['user' => $user],
         ]);
     }
 
@@ -109,16 +111,17 @@ final class AuthController
     private function jsonBody(): array
     {
         $raw = (string) file_get_contents('php://input');
+
         return json_decode($raw, true) ?? [];
     }
 
     private function userPayload(array $user): array
     {
         return [
-            'id'                => (int) $user['id'],
-            'display_name'      => $user['display_name'],
-            'email'             => $user['email'],
-            'role'              => $user['role'],
+            'id' => (int) $user['id'],
+            'display_name' => $user['display_name'],
+            'email' => $user['email'],
+            'role' => $user['role'],
             'preferred_language' => $user['preferred_language'] ?? 'en',
         ];
     }
@@ -135,7 +138,7 @@ final class AuthController
     {
         $this->json($status, [
             'success' => false,
-            'error'   => ['code' => $code, 'message' => $message],
+            'error' => ['code' => $code, 'message' => $message],
         ]);
     }
 }

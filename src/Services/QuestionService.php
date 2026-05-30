@@ -11,36 +11,37 @@ use EduQR\Contracts\SessionRepositoryInterface;
 
 final class QuestionService
 {
-    private const MAX_TEXT_LEN   = 500;
+    private const MAX_TEXT_LEN = 500;
     private const MAX_OPTION_LEN = 200;
     private const MC_MIN_OPTIONS = 2;
     private const MC_MAX_OPTIONS = 8;
-    private const ALLOWED_TYPES  = ['multiple_choice', 'open_text', 'yes_no', 'likert_5'];
+    private const ALLOWED_TYPES = ['multiple_choice', 'open_text', 'yes_no', 'likert_5'];
 
     public function __construct(
         private readonly QuestionRepositoryInterface $questions,
         private readonly OptionRepositoryInterface   $options,
         private readonly SessionRepositoryInterface  $sessions,
         private readonly CourseRepositoryInterface   $courses,
-    ) {}
+    ) {
+    }
 
     // ── Create (T-603–T-606) ───────────────────────────────────────────────────
 
     public function create(int $sessionId, int $userId, array $body): int
     {
-        $session  = $this->requireSession($sessionId, $userId);
+        $session = $this->requireSession($sessionId, $userId);
         $language = $session['language'];
 
-        $text       = $this->validateText($body['question_text'] ?? null);
-        $type       = $this->validateType($body['question_type'] ?? null);
+        $text = $this->validateText($body['question_text'] ?? null);
+        $type = $this->validateType($body['question_type'] ?? null);
         $showResults = (bool) ($body['show_results'] ?? false);
-        $allowMulti  = (bool) ($body['allow_multiple_answers'] ?? false);
+        $allowMulti = (bool) ($body['allow_multiple_answers'] ?? false);
 
         $opts = $this->buildOptions($type, $body['options'] ?? [], $language);
 
         $questionId = $this->questions->create($sessionId, $text, $type, $showResults, $allowMulti);
 
-        if (!empty($opts)) {
+        if (! empty($opts)) {
             $this->options->createBulk($questionId, $opts);
         }
 
@@ -69,7 +70,7 @@ final class QuestionService
             $fields['allow_multiple_answers'] = $body['allow_multiple_answers'] ? 1 : 0;
         }
 
-        if (!empty($fields)) {
+        if (! empty($fields)) {
             $this->questions->update($questionId, $fields);
         }
 
@@ -136,6 +137,7 @@ final class QuestionService
 
         return array_map(function (array $q): array {
             $opts = $this->options->findByQuestion((int) $q['id']);
+
             return $this->questionPayload($q, $opts);
         }, $qs);
     }
@@ -173,14 +175,14 @@ final class QuestionService
         $opts = $this->options->findByQuestion((int) $question['id']);
 
         return [
-            'id'               => (int) $question['id'],
-            'type'             => $question['question_type'],
-            'text'             => $question['question_text'],
-            'options'          => array_map(fn($o) => [
-                'id'   => (int) $o['id'],
+            'id' => (int) $question['id'],
+            'type' => $question['question_type'],
+            'text' => $question['question_text'],
+            'options' => array_map(fn ($o) => [
+                'id' => (int) $o['id'],
                 'text' => $o['option_text'],
             ], $opts),
-            'activated_at'     => $question['activated_at'],
+            'activated_at' => $question['activated_at'],
             'already_answered' => false, // Phase 7: filled from answers table
         ];
     }
@@ -197,6 +199,7 @@ final class QuestionService
         if ($course === null || (int) $course['instructor_id'] !== $userId) {
             throw new \RuntimeException('forbidden');
         }
+
         return $session;
     }
 
@@ -207,6 +210,7 @@ final class QuestionService
             throw new \RuntimeException('question_not_found');
         }
         $this->requireSession((int) $question['session_id'], $userId);
+
         return $question;
     }
 
@@ -219,15 +223,17 @@ final class QuestionService
         if (mb_strlen($text, 'UTF-8') > self::MAX_TEXT_LEN) {
             throw new \InvalidArgumentException('question_text:too_long');
         }
+
         return $text;
     }
 
     private function validateType(mixed $raw): string
     {
         $type = (string) $raw;
-        if (!in_array($type, self::ALLOWED_TYPES, true)) {
+        if (! in_array($type, self::ALLOWED_TYPES, true)) {
             throw new \InvalidArgumentException('question_type:invalid');
         }
+
         return $type;
     }
 
@@ -235,9 +241,9 @@ final class QuestionService
     {
         return match ($type) {
             'multiple_choice' => $this->buildMultipleChoiceOptions((array) $rawOptions),
-            'yes_no'          => $this->buildYesNoOptions($language),
-            'likert_5'        => $this->buildLikertOptions($language),
-            default           => [], // open_text
+            'yes_no' => $this->buildYesNoOptions($language),
+            'likert_5' => $this->buildLikertOptions($language),
+            default => [], // open_text
         };
     }
 
@@ -258,10 +264,10 @@ final class QuestionService
                 throw new \InvalidArgumentException('options:text_too_long');
             }
             $result[] = [
-                'option_text'  => $text,
+                'option_text' => $text,
                 'option_value' => (string) ($i + 1),
-                'is_correct'   => 0,
-                'order_no'     => $i + 1,
+                'is_correct' => 0,
+                'order_no' => $i + 1,
             ];
         }
 
@@ -300,15 +306,15 @@ final class QuestionService
                 'Strongly agree',
             ],
         ];
-        $texts  = $labels[$language] ?? $labels['en'];
+        $texts = $labels[$language] ?? $labels['en'];
         $result = [];
 
         foreach ($texts as $i => $text) {
             $result[] = [
-                'option_text'  => $text,
+                'option_text' => $text,
                 'option_value' => (string) ($i + 1),
-                'is_correct'   => 0,
-                'order_no'     => $i + 1,
+                'is_correct' => 0,
+                'order_no' => $i + 1,
             ];
         }
 
@@ -318,22 +324,22 @@ final class QuestionService
     private function questionPayload(array $question, array $options): array
     {
         return [
-            'id'                     => (int) $question['id'],
-            'question_text'          => $question['question_text'],
-            'question_type'          => $question['question_type'],
-            'status'                 => $question['status'],
-            'order_no'               => (int) $question['order_no'],
-            'show_results'           => (bool) $question['show_results'],
+            'id' => (int) $question['id'],
+            'question_text' => $question['question_text'],
+            'question_type' => $question['question_type'],
+            'status' => $question['status'],
+            'order_no' => (int) $question['order_no'],
+            'show_results' => (bool) $question['show_results'],
             'allow_multiple_answers' => (bool) $question['allow_multiple_answers'],
-            'options'                => array_map(fn($o) => [
-                'id'           => (int) $o['id'],
-                'option_text'  => $o['option_text'],
+            'options' => array_map(fn ($o) => [
+                'id' => (int) $o['id'],
+                'option_text' => $o['option_text'],
                 'option_value' => $o['option_value'],
-                'order_no'     => (int) $o['order_no'],
+                'order_no' => (int) $o['order_no'],
             ], $options),
             'activated_at' => $question['activated_at'],
-            'closed_at'    => $question['closed_at'],
-            'created_at'   => $question['created_at'],
+            'closed_at' => $question['closed_at'],
+            'created_at' => $question['created_at'],
         ];
     }
 }

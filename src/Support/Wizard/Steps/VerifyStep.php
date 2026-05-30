@@ -30,7 +30,8 @@ class VerifyStep extends Step
 
     public function __construct(
         private readonly string $projectRoot,
-    ) {}
+    ) {
+    }
 
     public function title(): string
     {
@@ -41,8 +42,9 @@ class VerifyStep extends Step
     {
         $console->info('Nginx yeniden yüklendikten sonra devam edin.');
 
-        if (!$console->confirm('Smoke testleri çalıştırılsın mı?', true)) {
+        if (! $console->confirm('Smoke testleri çalıştırılsın mı?', true)) {
             $console->warn('Doğrulama atlandı. Daha sonra: php bin/smoke.php --url=https://... --verbose');
+
             return true;
         }
 
@@ -52,26 +54,27 @@ class VerifyStep extends Step
 
         if ($base === '') {
             $console->error('Base URL boş olamaz.');
+
             return false;
         }
 
         $ctx = stream_context_create([
             'http' => [
-                'method'          => 'GET',
+                'method' => 'GET',
                 'follow_location' => 0,        // redirect'leri takip etme — statüyü doğrudan oku
-                'timeout'         => 10,
-                'ignore_errors'   => true,
-                'header'          => "Accept: application/json, text/html\r\n",
+                'timeout' => 10,
+                'ignore_errors' => true,
+                'header' => "Accept: application/json, text/html\r\n",
             ],
             'ssl' => [
-                'verify_peer'      => false,   // Staging / self-signed sertifikalara izin ver
+                'verify_peer' => false,   // Staging / self-signed sertifikalara izin ver
                 'verify_peer_name' => false,
             ],
         ]);
 
         $failed = 0;
         foreach (self::CHECKS as [$path, $expected]) {
-            $url    = $base . $path;
+            $url = $base . $path;
             @file_get_contents($url, false, $ctx);
             $status = $this->parseStatus($http_response_header ?? []);
 
@@ -96,6 +99,7 @@ class VerifyStep extends Step
             $console->info('  sudo systemctl status php8.2-fpm');
             $console->info('  sudo systemctl status mariadb');
             $console->info('  tail -30 /var/log/nginx/eduqr-error.log');
+
             return false;
         }
 
@@ -105,7 +109,7 @@ class VerifyStep extends Step
     private function readAppUrl(): string
     {
         $envPath = $this->projectRoot . '/.env';
-        if (!file_exists($envPath)) {
+        if (! file_exists($envPath)) {
             return 'https://example.com';
         }
         foreach ((array) file($envPath) as $line) {
@@ -113,6 +117,7 @@ class VerifyStep extends Step
                 return rtrim(trim(substr((string) $line, 8)), '/');
             }
         }
+
         return 'https://example.com';
     }
 
@@ -125,6 +130,7 @@ class VerifyStep extends Step
                 $status = (int) $m[1];
             }
         }
+
         return $status;
     }
 }

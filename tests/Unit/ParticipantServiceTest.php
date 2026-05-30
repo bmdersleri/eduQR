@@ -142,7 +142,7 @@ class ParticipantServiceTest extends TestCase
     public function testJoinSuccessReturnsData(): void
     {
         $service = $this->makeService();
-        $result  = $service->join('ABCD23', 'Elif', null, '');
+        $result = $service->join('ABCD23', 'Elif', null, '');
 
         $this->assertArrayHasKey('participant_id', $result);
         $this->assertSame('ABCD23', $result['session_short_code']);
@@ -152,39 +152,66 @@ class ParticipantServiceTest extends TestCase
     // ── Stub factories ─────────────────────────────────────────────────────────
 
     private function makeService(
-        string $status          = 'active',
-        bool   $hasSession      = true,
+        string $status = 'active',
+        bool   $hasSession = true,
         string $existingNickname = '',
     ): ParticipantService {
         $session = $hasSession ? [
-            'id'         => 1,
+            'id' => 1,
             'short_code' => 'ABCD23',
-            'title'      => 'Test Session',
-            'status'     => $status,
-            'language'   => 'en',
+            'title' => 'Test Session',
+            'status' => $status,
+            'language' => 'en',
         ] : null;
 
-        $sessionRepo = new class($session) implements SessionRepositoryInterface {
-            public function __construct(private ?array $session) {}
+        $sessionRepo = new class ($session) implements SessionRepositoryInterface {
+            public function __construct(private ?array $session)
+            {
+            }
 
-            public function findById(int $id): ?array { return $this->session; }
-            public function findByShortCode(string $code): ?array { return $this->session; }
-            public function shortCodeExists(string $code): bool { return false; }
-            public function create(int $courseId, string $title, string $shortCode, string $language): int { return 1; }
-            public function update(int $id, array $fields): void {}
-            public function listByCourse(int $courseId): array { return []; }
-            public function countParticipants(int $sessionId): int { return 0; }
-            public function anonymize(int $sessionId): void {}
+            public function findById(int $id): ?array
+            {
+                return $this->session;
+            }
+            public function findByShortCode(string $code): ?array
+            {
+                return $this->session;
+            }
+            public function shortCodeExists(string $code): bool
+            {
+                return false;
+            }
+            public function create(int $courseId, string $title, string $shortCode, string $language): int
+            {
+                return 1;
+            }
+            public function update(int $id, array $fields): void
+            {
+            }
+            public function listByCourse(int $courseId): array
+            {
+                return [];
+            }
+            public function countParticipants(int $sessionId): int
+            {
+                return 0;
+            }
+            public function anonymize(int $sessionId): void
+            {
+            }
         };
 
         $existing = $existingNickname;
-        $participantRepo = new class($existing) implements ParticipantRepositoryInterface {
+        $participantRepo = new class ($existing) implements ParticipantRepositoryInterface {
             public int $registeredCount = 0;
-            public function __construct(private string $existing) {}
+            public function __construct(private string $existing)
+            {
+            }
 
             public function register(int $sessionId, string $nickname, string $nicknameNormalized, ?string $deviceHash): int
             {
                 $this->registeredCount++;
+
                 return $this->registeredCount;
             }
 
@@ -193,13 +220,22 @@ class ParticipantServiceTest extends TestCase
                 return $this->existing !== '' && $this->existing === $nicknameNormalized;
             }
 
-            public function countBySession(int $sessionId): int { return 0; }
-            public function findBySession(int $sessionId): array { return []; }
-            public function findById(int $id): ?array { return null; }
+            public function countBySession(int $sessionId): int
+            {
+                return 0;
+            }
+            public function findBySession(int $sessionId): array
+            {
+                return [];
+            }
+            public function findById(int $id): ?array
+            {
+                return null;
+            }
         };
 
         // Point profanity filter at the real config dir
-        $_ENV['PROFANITY_DIR']   = dirname(__DIR__, 2) . '/config/profanity';
+        $_ENV['PROFANITY_DIR'] = dirname(__DIR__, 2) . '/config/profanity';
         putenv('PROFANITY_DIR=' . dirname(__DIR__, 2) . '/config/profanity');
 
         return new ParticipantService($participantRepo, $sessionRepo);

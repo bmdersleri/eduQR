@@ -34,40 +34,40 @@ final class JoinController
 
         $body = (array) (json_decode(file_get_contents('php://input') ?: '{}', true) ?? []);
         $rawNickname = trim((string) ($body['nickname'] ?? ''));
-        $userAgent   = $_SERVER['HTTP_USER_AGENT'] ?? '';
+        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
 
         try {
             $result = $this->service->join($shortCode, $rawNickname, $cookieId, $userAgent);
         } catch (\InvalidArgumentException $e) {
             match ($e->getMessage()) {
-                'nickname:required'      => $this->error(400, 'nickname_required',      t('validation.required'),           'nickname'),
-                'nickname:too_long'      => $this->error(400, 'nickname_too_long',      t('validation.nickname_too_long'),  'nickname'),
-                'nickname:invalid_chars' => $this->error(400, 'nickname_invalid_chars', t('student.join.error.invalid'),    'nickname'),
-                default                  => $this->error(400, 'validation_error',       t('common.error'),                  ''),
+                'nickname:required' => $this->error(400, 'nickname_required', t('validation.required'), 'nickname'),
+                'nickname:too_long' => $this->error(400, 'nickname_too_long', t('validation.nickname_too_long'), 'nickname'),
+                'nickname:invalid_chars' => $this->error(400, 'nickname_invalid_chars', t('student.join.error.invalid'), 'nickname'),
+                default => $this->error(400, 'validation_error', t('common.error'), ''),
             };
         } catch (\RuntimeException $e) {
             match ($e->getMessage()) {
-                'session_not_found'  => $this->error(404, 'session_not_found',  t('error.session_not_found')),
-                'session_closed'     => $this->error(410, 'session_closed',     t('error.session_closed')),
-                'session_paused'     => $this->error(410, 'session_paused',     t('error.session_paused')),
+                'session_not_found' => $this->error(404, 'session_not_found', t('error.session_not_found')),
+                'session_closed' => $this->error(410, 'session_closed', t('error.session_closed')),
+                'session_paused' => $this->error(410, 'session_paused', t('error.session_paused')),
                 'duplicate_nickname' => $this->error(409, 'duplicate_nickname', t('error.duplicate_nickname'), 'nickname'),
-                'profane_nickname'   => $this->error(400, 'profane_nickname',   t('error.profane_nickname'),   'nickname'),
-                default              => $this->error(500, 'server_error',       t('error.server_error')),
+                'profane_nickname' => $this->error(400, 'profane_nickname', t('error.profane_nickname'), 'nickname'),
+                default => $this->error(500, 'server_error', t('error.server_error')),
             };
         }
 
         // Set participant session cookie (session-lifetime, HttpOnly)
         setcookie('eduqr_participant', (string) $result['participant_id'], [
-            'expires'  => 0,
-            'path'     => '/',
-            'secure'   => (bool) ($_SERVER['HTTPS'] ?? false),
+            'expires' => 0,
+            'path' => '/',
+            'secure' => (bool) ($_SERVER['HTTPS'] ?? false),
             'httponly' => true,
             'samesite' => 'Lax',
         ]);
 
         $this->json(201, [
             'success' => true,
-            'data'    => $result,
+            'data' => $result,
             'message' => t('student.joined'),
         ]);
     }
@@ -79,19 +79,20 @@ final class JoinController
     {
         $name = 'eduqr_device';
 
-        if (!empty($_COOKIE[$name]) && strlen($_COOKIE[$name]) >= 32) {
+        if (! empty($_COOKIE[$name]) && strlen($_COOKIE[$name]) >= 32) {
             return $_COOKIE[$name];
         }
 
         // Generate a new random device ID
         $id = bin2hex(random_bytes(16)); // 32 hex chars
         setcookie($name, $id, [
-            'expires'  => time() + 365 * 24 * 3600, // 1 year
-            'path'     => '/',
-            'secure'   => (bool) ($_SERVER['HTTPS'] ?? false),
+            'expires' => time() + 365 * 24 * 3600, // 1 year
+            'path' => '/',
+            'secure' => (bool) ($_SERVER['HTTPS'] ?? false),
             'httponly' => true,
             'samesite' => 'Lax',
         ]);
+
         return $id;
     }
 

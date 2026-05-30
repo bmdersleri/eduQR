@@ -13,12 +13,12 @@ final class AuthService
     private const BCRYPT_COST = 12;
 
     // Rate limiting: 5 failures within 15-minute window → locked
-    private const RATE_MAX    = 5;
-    private const RATE_LOCK   = 900; // 15 minutes in seconds
+    private const RATE_MAX = 5;
+    private const RATE_LOCK = 900; // 15 minutes in seconds
 
     // Dummy bcrypt hash for constant-time comparison when user is not found.
     // Prevents timing attacks that would reveal whether an email is registered.
-    private const DUMMY_HASH  = '$2y$12$u9GwnD2qPr.8SxqXxBbmHOC2nHgFdJNt5C.BNcjBbBGzOkmJfDXji';
+    private const DUMMY_HASH = '$2y$12$u9GwnD2qPr.8SxqXxBbmHOC2nHgFdJNt5C.BNcjBbBGzOkmJfDXji';
 
     private UserRepositoryInterface $users;
     private LoginAttemptRepositoryInterface $attempts;
@@ -27,7 +27,7 @@ final class AuthService
         UserRepositoryInterface $users,
         LoginAttemptRepositoryInterface $attempts
     ) {
-        $this->users    = $users;
+        $this->users = $users;
         $this->attempts = $attempts;
     }
 
@@ -44,12 +44,13 @@ final class AuthService
             throw new \RuntimeException('too_many_attempts');
         }
 
-        $user        = $this->users->findByEmail($email);
+        $user = $this->users->findByEmail($email);
         $hashToCheck = ($user !== null) ? $user['password_hash'] : self::DUMMY_HASH;
-        $valid       = password_verify($password, $hashToCheck);
+        $valid = password_verify($password, $hashToCheck);
 
-        if (!$valid || $user === null || !(bool) $user['is_active']) {
+        if (! $valid || $user === null || ! (bool) $user['is_active']) {
             $this->attempts->record($email, $this->ipHash(), false);
+
             throw new \RuntimeException('invalid_credentials');
         }
 
@@ -71,10 +72,10 @@ final class AuthService
         self::ensureSessionStarted();
         session_regenerate_id(true);
 
-        $_SESSION['user_id']      = (int) $user['id'];
-        $_SESSION['user_email']   = $user['email'];
-        $_SESSION['user_role']    = $user['role'];
-        $_SESSION['user_name']    = $user['display_name'];
+        $_SESSION['user_id'] = (int) $user['id'];
+        $_SESSION['user_email'] = $user['email'];
+        $_SESSION['user_role'] = $user['role'];
+        $_SESSION['user_name'] = $user['display_name'];
         $_SESSION['logged_in_at'] = time();
     }
 
@@ -105,9 +106,9 @@ final class AuthService
         }
 
         return [
-            'id'           => (int) $_SESSION['user_id'],
-            'email'        => (string) ($_SESSION['user_email'] ?? ''),
-            'role'         => (string) ($_SESSION['user_role'] ?? ''),
+            'id' => (int) $_SESSION['user_id'],
+            'email' => (string) ($_SESSION['user_email'] ?? ''),
+            'role' => (string) ($_SESSION['user_role'] ?? ''),
             'display_name' => (string) ($_SESSION['user_name'] ?? ''),
         ];
     }
@@ -127,6 +128,7 @@ final class AuthService
     private function ipHash(): ?string
     {
         $ip = $_SERVER['REMOTE_ADDR'] ?? null;
+
         return $ip !== null ? hash('sha256', $ip) : null;
     }
 
@@ -139,9 +141,9 @@ final class AuthService
         session_name('eduqr_session');
         session_set_cookie_params([
             'lifetime' => 0,
-            'path'     => '/',
-            'domain'   => '',
-            'secure'   => Config::bool('COOKIE_SECURE', true),
+            'path' => '/',
+            'domain' => '',
+            'secure' => Config::bool('COOKIE_SECURE', true),
             'httponly' => true,
             'samesite' => 'Lax',
         ]);

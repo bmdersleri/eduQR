@@ -37,7 +37,8 @@ final class AnswerService
         private readonly SessionRepositoryInterface     $sessions,
         private readonly ParticipantRepositoryInterface $participants,
         private readonly OptionRepositoryInterface      $options,
-    ) {}
+    ) {
+    }
 
     // ── Submit answer ──────────────────────────────────────────────────────────
 
@@ -82,6 +83,7 @@ final class AnswerService
         if ($session['status'] !== 'active') {
             // Distinguish paused vs closed for better UX messages
             $code = $session['status'] === 'paused' ? 'session_paused' : 'session_closed';
+
             throw new \RuntimeException($code);
         }
 
@@ -109,6 +111,7 @@ final class AnswerService
             if ($e->getCode() === '23000') {
                 throw new DuplicateAnswerException('duplicate_answer');
             }
+
             throw $e;
         }
     }
@@ -165,7 +168,7 @@ final class AnswerService
         }
 
         // answer_text must be absent for option-based types
-        if (!empty($body['answer_text'])) {
+        if (! empty($body['answer_text'])) {
             throw new \InvalidArgumentException('answer:invalid_shape');
         }
 
@@ -177,7 +180,7 @@ final class AnswerService
      */
     private function validateOpenTextAnswer(array $body): array
     {
-        if (!isset($body['answer_text'])) {
+        if (! isset($body['answer_text'])) {
             throw new \InvalidArgumentException('answer_text:required');
         }
 
@@ -193,7 +196,7 @@ final class AnswerService
         }
 
         // selected_option_id must be absent for open_text
-        if (!empty($body['selected_option_id'])) {
+        if (! empty($body['selected_option_id'])) {
             throw new \InvalidArgumentException('answer:invalid_shape');
         }
 

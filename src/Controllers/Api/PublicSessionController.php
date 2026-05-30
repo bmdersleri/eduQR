@@ -26,14 +26,14 @@ final class PublicSessionController
         } catch (\RuntimeException $e) {
             match ($e->getMessage()) {
                 'session_not_found' => $this->error(404, 'session_not_found', t('error.session_not_found')),
-                'session_closed'    => $this->error(410, 'session_closed',    t('error.session_closed')),
-                default             => $this->error(500, 'server_error',      t('error.server_error')),
+                'session_closed' => $this->error(410, 'session_closed', t('error.session_closed')),
+                default => $this->error(500, 'server_error', t('error.server_error')),
             };
         }
 
         $this->json(200, [
             'success' => true,
-            'data'    => $data,
+            'data' => $data,
         ]);
     }
 
@@ -51,7 +51,7 @@ final class PublicSessionController
     {
         $this->json($status, [
             'success' => false,
-            'error'   => ['code' => $code, 'message' => $message],
+            'error' => ['code' => $code, 'message' => $message],
         ]);
     }
 }

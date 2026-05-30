@@ -31,6 +31,7 @@ final class LocaleHelper
         );
 
         $result = $fmt->format($timestamp);
+
         return $result !== false ? $result : gmdate('Y-m-d', $timestamp);
     }
 
@@ -42,6 +43,7 @@ final class LocaleHelper
         $icu = self::ICU_MAP[$locale] ?? 'en_US';
         $fmt = new NumberFormatter($icu, NumberFormatter::DECIMAL);
         $result = $fmt->format($n);
+
         return $result !== false ? $result : (string) $n;
     }
 
@@ -55,6 +57,7 @@ final class LocaleHelper
         $fmt = new NumberFormatter($icu, NumberFormatter::PERCENT);
         $fmt->setAttribute(NumberFormatter::MAX_FRACTION_DIGITS, 1);
         $result = $fmt->format($n / 100.0);
+
         return $result !== false ? $result : round($n, 1) . '%';
     }
 }

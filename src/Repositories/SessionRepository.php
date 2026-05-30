@@ -22,6 +22,7 @@ final class SessionRepository implements SessionRepositoryInterface
         $stmt = $this->pdo->prepare('SELECT * FROM sessions WHERE id = ? LIMIT 1');
         $stmt->execute([$id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
         return $row !== false ? $row : null;
     }
 
@@ -30,6 +31,7 @@ final class SessionRepository implements SessionRepositoryInterface
         $stmt = $this->pdo->prepare('SELECT * FROM sessions WHERE short_code = ? LIMIT 1');
         $stmt->execute([$code]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
         return $row !== false ? $row : null;
     }
 
@@ -37,6 +39,7 @@ final class SessionRepository implements SessionRepositoryInterface
     {
         $stmt = $this->pdo->prepare('SELECT 1 FROM sessions WHERE short_code = ? LIMIT 1');
         $stmt->execute([$code]);
+
         return $stmt->fetchColumn() !== false;
     }
 
@@ -47,6 +50,7 @@ final class SessionRepository implements SessionRepositoryInterface
              VALUES (?, ?, ?, ?, \'active\', UTC_TIMESTAMP())'
         );
         $stmt->execute([$courseId, $title, $shortCode, $language]);
+
         return (int) $this->pdo->lastInsertId();
     }
 
@@ -54,12 +58,12 @@ final class SessionRepository implements SessionRepositoryInterface
     {
         $allowed = ['title', 'status', 'show_results_to_students', 'moderation_mode',
                     'started_at', 'paused_at', 'closed_at', 'delete_requested_at', 'anonymized'];
-        $sets    = [];
-        $values  = [];
+        $sets = [];
+        $values = [];
 
         foreach ($allowed as $col) {
             if (array_key_exists($col, $fields)) {
-                $sets[]   = "{$col} = ?";
+                $sets[] = "{$col} = ?";
                 $values[] = $fields[$col];
             }
         }
@@ -80,6 +84,7 @@ final class SessionRepository implements SessionRepositoryInterface
             'SELECT * FROM sessions WHERE course_id = ? ORDER BY created_at DESC'
         );
         $stmt->execute([$courseId]);
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -88,6 +93,7 @@ final class SessionRepository implements SessionRepositoryInterface
         try {
             $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM participants WHERE session_id = ?');
             $stmt->execute([$sessionId]);
+
             return (int) $stmt->fetchColumn();
         } catch (\PDOException) {
             return 0;
@@ -113,7 +119,7 @@ final class SessionRepository implements SessionRepositoryInterface
 
         // Mark session as anonymized
         $this->pdo
-            ->prepare("UPDATE sessions SET anonymized = 1 WHERE id = ?")
+            ->prepare('UPDATE sessions SET anonymized = 1 WHERE id = ?')
             ->execute([$sessionId]);
     }
 }

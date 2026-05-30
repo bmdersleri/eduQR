@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
-use EduQR\Middleware\CsrfMiddleware;
 use EduQR\Middleware\RateLimitMiddleware;
 use EduQR\Repositories\AnswerRepository;
 use EduQR\Repositories\OptionRepository;
@@ -46,7 +45,7 @@ final class AnswerController
         RateLimitMiddleware::check("answer:{$ipHash}", 60, 60);
 
         $participantId = $this->resolveParticipant();
-        $body          = $this->jsonBody();
+        $body = $this->jsonBody();
 
         try {
             $answerId = $this->service->submit($participantId, $body);
@@ -60,7 +59,7 @@ final class AnswerController
 
         $this->json(201, [
             'success' => true,
-            'data'    => ['id' => $answerId],
+            'data' => ['id' => $answerId],
             'message' => t('student.answer.submitted'),
         ]);
     }
@@ -89,27 +88,27 @@ final class AnswerController
     private function handleRuntimeException(\RuntimeException $e): never
     {
         match ($e->getMessage()) {
-            'participant_not_found' => $this->error(401, 'not_joined',          t('error.not_joined')),
-            'question_not_found'    => $this->error(404, 'question_not_found',   t('error.question_not_found')),
-            'question_not_active'   => $this->error(422, 'question_closed',      t('error.question_closed')),
-            'session_not_found'     => $this->error(404, 'session_not_found',    t('error.session_not_found')),
-            'session_paused'        => $this->error(422, 'session_paused',       t('error.session_paused')),
-            'session_closed'        => $this->error(422, 'session_closed',       t('error.session_closed')),
-            'forbidden'             => $this->error(403, 'forbidden',            t('error.forbidden')),
-            'invalid_option'        => $this->error(422, 'invalid_option',       t('error.invalid_answer_shape')),
-            default                 => $this->error(500, 'server_error',         t('error.server_error')),
+            'participant_not_found' => $this->error(401, 'not_joined', t('error.not_joined')),
+            'question_not_found' => $this->error(404, 'question_not_found', t('error.question_not_found')),
+            'question_not_active' => $this->error(422, 'question_closed', t('error.question_closed')),
+            'session_not_found' => $this->error(404, 'session_not_found', t('error.session_not_found')),
+            'session_paused' => $this->error(422, 'session_paused', t('error.session_paused')),
+            'session_closed' => $this->error(422, 'session_closed', t('error.session_closed')),
+            'forbidden' => $this->error(403, 'forbidden', t('error.forbidden')),
+            'invalid_option' => $this->error(422, 'invalid_option', t('error.invalid_answer_shape')),
+            default => $this->error(500, 'server_error', t('error.server_error')),
         };
     }
 
     private function handleValidationException(\InvalidArgumentException $e): never
     {
         match ($e->getMessage()) {
-            'question_id:required'      => $this->error(400, 'missing_fields',   t('validation.required'),  'question_id'),
-            'selected_option_id:required' => $this->error(400, 'missing_fields', t('validation.required'),  'selected_option_id'),
-            'answer_text:required'      => $this->error(400, 'missing_fields',   t('validation.required'),  'answer_text'),
-            'answer_text:too_long'      => $this->error(400, 'validation_error', t('validation.text_too_long'), 'answer_text'),
-            'answer:invalid_shape'      => $this->error(422, 'invalid_answer_shape', t('error.invalid_answer_shape')),
-            default                     => $this->error(400, 'validation_error', t('common.error')),
+            'question_id:required' => $this->error(400, 'missing_fields', t('validation.required'), 'question_id'),
+            'selected_option_id:required' => $this->error(400, 'missing_fields', t('validation.required'), 'selected_option_id'),
+            'answer_text:required' => $this->error(400, 'missing_fields', t('validation.required'), 'answer_text'),
+            'answer_text:too_long' => $this->error(400, 'validation_error', t('validation.text_too_long'), 'answer_text'),
+            'answer:invalid_shape' => $this->error(422, 'invalid_answer_shape', t('error.invalid_answer_shape')),
+            default => $this->error(400, 'validation_error', t('common.error')),
         };
     }
 

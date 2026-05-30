@@ -24,6 +24,7 @@ final class AuthMiddleware
         if ($user === null) {
             self::unauthorized();
         }
+
         return $user;
     }
 
@@ -34,9 +35,10 @@ final class AuthMiddleware
     public static function requireRole(string ...$roles): array
     {
         $user = self::require();
-        if (!in_array($user['role'], $roles, true)) {
+        if (! in_array($user['role'], $roles, true)) {
             self::forbidden();
         }
+
         return $user;
     }
 
@@ -49,8 +51,8 @@ final class AuthMiddleware
             header('Content-Type: application/json; charset=utf-8');
             echo json_encode([
                 'success' => false,
-                'error'   => [
-                    'code'    => 'not_authenticated',
+                'error' => [
+                    'code' => 'not_authenticated',
                     'message' => function_exists('t') ? t('error.not_authenticated') : 'Please sign in.',
                 ],
             ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
@@ -68,8 +70,8 @@ final class AuthMiddleware
             header('Content-Type: application/json; charset=utf-8');
             echo json_encode([
                 'success' => false,
-                'error'   => [
-                    'code'    => 'forbidden',
+                'error' => [
+                    'code' => 'forbidden',
                     'message' => function_exists('t') ? t('error.forbidden') : 'Access denied.',
                 ],
             ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
@@ -87,7 +89,8 @@ final class AuthMiddleware
     private static function wantsJson(): bool
     {
         $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
-        $uri    = $_SERVER['REQUEST_URI'] ?? '';
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+
         return str_contains($accept, 'application/json')
             || str_contains($uri, '/api/');
     }

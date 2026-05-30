@@ -23,7 +23,7 @@ final class SessionController
 
     public function __construct()
     {
-        $this->service  = new SessionService(new SessionRepository(), new CourseRepository());
+        $this->service = new SessionService(new SessionRepository(), new CourseRepository());
         $this->auditLog = new AuditLogRepository();
     }
 
@@ -47,11 +47,12 @@ final class SessionController
         // Audit: FR-90
         try {
             $this->auditLog->write('instructor', (int) $user['id'], 'session.create', 'session', (int) $result['id']);
-        } catch (\Throwable) {}
+        } catch (\Throwable) {
+        }
 
         $this->json(201, [
             'success' => true,
-            'data'    => $result,
+            'data' => $result,
             'message' => t('session.created'),
         ]);
     }
@@ -68,12 +69,12 @@ final class SessionController
             $this->handleRuntimeException($e);
         }
 
-        $appUrl  = rtrim(Config::get('APP_URL', ''), '/');
+        $appUrl = rtrim(Config::get('APP_URL', ''), '/');
         $joinUrl = $appUrl . '/join/' . $session['short_code'];
 
         $this->json(200, [
             'success' => true,
-            'data'    => $this->sessionPayload($session, $joinUrl),
+            'data' => $this->sessionPayload($session, $joinUrl),
         ]);
     }
 
@@ -96,7 +97,7 @@ final class SessionController
 
         $this->json(200, [
             'success' => true,
-            'data'    => null,
+            'data' => null,
             'message' => t('common.success'),
         ]);
     }
@@ -116,7 +117,7 @@ final class SessionController
 
         $this->json(200, [
             'success' => true,
-            'data'    => null,
+            'data' => null,
             'message' => t('session.paused'),
         ]);
     }
@@ -136,7 +137,7 @@ final class SessionController
 
         $this->json(200, [
             'success' => true,
-            'data'    => null,
+            'data' => null,
             'message' => t('session.resumed'),
         ]);
     }
@@ -157,11 +158,12 @@ final class SessionController
         // Audit: FR-90
         try {
             $this->auditLog->write('instructor', (int) $user['id'], 'session.close', 'session', $id);
-        } catch (\Throwable) {}
+        } catch (\Throwable) {
+        }
 
         $this->json(200, [
             'success' => true,
-            'data'    => null,
+            'data' => null,
             'message' => t('session.closed'),
         ]);
     }
@@ -179,8 +181,8 @@ final class SessionController
             exit;
         }
 
-        $size    = max(128, min(1024, (int) ($_GET['size'] ?? 512)));
-        $appUrl  = rtrim(Config::get('APP_URL', ''), '/');
+        $size = max(128, min(1024, (int) ($_GET['size'] ?? 512)));
+        $appUrl = rtrim(Config::get('APP_URL', ''), '/');
         $joinUrl = $appUrl . '/join/' . $session['short_code'];
 
         $result = Builder::create()
@@ -214,11 +216,12 @@ final class SessionController
         // Audit: FR-90
         try {
             $this->auditLog->write('instructor', (int) $user['id'], 'session.anonymize', 'session', $id);
-        } catch (\Throwable) {}
+        } catch (\Throwable) {
+        }
 
         $this->json(200, [
             'success' => true,
-            'data'    => null,
+            'data' => null,
             'message' => t('session.anonymized'),
         ]);
     }
@@ -239,11 +242,12 @@ final class SessionController
         // Audit: FR-90
         try {
             $this->auditLog->write('instructor', (int) $user['id'], 'session.delete_request', 'session', $id);
-        } catch (\Throwable) {}
+        } catch (\Throwable) {
+        }
 
         $this->json(200, [
             'success' => true,
-            'data'    => null,
+            'data' => null,
             'message' => t('session.delete_requested'),
         ]);
     }
@@ -262,7 +266,7 @@ final class SessionController
 
         $this->json(200, [
             'success' => true,
-            'data'    => ['count' => $count],
+            'data' => ['count' => $count],
         ]);
     }
 
@@ -271,49 +275,49 @@ final class SessionController
     private function sessionPayload(array $session, string $joinUrl): array
     {
         return [
-            'id'                       => (int) $session['id'],
-            'course_id'                => (int) $session['course_id'],
-            'title'                    => $session['title'],
-            'short_code'               => $session['short_code'],
-            'status'                   => $session['status'],
-            'language'                 => $session['language'],
+            'id' => (int) $session['id'],
+            'course_id' => (int) $session['course_id'],
+            'title' => $session['title'],
+            'short_code' => $session['short_code'],
+            'status' => $session['status'],
+            'language' => $session['language'],
             'show_results_to_students' => (bool) $session['show_results_to_students'],
-            'moderation_mode'          => (bool) $session['moderation_mode'],
-            'join_url'                 => $joinUrl,
-            'qr_url'                   => '/api/v1/sessions/' . (int) $session['id'] . '/qr.png',
-            'started_at'               => $session['started_at'],
-            'paused_at'                => $session['paused_at'],
-            'closed_at'                => $session['closed_at'],
-            'created_at'               => $session['created_at'],
+            'moderation_mode' => (bool) $session['moderation_mode'],
+            'join_url' => $joinUrl,
+            'qr_url' => '/api/v1/sessions/' . (int) $session['id'] . '/qr.png',
+            'started_at' => $session['started_at'],
+            'paused_at' => $session['paused_at'],
+            'closed_at' => $session['closed_at'],
+            'created_at' => $session['created_at'],
         ];
     }
 
     private function handleRuntimeException(\RuntimeException $e): never
     {
         match ($e->getMessage()) {
-            'session_not_found'        => $this->error(404, 'session_not_found',        t('error.session_not_found')),
-            'course_not_found'         => $this->error(404, 'course_not_found',          t('error.course_not_found')),
-            'forbidden'                => $this->error(403, 'forbidden',                 t('error.forbidden')),
-            'invalid_state_transition' => $this->error(422, 'invalid_state_transition',  t('error.invalid_state_transition')),
-            'already_anonymized'       => $this->error(409, 'already_anonymized',        t('common.error')),
-            default                    => $this->error(500, 'server_error',              t('error.server_error')),
+            'session_not_found' => $this->error(404, 'session_not_found', t('error.session_not_found')),
+            'course_not_found' => $this->error(404, 'course_not_found', t('error.course_not_found')),
+            'forbidden' => $this->error(403, 'forbidden', t('error.forbidden')),
+            'invalid_state_transition' => $this->error(422, 'invalid_state_transition', t('error.invalid_state_transition')),
+            'already_anonymized' => $this->error(409, 'already_anonymized', t('common.error')),
+            default => $this->error(500, 'server_error', t('error.server_error')),
         };
     }
 
     private function handleValidationException(\InvalidArgumentException $e): never
     {
-        $parts   = explode(':', $e->getMessage(), 2);
-        $field   = $parts[0];
-        $key     = $parts[1] ?? 'validation_error';
+        $parts = explode(':', $e->getMessage(), 2);
+        $field = $parts[0];
+        $key = $parts[1] ?? 'validation_error';
         $message = match ($key) {
             'required' => t('validation.required'),
             'too_long' => t('validation.text_too_long'),
-            'invalid'  => t('validation.invalid_language'),
-            default    => t('common.error'),
+            'invalid' => t('validation.invalid_language'),
+            default => t('common.error'),
         };
         $this->json(400, [
             'success' => false,
-            'error'   => ['code' => 'validation_error', 'message' => $message, 'field' => $field],
+            'error' => ['code' => 'validation_error', 'message' => $message, 'field' => $field],
         ]);
     }
 
@@ -334,7 +338,7 @@ final class SessionController
     {
         $this->json($status, [
             'success' => false,
-            'error'   => ['code' => $code, 'message' => $message],
+            'error' => ['code' => $code, 'message' => $message],
         ]);
     }
 }

@@ -21,7 +21,7 @@ final class Config
             return;
         }
 
-        if (!file_exists($envPath)) {
+        if (! file_exists($envPath)) {
             $env = getenv('APP_ENV') ?: 'production';
             if ($env === 'production') {
                 http_response_code(500);
@@ -30,6 +30,7 @@ final class Config
             }
             // Development without .env — use only system env vars
             self::$loaded = true;
+
             return;
         }
 
@@ -39,11 +40,11 @@ final class Config
             if ($line === '' || str_starts_with($line, '#')) {
                 continue;
             }
-            if (!str_contains($line, '=')) {
+            if (! str_contains($line, '=')) {
                 continue;
             }
             [$key, $value] = explode('=', $line, 2);
-            $key   = trim($key);
+            $key = trim($key);
             $value = trim($value);
 
             // Strip surrounding quotes
@@ -60,7 +61,7 @@ final class Config
             self::$data[$key] = $value;
 
             // Also expose to getenv() / $_ENV for libraries that use those
-            if (!array_key_exists($key, $_ENV)) {
+            if (! array_key_exists($key, $_ENV)) {
                 $_ENV[$key] = $value;
                 putenv("{$key}={$value}");
             }
@@ -75,6 +76,7 @@ final class Config
             return self::$data[$key];
         }
         $env = getenv($key);
+
         return $env !== false ? $env : $default;
     }
 
@@ -84,6 +86,7 @@ final class Config
         if ($value === null || $value === '') {
             throw new \RuntimeException("Required config key '{$key}' is missing or empty.");
         }
+
         return (string) $value;
     }
 
@@ -93,12 +96,14 @@ final class Config
         if ($val === null) {
             return $default;
         }
+
         return in_array(strtolower((string) $val), ['true', '1', 'yes', 'on'], true);
     }
 
     public static function int(string $key, int $default = 0): int
     {
         $val = self::get($key);
+
         return $val !== null ? (int) $val : $default;
     }
 }

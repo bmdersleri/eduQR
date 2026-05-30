@@ -42,12 +42,13 @@ class NginxStepTest extends TestCase
     {
         $path = $this->tmpDir . '/test.conf.template';
         file_put_contents($path, $content);
+
         return $path;
     }
 
     public function testRenderReplacesDomainPlaceholder(): void
     {
-        $tpl  = $this->writeTpl('server_name {{DOMAIN}};');
+        $tpl = $this->writeTpl('server_name {{DOMAIN}};');
         $step = new NginxStep('/fake/root', $tpl);
 
         $output = $step->render(['DOMAIN' => 'eduqr.example.com']);
@@ -57,7 +58,7 @@ class NginxStepTest extends TestCase
 
     public function testRenderReplacesFpmSocketPlaceholder(): void
     {
-        $tpl  = $this->writeTpl('fastcgi_pass {{FPM_SOCKET}};');
+        $tpl = $this->writeTpl('fastcgi_pass {{FPM_SOCKET}};');
         $step = new NginxStep('/fake/root', $tpl);
 
         $output = $step->render(['FPM_SOCKET' => 'unix:/run/php/php8.2-fpm.sock']);
@@ -67,15 +68,15 @@ class NginxStepTest extends TestCase
 
     public function testRenderReplacesAllKnownPlaceholders(): void
     {
-        $tpl  = $this->writeTpl('{{DOMAIN}} {{PROJECT_ROOT}} {{FPM_SOCKET}} {{SSL_CERT}} {{SSL_KEY}}');
+        $tpl = $this->writeTpl('{{DOMAIN}} {{PROJECT_ROOT}} {{FPM_SOCKET}} {{SSL_CERT}} {{SSL_KEY}}');
         $step = new NginxStep('/fake/root', $tpl);
 
         $output = $step->render([
-            'DOMAIN'       => 'test.com',
+            'DOMAIN' => 'test.com',
             'PROJECT_ROOT' => '/var/www/eduqr',
-            'FPM_SOCKET'   => 'unix:/run/php/php8.2-fpm.sock',
-            'SSL_CERT'     => '/etc/letsencrypt/live/test.com/fullchain.pem',
-            'SSL_KEY'      => '/etc/letsencrypt/live/test.com/privkey.pem',
+            'FPM_SOCKET' => 'unix:/run/php/php8.2-fpm.sock',
+            'SSL_CERT' => '/etc/letsencrypt/live/test.com/fullchain.pem',
+            'SSL_KEY' => '/etc/letsencrypt/live/test.com/privkey.pem',
         ]);
 
         $this->assertSame(
@@ -88,7 +89,7 @@ class NginxStepTest extends TestCase
 
     public function testRenderLeavesUnknownPlaceholdersIntact(): void
     {
-        $tpl  = $this->writeTpl('{{KNOWN}} {{UNKNOWN_KEY}}');
+        $tpl = $this->writeTpl('{{KNOWN}} {{UNKNOWN_KEY}}');
         $step = new NginxStep('/fake/root', $tpl);
 
         $output = $step->render(['KNOWN' => 'replaced']);
@@ -114,7 +115,7 @@ class NginxStepTest extends TestCase
         mkdir($deployDir, 0755, true);
         file_put_contents($deployDir . '/nginx.conf.template', 'server_name {{DOMAIN}};');
 
-        $step   = new NginxStep($this->tmpDir); // templatePath verilmedi → varsayılan
+        $step = new NginxStep($this->tmpDir); // templatePath verilmedi → varsayılan
         $output = $step->render(['DOMAIN' => 'auto.example.com']);
 
         $this->assertStringContainsString('server_name auto.example.com;', $output);

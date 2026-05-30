@@ -14,9 +14,9 @@ declare(strict_types=1);
  */
 
 $projectRoot = dirname(__DIR__);
-$autoload    = $projectRoot . '/vendor/autoload.php';
+$autoload = $projectRoot . '/vendor/autoload.php';
 
-if (!file_exists($autoload)) {
+if (! file_exists($autoload)) {
     fwrite(STDERR, "Error: vendor/autoload.php not found. Run: composer install\n");
     exit(2);
 }
@@ -29,26 +29,26 @@ EduQR\Config::load($projectRoot . '/.env');
 $opts = getopt('', ['email:', 'name:', 'role::', 'lang::']);
 
 $email = trim($opts['email'] ?? '');
-$name  = trim($opts['name']  ?? '');
-$role  = strtolower(trim($opts['role'] ?? 'instructor'));
-$lang  = strtolower(trim($opts['lang'] ?? 'en'));
+$name = trim($opts['name'] ?? '');
+$role = strtolower(trim($opts['role'] ?? 'instructor'));
+$lang = strtolower(trim($opts['lang'] ?? 'en'));
 
 if ($email === '' || $name === '') {
     fwrite(STDERR, "Usage: php bin/user-add.php --email=<email> --name=<name> [--role=instructor|admin] [--lang=en|tr]\n");
     exit(1);
 }
 
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
     fwrite(STDERR, "Error: '{$email}' is not a valid email address.\n");
     exit(1);
 }
 
-if (!in_array($role, ['instructor', 'admin'], true)) {
+if (! in_array($role, ['instructor', 'admin'], true)) {
     fwrite(STDERR, "Error: --role must be 'instructor' or 'admin'.\n");
     exit(1);
 }
 
-if (!in_array($lang, ['en', 'tr'], true)) {
+if (! in_array($lang, ['en', 'tr'], true)) {
     fwrite(STDERR, "Error: --lang must be 'en' or 'tr'.\n");
     exit(1);
 }
@@ -77,12 +77,13 @@ function readPassword(string $prompt): string
             $pass = trim((string) fgets(STDIN));
         }
     }
+
     return $pass;
 }
 
 echo "Creating user: {$email} ({$role})\n";
 $password = readPassword('Password: ');
-$confirm  = readPassword('Confirm password: ');
+$confirm = readPassword('Confirm password: ');
 
 if ($password !== $confirm) {
     fwrite(STDERR, "Error: Passwords do not match.\n");
@@ -95,10 +96,18 @@ if (mb_strlen($password) < 10) {
 }
 
 $strength = 0;
-if (preg_match('/[a-z]/', $password)) { $strength++; }
-if (preg_match('/[A-Z]/', $password)) { $strength++; }
-if (preg_match('/[0-9]/', $password)) { $strength++; }
-if (preg_match('/[^a-zA-Z0-9]/', $password)) { $strength++; }
+if (preg_match('/[a-z]/', $password)) {
+    $strength++;
+}
+if (preg_match('/[A-Z]/', $password)) {
+    $strength++;
+}
+if (preg_match('/[0-9]/', $password)) {
+    $strength++;
+}
+if (preg_match('/[^a-zA-Z0-9]/', $password)) {
+    $strength++;
+}
 
 if ($strength < 3) {
     fwrite(STDERR, "Error: Password must include at least three of: lowercase, uppercase, digit, symbol.\n");

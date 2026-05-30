@@ -19,7 +19,10 @@ final class AuthServiceTest extends TestCase
             private array $store;
             private array $touched = [];
 
-            public function __construct(array $store) { $this->store = $store; }
+            public function __construct(array $store)
+            {
+                $this->store = $store;
+            }
 
             public function findByEmail(string $email): ?array
             {
@@ -28,6 +31,7 @@ final class AuthServiceTest extends TestCase
                         return $u;
                     }
                 }
+
                 return null;
             }
 
@@ -41,7 +45,10 @@ final class AuthServiceTest extends TestCase
                 $this->touched[] = $id;
             }
 
-            public function touchedIds(): array { return $this->touched; }
+            public function touchedIds(): array
+            {
+                return $this->touched;
+            }
         };
     }
 
@@ -51,7 +58,10 @@ final class AuthServiceTest extends TestCase
             private int $failures;
             public array $recorded = [];
 
-            public function __construct(int $failures) { $this->failures = $failures; }
+            public function __construct(int $failures)
+            {
+                $this->failures = $failures;
+            }
 
             public function record(string $email, ?string $ipHash, bool $succeeded): void
             {
@@ -68,13 +78,13 @@ final class AuthServiceTest extends TestCase
     private function activeUser(string $email, string $password): array
     {
         return [
-            'id'                => 1,
-            'email'             => $email,
-            'password_hash'     => AuthService::hashPassword($password),
-            'display_name'      => 'Test Instructor',
-            'role'              => 'instructor',
+            'id' => 1,
+            'email' => $email,
+            'password_hash' => AuthService::hashPassword($password),
+            'display_name' => 'Test Instructor',
+            'role' => 'instructor',
             'preferred_language' => 'en',
-            'is_active'         => '1',
+            'is_active' => '1',
         ];
     }
 
@@ -82,11 +92,11 @@ final class AuthServiceTest extends TestCase
 
     public function testLoginSucceeds(): void
     {
-        $user    = $this->activeUser('instructor@example.com', 'CorrectPassw0rd!');
-        $users   = $this->makeUserRepo([$user]);
+        $user = $this->activeUser('instructor@example.com', 'CorrectPassw0rd!');
+        $users = $this->makeUserRepo([$user]);
         $attempts = $this->makeAttemptRepo(0);
 
-        $svc    = new AuthService($users, $attempts);
+        $svc = new AuthService($users, $attempts);
         $result = $svc->login('instructor@example.com', 'CorrectPassw0rd!');
 
         $this->assertSame(1, (int) $result['id']);
@@ -97,9 +107,9 @@ final class AuthServiceTest extends TestCase
 
     public function testLoginNormalisesEmailToLowercase(): void
     {
-        $user   = $this->activeUser('instructor@example.com', 'CorrectPassw0rd!');
-        $users  = $this->makeUserRepo([$user]);
-        $svc    = new AuthService($users, $this->makeAttemptRepo(0));
+        $user = $this->activeUser('instructor@example.com', 'CorrectPassw0rd!');
+        $users = $this->makeUserRepo([$user]);
+        $svc = new AuthService($users, $this->makeAttemptRepo(0));
 
         $result = $svc->login('INSTRUCTOR@EXAMPLE.COM', 'CorrectPassw0rd!');
         $this->assertSame('instructor@example.com', $result['email']);
@@ -109,8 +119,8 @@ final class AuthServiceTest extends TestCase
 
     public function testLoginFailsWithWrongPassword(): void
     {
-        $user    = $this->activeUser('instructor@example.com', 'CorrectPassw0rd!');
-        $users   = $this->makeUserRepo([$user]);
+        $user = $this->activeUser('instructor@example.com', 'CorrectPassw0rd!');
+        $users = $this->makeUserRepo([$user]);
         $attempts = $this->makeAttemptRepo(0);
 
         $svc = new AuthService($users, $attempts);
@@ -131,8 +141,8 @@ final class AuthServiceTest extends TestCase
 
     public function testLoginFailsForInactiveUser(): void
     {
-        $user               = $this->activeUser('instructor@example.com', 'CorrectPassw0rd!');
-        $user['is_active']  = '0';
+        $user = $this->activeUser('instructor@example.com', 'CorrectPassw0rd!');
+        $user['is_active'] = '0';
         $svc = new AuthService($this->makeUserRepo([$user]), $this->makeAttemptRepo(0));
 
         $this->expectException(\RuntimeException::class);
@@ -143,7 +153,7 @@ final class AuthServiceTest extends TestCase
     public function testFailedLoginRecordsAttempt(): void
     {
         $attempts = $this->makeAttemptRepo(0);
-        $svc      = new AuthService($this->makeUserRepo([]), $attempts);
+        $svc = new AuthService($this->makeUserRepo([]), $attempts);
 
         try {
             $svc->login('nobody@example.com', 'AnyPassword1!');
@@ -159,11 +169,11 @@ final class AuthServiceTest extends TestCase
 
     public function testRateLimitBlocksAfterMaxFailures(): void
     {
-        $user    = $this->activeUser('instructor@example.com', 'CorrectPassw0rd!');
-        $users   = $this->makeUserRepo([$user]);
+        $user = $this->activeUser('instructor@example.com', 'CorrectPassw0rd!');
+        $users = $this->makeUserRepo([$user]);
         // Simulate 5 prior failures already recorded
         $attempts = $this->makeAttemptRepo(5);
-        $svc      = new AuthService($users, $attempts);
+        $svc = new AuthService($users, $attempts);
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('too_many_attempts');
@@ -172,10 +182,10 @@ final class AuthServiceTest extends TestCase
 
     public function testRateLimitAllowsLoginBelowThreshold(): void
     {
-        $user    = $this->activeUser('instructor@example.com', 'CorrectPassw0rd!');
-        $users   = $this->makeUserRepo([$user]);
+        $user = $this->activeUser('instructor@example.com', 'CorrectPassw0rd!');
+        $users = $this->makeUserRepo([$user]);
         $attempts = $this->makeAttemptRepo(4); // one below the limit of 5
-        $svc      = new AuthService($users, $attempts);
+        $svc = new AuthService($users, $attempts);
 
         $result = $svc->login('instructor@example.com', 'CorrectPassw0rd!');
         $this->assertSame('instructor@example.com', $result['email']);

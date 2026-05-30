@@ -25,7 +25,7 @@ class AuditLogRepositoryTest extends TestCase
     protected function setUp(): void
     {
         $this->pdo = new PDO('sqlite::memory:', options: [
-            PDO::ATTR_ERRMODE          => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
 
@@ -60,11 +60,11 @@ class AuditLogRepositoryTest extends TestCase
         $this->repo->write('instructor', 7, 'session.create', 'session', 99);
 
         $row = $this->pdo->query('SELECT * FROM audit_logs')->fetch();
-        $this->assertSame('instructor',      $row['actor_type']);
-        $this->assertSame('7',               (string) $row['actor_id']);
-        $this->assertSame('session.create',  $row['action']);
-        $this->assertSame('session',         $row['entity_type']);
-        $this->assertSame('99',              (string) $row['entity_id']);
+        $this->assertSame('instructor', $row['actor_type']);
+        $this->assertSame('7', (string) $row['actor_id']);
+        $this->assertSame('session.create', $row['action']);
+        $this->assertSame('session', $row['entity_type']);
+        $this->assertSame('99', (string) $row['entity_id']);
         $this->assertNull($row['metadata_json']);
     }
 

@@ -22,7 +22,8 @@ class AdminStep extends Step
 {
     public function __construct(
         private readonly string $projectRoot,
-    ) {}
+    ) {
+    }
 
     public function title(): string
     {
@@ -31,27 +32,31 @@ class AdminStep extends Step
 
     public function run(Console $console): bool
     {
-        if (!$console->confirm('İlk yönetici hesabı oluşturulsun mu?', true)) {
+        if (! $console->confirm('İlk yönetici hesabı oluşturulsun mu?', true)) {
             $console->warn('Hesap atlandı. Daha sonra: php bin/user-add.php --email=... --name=... --role=admin');
+
             return true;
         }
 
-        $name  = $console->prompt('Ad Soyad');
+        $name = $console->prompt('Ad Soyad');
         $email = $console->prompt('E-posta');
-        $lang  = $console->prompt('Arayüz dili (en / tr)', 'tr');
+        $lang = $console->prompt('Arayüz dili (en / tr)', 'tr');
 
         if (trim($name) === '' || trim($email) === '') {
             $console->error('Ad ve e-posta zorunludur.');
+
             return false;
         }
 
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $console->error("Geçersiz e-posta adresi: {$email}");
+
             return false;
         }
 
-        if (!in_array($lang, ['en', 'tr'], true)) {
+        if (! in_array($lang, ['en', 'tr'], true)) {
             $console->error("Dil değeri 'en' veya 'tr' olmalıdır.");
+
             return false;
         }
 
@@ -60,12 +65,14 @@ class AdminStep extends Step
 
         if ($pass1 !== $pass2) {
             $console->error('Şifreler eşleşmiyor.');
+
             return false;
         }
 
         $error = $this->validatePassword($pass1);
         if ($error !== null) {
             $console->error($error);
+
             return false;
         }
 
@@ -80,7 +87,7 @@ class AdminStep extends Step
             $console->success("Yönetici hesabı oluşturuldu (ID: {$id}).");
             $console->info("  E-posta : {$email}");
             $console->info("  Ad      : {$name}");
-            $console->info("  Rol     : admin");
+            $console->info('  Rol     : admin');
             $console->info("  Dil     : {$lang}");
         } catch (PDOException $e) {
             if ($e->getCode() === '23000') {
@@ -89,6 +96,7 @@ class AdminStep extends Step
             } else {
                 $console->error('Veritabanı hatası: ' . $e->getMessage());
             }
+
             return false;
         }
 
@@ -106,10 +114,18 @@ class AdminStep extends Step
         }
 
         $score = 0;
-        if (preg_match('/[a-z]/', $password)) { $score++; }
-        if (preg_match('/[A-Z]/', $password)) { $score++; }
-        if (preg_match('/[0-9]/', $password)) { $score++; }
-        if (preg_match('/[^a-zA-Z0-9]/', $password)) { $score++; }
+        if (preg_match('/[a-z]/', $password)) {
+            $score++;
+        }
+        if (preg_match('/[A-Z]/', $password)) {
+            $score++;
+        }
+        if (preg_match('/[0-9]/', $password)) {
+            $score++;
+        }
+        if (preg_match('/[^a-zA-Z0-9]/', $password)) {
+            $score++;
+        }
 
         if ($score < 3) {
             return 'Şifre; küçük harf, büyük harf, rakam ve sembolden en az 3\'ünü içermelidir.';

@@ -18,7 +18,8 @@ class EnvStep extends Step
 {
     public function __construct(
         private readonly string $projectRoot,
-    ) {}
+    ) {
+    }
 
     public function title(): string
     {
@@ -27,30 +28,32 @@ class EnvStep extends Step
 
     public function run(Console $console): bool
     {
-        $envPath     = $this->projectRoot . '/.env';
+        $envPath = $this->projectRoot . '/.env';
         $examplePath = $this->projectRoot . '/.env.example';
 
-        if (!file_exists($examplePath)) {
+        if (! file_exists($examplePath)) {
             $console->error('.env.example bulunamadı — depo eksik veya bozuk.');
+
             return false;
         }
 
         if (file_exists($envPath)) {
-            if (!$console->confirm('.env zaten mevcut. Yeniden yapılandırılsın mı?', false)) {
+            if (! $console->confirm('.env zaten mevcut. Yeniden yapılandırılsın mı?', false)) {
                 $console->info('Mevcut .env kullanılıyor. (DB bilgileri bir sonraki adımda güncellenecek.)');
+
                 return true;
             }
         }
 
         // Kullanıcıdan bilgi al
-        $appUrl  = $console->prompt('Uygulama URL\'i (https://, trailing slash olmadan)', 'https://example.com');
-        $appEnv  = $console->prompt('Ortam (production / development)', 'production');
-        $debug   = ($appEnv === 'development') ? 'true' : 'false';
-        $locale  = $console->prompt('Varsayılan dil (en / tr)', 'tr');
+        $appUrl = $console->prompt('Uygulama URL\'i (https://, trailing slash olmadan)', 'https://example.com');
+        $appEnv = $console->prompt('Ortam (production / development)', 'production');
+        $debug = ($appEnv === 'development') ? 'true' : 'false';
+        $locale = $console->prompt('Varsayılan dil (en / tr)', 'tr');
 
         // Ubuntu: log ve backup dizinleri web kökü dışında olmalı
-        $parent    = dirname($this->projectRoot);
-        $logPath   = $console->prompt('Log dizini (mutlak yol, web kökü dışında)', "{$parent}/eduqr-logs");
+        $parent = dirname($this->projectRoot);
+        $logPath = $console->prompt('Log dizini (mutlak yol, web kökü dışında)', "{$parent}/eduqr-logs");
         $backupDir = $console->prompt('Yedekleme dizini (mutlak yol)', "{$parent}/eduqr-backups");
 
         // APP_SECRET: 32 kriptografik rastgele byte, URL-safe base64
@@ -60,13 +63,13 @@ class EnvStep extends Step
         $content = (string) file_get_contents($examplePath);
 
         $subs = [
-            '/^APP_URL=.*/m'            => "APP_URL={$appUrl}",
-            '/^APP_ENV=.*/m'            => "APP_ENV={$appEnv}",
-            '/^APP_DEBUG=.*/m'          => "APP_DEBUG={$debug}",
-            '/^APP_SECRET=.*/m'         => "APP_SECRET={$secret}",
+            '/^APP_URL=.*/m' => "APP_URL={$appUrl}",
+            '/^APP_ENV=.*/m' => "APP_ENV={$appEnv}",
+            '/^APP_DEBUG=.*/m' => "APP_DEBUG={$debug}",
+            '/^APP_SECRET=.*/m' => "APP_SECRET={$secret}",
             '/^APP_LOCALE_DEFAULT=.*/m' => "APP_LOCALE_DEFAULT={$locale}",
-            '/^LOG_PATH=.*/m'           => "LOG_PATH={$logPath}",
-            '/^BACKUP_DIR=.*/m'         => "BACKUP_DIR={$backupDir}",
+            '/^LOG_PATH=.*/m' => "LOG_PATH={$logPath}",
+            '/^BACKUP_DIR=.*/m' => "BACKUP_DIR={$backupDir}",
         ];
 
         foreach ($subs as $pattern => $replacement) {
@@ -75,6 +78,7 @@ class EnvStep extends Step
 
         if (file_put_contents($envPath, $content) === false) {
             $console->error('.env yazılamadı — dizin izinlerini kontrol edin.');
+
             return false;
         }
 

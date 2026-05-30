@@ -29,8 +29,8 @@ final class OptionRepository implements OptionRepositoryInterface
                 $questionId,
                 $option['option_text'],
                 $option['option_value'] ?? null,
-                $option['is_correct']   ?? 0,
-                $option['order_no']     ?? 0,
+                $option['is_correct'] ?? 0,
+                $option['order_no'] ?? 0,
             ]);
         }
     }
@@ -41,6 +41,7 @@ final class OptionRepository implements OptionRepositoryInterface
             'SELECT * FROM options WHERE question_id = ? ORDER BY order_no ASC, id ASC'
         );
         $stmt->execute([$questionId]);
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -54,6 +55,7 @@ final class OptionRepository implements OptionRepositoryInterface
         $stmt = $this->pdo->prepare('SELECT * FROM options WHERE id = ? LIMIT 1');
         $stmt->execute([$id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
         return $row !== false ? $row : null;
     }
 }

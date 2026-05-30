@@ -15,7 +15,7 @@ declare(strict_types=1);
 $projectRoot = dirname(__DIR__);
 $isCli = PHP_SAPI === 'cli';
 
-if (!$isCli) {
+if (! $isCli) {
     http_response_code(403);
     exit('This script must be run from the command line.');
 }
@@ -27,19 +27,19 @@ require_once $projectRoot . '/vendor/autoload.php';
 $pdo = \EduQR\Support\Database::connection();
 
 // Ensure schema_migrations table exists
-$pdo->exec("
+$pdo->exec('
     CREATE TABLE IF NOT EXISTS schema_migrations (
         filename   VARCHAR(120) PRIMARY KEY,
         applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-");
+');
 
 // Fetch already-applied migrations
-$applied = $pdo->query("SELECT filename FROM schema_migrations")->fetchAll(\PDO::FETCH_COLUMN);
+$applied = $pdo->query('SELECT filename FROM schema_migrations')->fetchAll(\PDO::FETCH_COLUMN);
 $applied = array_flip($applied);
 
 // Find migration files
-$dir   = $projectRoot . '/database/migrations';
+$dir = $projectRoot . '/database/migrations';
 $files = glob($dir . '/*.sql');
 sort($files);
 
@@ -53,18 +53,20 @@ foreach ($files as $file) {
     $filename = basename($file);
     if (isset($applied[$filename])) {
         echo "[skip] {$filename}\n";
+
         continue;
     }
 
     $sql = file_get_contents($file);
     if ($sql === false || trim($sql) === '') {
         echo "[warn] {$filename} is empty — skipping\n";
+
         continue;
     }
 
     try {
         $pdo->exec($sql);
-        $stmt = $pdo->prepare("INSERT INTO schema_migrations (filename) VALUES (?)");
+        $stmt = $pdo->prepare('INSERT INTO schema_migrations (filename) VALUES (?)');
         $stmt->execute([$filename]);
         echo "[done] {$filename}\n";
         $ran++;

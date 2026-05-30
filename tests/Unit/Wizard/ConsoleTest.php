@@ -12,17 +12,19 @@ class ConsoleTest extends TestCase
     /** @return array{Console, resource} */
     private function makeConsole(string $input): array
     {
-        $stdin  = fopen('php://memory', 'r+');
+        $stdin = fopen('php://memory', 'r+');
         $stdout = fopen('php://memory', 'r+');
         fwrite($stdin, $input);
         rewind($stdin);
         $console = new Console($stdin, $stdout);
+
         return [$console, $stdout];
     }
 
     private function readOutput(mixed $stdout): string
     {
         rewind($stdout);
+
         return (string) stream_get_contents($stdout);
     }
 

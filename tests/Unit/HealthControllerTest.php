@@ -28,7 +28,7 @@ final class HealthControllerTest extends TestCase
     {
         $result = HealthController::aggregateStatus([
             'php_version' => 'ok',
-            'database'    => 'error',
+            'database' => 'error',
         ]);
 
         $this->assertSame('degraded', $result);
@@ -38,7 +38,7 @@ final class HealthControllerTest extends TestCase
     {
         $result = HealthController::aggregateStatus([
             'php_version' => 'ok',
-            'database'    => 'ok',
+            'database' => 'ok',
         ]);
 
         $this->assertSame('ok', $result);

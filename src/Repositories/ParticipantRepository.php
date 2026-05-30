@@ -27,11 +27,12 @@ final class ParticipantRepository implements ParticipantRepositoryInterface
              VALUES (:session_id, :nickname, :nickname_normalized, :device_hash)'
         );
         $stmt->execute([
-            ':session_id'          => $sessionId,
-            ':nickname'            => $nickname,
+            ':session_id' => $sessionId,
+            ':nickname' => $nickname,
             ':nickname_normalized' => $nicknameNormalized,
-            ':device_hash'         => $deviceHash,
+            ':device_hash' => $deviceHash,
         ]);
+
         return (int) $this->pdo->lastInsertId();
     }
 
@@ -41,6 +42,7 @@ final class ParticipantRepository implements ParticipantRepositoryInterface
             'SELECT 1 FROM participants WHERE session_id = :sid AND nickname_normalized = :nn LIMIT 1'
         );
         $stmt->execute([':sid' => $sessionId, ':nn' => $nicknameNormalized]);
+
         return (bool) $stmt->fetchColumn();
     }
 
@@ -50,6 +52,7 @@ final class ParticipantRepository implements ParticipantRepositoryInterface
             'SELECT COUNT(*) FROM participants WHERE session_id = :sid'
         );
         $stmt->execute([':sid' => $sessionId]);
+
         return (int) $stmt->fetchColumn();
     }
 
@@ -59,6 +62,7 @@ final class ParticipantRepository implements ParticipantRepositoryInterface
             'SELECT * FROM participants WHERE session_id = :sid ORDER BY joined_at ASC'
         );
         $stmt->execute([':sid' => $sessionId]);
+
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
@@ -67,6 +71,7 @@ final class ParticipantRepository implements ParticipantRepositoryInterface
         $stmt = $this->pdo->prepare('SELECT * FROM participants WHERE id = :id');
         $stmt->execute([':id' => $id]);
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+
         return $row ?: null;
     }
 }

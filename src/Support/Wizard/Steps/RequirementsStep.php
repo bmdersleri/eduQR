@@ -18,13 +18,14 @@ use EduQR\Support\Wizard\Step;
  */
 class RequirementsStep extends Step
 {
-    private const MIN_PHP             = '8.2.0';
+    private const MIN_PHP = '8.2.0';
     private const REQUIRED_EXTENSIONS = ['pdo_mysql', 'mbstring', 'gd', 'intl', 'json'];
     private const OPTIONAL_EXTENSIONS = ['apcu'];
 
     public function __construct(
         private readonly string $projectRoot,
-    ) {}
+    ) {
+    }
 
     public function title(): string
     {
@@ -77,7 +78,7 @@ class RequirementsStep extends Step
                 $console->success("ext-{$ext} (opsiyonel)");
             } else {
                 $console->warn("ext-{$ext} yüklü değil (opsiyonel — rate limiting, DB bazlı fallback kullanır)");
-                $console->info("  Ubuntu: sudo apt install php8.2-apcu");
+                $console->info('  Ubuntu: sudo apt install php8.2-apcu');
             }
         }
 
@@ -89,7 +90,7 @@ class RequirementsStep extends Step
             $allOk = false;
         }
 
-        if (!$allOk) {
+        if (! $allOk) {
             $console->writeln();
             $console->error('Gereksinimler karşılanmıyor. Sorunları düzeltin ve sihirbazı tekrar başlatın.');
         }
@@ -102,11 +103,11 @@ class RequirementsStep extends Step
     {
         return match ($ext) {
             'pdo_mysql' => 'php8.2-mysql',
-            'mbstring'  => 'php8.2-mbstring',
-            'gd'        => 'php8.2-gd',
-            'intl'      => 'php8.2-intl',
-            'json'      => 'php8.2-common',
-            default     => "php8.2-{$ext}",
+            'mbstring' => 'php8.2-mbstring',
+            'gd' => 'php8.2-gd',
+            'intl' => 'php8.2-intl',
+            'json' => 'php8.2-common',
+            default => "php8.2-{$ext}",
         };
     }
 }

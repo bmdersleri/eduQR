@@ -18,26 +18,28 @@ use EduQR\Contracts\CourseRepositoryInterface;
  */
 final class CourseService
 {
-    private const ALLOWED_LANGS   = ['en', 'tr'];
-    private const MAX_TITLE_LEN   = 200;
-    private const MAX_CODE_LEN    = 40;
-    private const MAX_SEM_LEN     = 40;
+    private const ALLOWED_LANGS = ['en', 'tr'];
+    private const MAX_TITLE_LEN = 200;
+    private const MAX_CODE_LEN = 40;
+    private const MAX_SEM_LEN = 40;
 
-    public function __construct(private readonly CourseRepositoryInterface $courses) {}
+    public function __construct(private readonly CourseRepositoryInterface $courses)
+    {
+    }
 
     // ── Read ───────────────────────────────────────────────────────────────────
 
     public function listMyCourses(int $instructorId, int $page = 1, int $perPage = 20): array
     {
-        $page    = max(1, $page);
+        $page = max(1, $page);
         $perPage = max(1, min(100, $perPage));
 
         return [
             'data' => $this->courses->listByInstructor($instructorId, $page, $perPage),
             'meta' => [
-                'page'     => $page,
+                'page' => $page,
                 'per_page' => $perPage,
-                'total'    => $this->courses->countByInstructor($instructorId),
+                'total' => $this->courses->countByInstructor($instructorId),
             ],
         ];
     }
@@ -67,13 +69,13 @@ final class CourseService
     /** @throws \InvalidArgumentException on validation failure */
     public function createCourse(int $instructorId, array $data): int
     {
-        $title       = $this->validateTitle($data['title'] ?? '');
-        $code        = $this->validateOptionalStr($data['code'] ?? null, self::MAX_CODE_LEN, 'code');
-        $semester    = $this->validateOptionalStr($data['semester'] ?? null, self::MAX_SEM_LEN, 'semester');
+        $title = $this->validateTitle($data['title'] ?? '');
+        $code = $this->validateOptionalStr($data['code'] ?? null, self::MAX_CODE_LEN, 'code');
+        $semester = $this->validateOptionalStr($data['semester'] ?? null, self::MAX_SEM_LEN, 'semester');
         $description = isset($data['description']) && $data['description'] !== ''
                         ? (string) $data['description']
                         : null;
-        $lang        = $this->validateLanguage($data['default_language'] ?? 'en');
+        $lang = $this->validateLanguage($data['default_language'] ?? 'en');
 
         return $this->courses->create($instructorId, $title, $code, $semester, $description, $lang);
     }
@@ -124,6 +126,7 @@ final class CourseService
         if (mb_strlen($title) > self::MAX_TITLE_LEN) {
             throw new \InvalidArgumentException('title:too_long');
         }
+
         return $title;
     }
 
@@ -139,15 +142,17 @@ final class CourseService
         if (mb_strlen($val) > $maxLen) {
             throw new \InvalidArgumentException("{$field}:too_long");
         }
+
         return $val;
     }
 
     private function validateLanguage(mixed $raw): string
     {
         $lang = (string) $raw;
-        if (!in_array($lang, self::ALLOWED_LANGS, true)) {
+        if (! in_array($lang, self::ALLOWED_LANGS, true)) {
             throw new \InvalidArgumentException('default_language:invalid');
         }
+
         return $lang;
     }
 }

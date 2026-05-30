@@ -20,7 +20,7 @@ final class QuestionController
 
     public function __construct()
     {
-        $this->service  = new QuestionService(
+        $this->service = new QuestionService(
             new QuestionRepository(),
             new OptionRepository(),
             new SessionRepository(),
@@ -63,7 +63,7 @@ final class QuestionController
 
         $this->json(201, [
             'success' => true,
-            'data'    => ['id' => $id],
+            'data' => ['id' => $id],
             'message' => t('question.created'),
         ]);
     }
@@ -104,11 +104,12 @@ final class QuestionController
         // Audit: FR-90
         try {
             $this->auditLog->write('instructor', (int) $user['id'], 'question.activate', 'question', $questionId);
-        } catch (\Throwable) {}
+        } catch (\Throwable) {
+        }
 
         $this->json(200, [
             'success' => true,
-            'data'    => null,
+            'data' => null,
             'message' => t('question.activated'),
         ]);
     }
@@ -128,7 +129,7 @@ final class QuestionController
 
         $this->json(200, [
             'success' => true,
-            'data'    => null,
+            'data' => null,
             'message' => t('question.closed'),
         ]);
     }
@@ -174,27 +175,27 @@ final class QuestionController
     private function handleRuntimeException(\RuntimeException $e): never
     {
         match ($e->getMessage()) {
-            'question_not_found'       => $this->error(404, 'question_not_found',       t('error.question_not_found')),
-            'session_not_found'        => $this->error(404, 'session_not_found',         t('error.session_not_found')),
-            'forbidden'                => $this->error(403, 'forbidden',                  t('error.forbidden')),
-            'question_not_draft'       => $this->error(422, 'invalid_state_transition',   t('error.invalid_state_transition')),
-            'invalid_state_transition' => $this->error(422, 'invalid_state_transition',   t('error.invalid_state_transition')),
-            'session_not_active'       => $this->error(422, 'session_not_active',         t('error.session_not_active')),
-            default                    => $this->error(500, 'server_error',               t('error.server_error')),
+            'question_not_found' => $this->error(404, 'question_not_found', t('error.question_not_found')),
+            'session_not_found' => $this->error(404, 'session_not_found', t('error.session_not_found')),
+            'forbidden' => $this->error(403, 'forbidden', t('error.forbidden')),
+            'question_not_draft' => $this->error(422, 'invalid_state_transition', t('error.invalid_state_transition')),
+            'invalid_state_transition' => $this->error(422, 'invalid_state_transition', t('error.invalid_state_transition')),
+            'session_not_active' => $this->error(422, 'session_not_active', t('error.session_not_active')),
+            default => $this->error(500, 'server_error', t('error.server_error')),
         };
     }
 
     private function handleValidationException(\InvalidArgumentException $e): never
     {
         match ($e->getMessage()) {
-            'question_text:required' => $this->error(400, 'missing_fields',        t('validation.required'),              'question_text'),
-            'question_text:too_long' => $this->error(400, 'validation_error',      t('validation.text_too_long'),         'question_text'),
-            'question_type:invalid'  => $this->error(422, 'invalid_question_type', t('common.error')),
-            'options:invalid_count'  => $this->error(422, 'invalid_option_count',  t('validation.invalid_option_count'),  'options'),
-            'options:empty_text'     => $this->error(400, 'validation_error',      t('validation.required'),              'options'),
-            'options:text_too_long'  => $this->error(400, 'validation_error',      t('validation.text_too_long'),         'options'),
-            'order:required'         => $this->error(400, 'missing_fields',        t('validation.required'),              'order'),
-            default                  => $this->error(400, 'validation_error',      t('common.error')),
+            'question_text:required' => $this->error(400, 'missing_fields', t('validation.required'), 'question_text'),
+            'question_text:too_long' => $this->error(400, 'validation_error', t('validation.text_too_long'), 'question_text'),
+            'question_type:invalid' => $this->error(422, 'invalid_question_type', t('common.error')),
+            'options:invalid_count' => $this->error(422, 'invalid_option_count', t('validation.invalid_option_count'), 'options'),
+            'options:empty_text' => $this->error(400, 'validation_error', t('validation.required'), 'options'),
+            'options:text_too_long' => $this->error(400, 'validation_error', t('validation.text_too_long'), 'options'),
+            'order:required' => $this->error(400, 'missing_fields', t('validation.required'), 'order'),
+            default => $this->error(400, 'validation_error', t('common.error')),
         };
     }
 

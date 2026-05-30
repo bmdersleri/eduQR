@@ -19,16 +19,25 @@ declare(strict_types=1);
 $projectRoot = dirname(__DIR__);
 $isCli = PHP_SAPI === 'cli';
 
-if (!$isCli) {
+if (! $isCli) {
     http_response_code(403);
     exit('This script must be run from the command line.');
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function ok(string $msg): void  { echo "\033[32m[OK]\033[0m  {$msg}\n"; }
-function err(string $msg): void { echo "\033[31m[ERR]\033[0m {$msg}\n"; }
-function info(string $msg): void{ echo "\033[34m[--]\033[0m  {$msg}\n"; }
+function ok(string $msg): void
+{
+    echo "\033[32m[OK]\033[0m  {$msg}\n";
+}
+function err(string $msg): void
+{
+    echo "\033[31m[ERR]\033[0m {$msg}\n";
+}
+function info(string $msg): void
+{
+    echo "\033[34m[--]\033[0m  {$msg}\n";
+}
 
 $errors = 0;
 
@@ -64,7 +73,7 @@ if (is_dir($projectRoot . '/vendor')) {
 
 // ── .env scaffolding ──────────────────────────────────────────────────────────
 
-$envPath     = $projectRoot . '/.env';
+$envPath = $projectRoot . '/.env';
 $examplePath = $projectRoot . '/.env.example';
 
 if (file_exists($envPath)) {
@@ -72,7 +81,7 @@ if (file_exists($envPath)) {
     $content = file_get_contents($envPath);
     if (
         str_contains($content, 'APP_ENV=production')
-        && !str_contains($content, 'APP_SECRET=')
+        && ! str_contains($content, 'APP_SECRET=')
         === false  // APP_SECRET key exists
     ) {
         info('.env exists — skipping scaffold (production guard active)');
@@ -91,7 +100,7 @@ if (file_exists($envPath)) {
 // ── logs/ directory ───────────────────────────────────────────────────────────
 
 $logsDir = $projectRoot . '/logs';
-if (!is_dir($logsDir)) {
+if (! is_dir($logsDir)) {
     mkdir($logsDir, 0750, true);
 }
 if (is_writable($logsDir)) {
@@ -104,7 +113,7 @@ if (is_writable($logsDir)) {
 // ── public/uploads/ ───────────────────────────────────────────────────────────
 
 $uploadsDir = $projectRoot . '/public/uploads';
-if (!is_dir($uploadsDir)) {
+if (! is_dir($uploadsDir)) {
     mkdir($uploadsDir, 0750, true);
 }
 if (is_writable($uploadsDir)) {
@@ -118,11 +127,11 @@ if (is_writable($uploadsDir)) {
 
 echo "\n";
 if ($errors === 0) {
-    ok("All checks passed. Next steps:");
-    info("  1. Edit .env with your DB credentials and APP_URL");
-    info("  2. php bin/migrate.php");
-    info("  3. php bin/seed.php demo    (optional demo data)");
-    info("  4. php -S localhost:8080 -t public/");
+    ok('All checks passed. Next steps:');
+    info('  1. Edit .env with your DB credentials and APP_URL');
+    info('  2. php bin/migrate.php');
+    info('  3. php bin/seed.php demo    (optional demo data)');
+    info('  4. php -S localhost:8080 -t public/');
 } else {
     err("{$errors} check(s) failed. Fix the issues above and re-run.");
     exit(1);

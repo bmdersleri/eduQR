@@ -29,6 +29,7 @@ final class AnswerRepository implements AnswerRepositoryInterface
              VALUES (?, ?, ?, ?)'
         );
         $stmt->execute([$questionId, $participantId, $selectedOptionId, $answerText]);
+
         return (int) $this->pdo->lastInsertId();
     }
 
@@ -38,6 +39,7 @@ final class AnswerRepository implements AnswerRepositoryInterface
             'SELECT COUNT(*) FROM answers WHERE question_id = ?'
         );
         $stmt->execute([$questionId]);
+
         return (int) $stmt->fetchColumn();
     }
 
@@ -50,6 +52,7 @@ final class AnswerRepository implements AnswerRepositoryInterface
               ORDER BY created_at ASC'
         );
         $stmt->execute([$questionId]);
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -61,6 +64,7 @@ final class AnswerRepository implements AnswerRepositoryInterface
               LIMIT 1'
         );
         $stmt->execute([$participantId, $questionId]);
+
         return $stmt->fetchColumn() !== false;
     }
 }

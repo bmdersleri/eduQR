@@ -30,8 +30,8 @@
         }
     },
     "scripts": {
-        "lint": "php-cs-fixer fix --dry-run --diff",
-        "lint:fix": "php-cs-fixer fix",
+        "lint": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
+        "lint:fix": "php-cs-fixer fix --allow-risky=yes",
         "test": "phpunit --configuration tests/phpunit.xml",
         "test:unit": "phpunit --configuration tests/phpunit.xml --testsuite Unit",
         "test:integration": "phpunit --configuration tests/phpunit.xml --testsuite Integration"

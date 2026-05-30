@@ -29,7 +29,7 @@ final class I18nService
 
     public static function setLocale(string $locale): void
     {
-        if ($locale === self::$locale && !empty(self::$strings)) {
+        if ($locale === self::$locale && ! empty(self::$strings)) {
             return;
         }
 
@@ -87,6 +87,7 @@ final class I18nService
             ?? $key;
 
         $params['count'] = $count;
+
         return self::interpolate($raw, $params);
     }
 
@@ -97,10 +98,11 @@ final class I18nService
             return [];
         }
         $path = rtrim(self::$localesPath, '/') . '/' . $locale . '.json';
-        if (!is_file($path)) {
+        if (! is_file($path)) {
             return [];
         }
         $decoded = json_decode((string) file_get_contents($path), true);
+
         return is_array($decoded) ? $decoded : [];
     }
 
@@ -110,6 +112,7 @@ final class I18nService
         foreach ($params as $key => $value) {
             $text = str_replace('{' . $key . '}', (string) $value, $text);
         }
+
         return $text;
     }
 }

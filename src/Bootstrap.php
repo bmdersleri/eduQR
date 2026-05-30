@@ -19,7 +19,7 @@ final class Bootstrap
     {
         // 1. Autoloader
         $autoload = $projectRoot . '/vendor/autoload.php';
-        if (!file_exists($autoload)) {
+        if (! file_exists($autoload)) {
             http_response_code(500);
             error_log('[eduQR] vendor/autoload.php not found — run composer install');
             exit('Application not installed. Run: composer install');
@@ -43,7 +43,7 @@ final class Bootstrap
         self::registerRoutes($router, $projectRoot);
 
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-        $uri    = $_SERVER['REQUEST_URI']    ?? '/';
+        $uri = $_SERVER['REQUEST_URI'] ?? '/';
         $router->dispatch($method, $uri);
     }
 
@@ -53,24 +53,24 @@ final class Bootstrap
     {
         $appUrl = Config::get('APP_URL', '');
 
-        header("X-Frame-Options: DENY");
-        header("X-Content-Type-Options: nosniff");
-        header("X-XSS-Protection: 1; mode=block");
-        header("Referrer-Policy: strict-origin-when-cross-origin");
-        header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
+        header('X-Frame-Options: DENY');
+        header('X-Content-Type-Options: nosniff');
+        header('X-XSS-Protection: 1; mode=block');
+        header('Referrer-Policy: strict-origin-when-cross-origin');
+        header('Permissions-Policy: geolocation=(), microphone=(), camera=()');
 
         // Content-Security-Policy
-        $csp  = "default-src 'self'; ";
+        $csp = "default-src 'self'; ";
         $csp .= "script-src 'self'; ";
         $csp .= "style-src 'self' 'unsafe-inline'; ";
         $csp .= "img-src 'self' data:; ";
         $csp .= "font-src 'self'; ";
         $csp .= "connect-src 'self'; ";
         $csp .= "frame-ancestors 'none'";
-        header("Content-Security-Policy: " . $csp);
+        header('Content-Security-Policy: ' . $csp);
 
         if (Config::bool('COOKIE_SECURE', true)) {
-            header("Strict-Transport-Security: max-age=31536000; includeSubDomains");
+            header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
         }
     }
 
@@ -78,11 +78,11 @@ final class Bootstrap
 
     private static function registerErrorHandlers(string $projectRoot): void
     {
-        $logPath  = Config::get('LOG_PATH', $projectRoot . '/logs');
-        $debug    = Config::bool('APP_DEBUG', false);
+        $logPath = Config::get('LOG_PATH', $projectRoot . '/logs');
+        $debug = Config::bool('APP_DEBUG', false);
 
         set_error_handler(function (int $errno, string $errstr, string $errfile, int $errline) use ($logPath, $debug): bool {
-            if (!($errno & error_reporting())) {
+            if (! ($errno & error_reporting())) {
                 return false;
             }
             $msg = "[eduQR][error] {$errstr} in {$errfile}:{$errline}";
@@ -90,6 +90,7 @@ final class Bootstrap
             if ($debug) {
                 throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
             }
+
             return true;
         });
 
@@ -104,7 +105,7 @@ final class Bootstrap
             );
             error_log($msg, 3, rtrim($logPath, '/') . '/app.log');
 
-            if (!headers_sent()) {
+            if (! headers_sent()) {
                 http_response_code(500);
                 header('Content-Type: text/html; charset=utf-8');
             }

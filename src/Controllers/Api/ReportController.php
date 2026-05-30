@@ -35,7 +35,7 @@ final class ReportController
 
     public function json(int $sessionId): void
     {
-        $user      = AuthMiddleware::require();
+        $user = AuthMiddleware::require();
         $anonymize = filter_var($_GET['anonymize'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         try {
@@ -57,7 +57,7 @@ final class ReportController
 
     public function csv(int $sessionId): void
     {
-        $user      = AuthMiddleware::require();
+        $user = AuthMiddleware::require();
         $anonymize = filter_var($_GET['anonymize'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         try {
@@ -136,7 +136,7 @@ final class ReportController
 
     public function html(int $sessionId): void
     {
-        $user      = AuthMiddleware::require();
+        $user = AuthMiddleware::require();
         $anonymize = filter_var($_GET['anonymize'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         try {
@@ -147,9 +147,9 @@ final class ReportController
 
         header('Content-Type: text/html; charset=utf-8');
 
-        $e = fn(string $s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+        $e = fn (string $s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 
-        $s  = $data['session'];
+        $s = $data['session'];
         $sm = $data['summary'];
 
         echo '<!DOCTYPE html><html lang="' . $e($s['language']) . '"><head>';
@@ -225,6 +225,7 @@ final class ReportController
         if ($value !== '' && in_array($value[0], ['=', '+', '-', '@', '|', "\t", "\r"], true)) {
             return "'" . $value;
         }
+
         return $value;
     }
 
@@ -234,14 +235,14 @@ final class ReportController
     {
         $map = [
             'session_not_found' => [404, t('error.session_not_found')],
-            'forbidden'         => [403, t('error.forbidden')],
+            'forbidden' => [403, t('error.forbidden')],
         ];
         [$status, $msg] = $map[$e->getMessage()] ?? [500, t('error.server_error')];
         http_response_code($status);
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode([
             'success' => false,
-            'error'   => ['code' => $e->getMessage(), 'message' => $msg],
+            'error' => ['code' => $e->getMessage(), 'message' => $msg],
         ], JSON_UNESCAPED_UNICODE);
         exit;
     }

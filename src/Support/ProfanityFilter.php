@@ -20,6 +20,7 @@ final class ProfanityFilter
                 return true;
             }
         }
+
         return false;
     }
 
@@ -27,10 +28,10 @@ final class ProfanityFilter
     {
         // Sanitize locale to prevent directory traversal
         $safe = preg_replace('/[^a-z]/', '', strtolower($locale));
-        $key  = $configDir . '/' . $safe;
+        $key = $configDir . '/' . $safe;
 
-        if (!isset(self::$cache[$key])) {
-            $path  = rtrim($configDir, '/') . '/' . $safe . '.txt';
+        if (! isset(self::$cache[$key])) {
+            $path = rtrim($configDir, '/') . '/' . $safe . '.txt';
             $lines = [];
 
             if (is_file($path) && is_readable($path)) {

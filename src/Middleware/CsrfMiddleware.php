@@ -24,16 +24,16 @@ final class CsrfMiddleware
 
     public static function getToken(): string
     {
-        if (!empty($_COOKIE[self::COOKIE])) {
+        if (! empty($_COOKIE[self::COOKIE])) {
             return $_COOKIE[self::COOKIE];
         }
 
-        $token  = bin2hex(random_bytes(32));
+        $token = bin2hex(random_bytes(32));
         $secure = Config::bool('COOKIE_SECURE', true);
         setcookie(self::COOKIE, $token, [
-            'expires'  => 0,
-            'path'     => '/',
-            'secure'   => $secure,
+            'expires' => 0,
+            'path' => '/',
+            'secure' => $secure,
             'httponly' => false, // must be readable by JS for fetch() requests
             'samesite' => 'Strict',
         ]);
@@ -57,11 +57,11 @@ final class CsrfMiddleware
         // Prefer X-CSRF-Token header (AJAX), fall back to _csrf body field (HTML form).
         $submitted = trim($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
         if ($submitted === '') {
-            $body      = self::parseBody();
+            $body = self::parseBody();
             $submitted = (string) ($body['_csrf'] ?? '');
         }
 
-        if (!hash_equals($cookie, $submitted)) {
+        if (! hash_equals($cookie, $submitted)) {
             self::fail();
         }
     }
@@ -73,8 +73,10 @@ final class CsrfMiddleware
         $ct = $_SERVER['CONTENT_TYPE'] ?? '';
         if (str_contains($ct, 'application/json')) {
             $raw = (string) file_get_contents('php://input');
+
             return json_decode($raw, true) ?? [];
         }
+
         return $_POST;
     }
 
@@ -84,7 +86,7 @@ final class CsrfMiddleware
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode([
             'success' => false,
-            'error'   => ['code' => 'csrf_invalid', 'message' => 'CSRF token mismatch.'],
+            'error' => ['code' => 'csrf_invalid', 'message' => 'CSRF token mismatch.'],
         ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         exit;
     }

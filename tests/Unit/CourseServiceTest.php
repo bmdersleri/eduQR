@@ -14,9 +14,9 @@ class CourseServiceTest extends TestCase
 
     private function makeRepo(array $store = []): CourseRepositoryInterface
     {
-        return new class($store) implements CourseRepositoryInterface {
-            public array $created  = [];
-            public array $updated  = [];
+        return new class ($store) implements CourseRepositoryInterface {
+            public array $created = [];
+            public array $updated = [];
             public array $archived = [];
 
             private array $rows;
@@ -24,7 +24,7 @@ class CourseServiceTest extends TestCase
 
             public function __construct(array $rows)
             {
-                $this->rows   = $rows;
+                $this->rows = $rows;
                 $this->nextId = $rows ? (max(array_column($rows, 'id')) + 1) : 1;
             }
 
@@ -35,6 +35,7 @@ class CourseServiceTest extends TestCase
                         return $r;
                     }
                 }
+
                 return null;
             }
 
@@ -43,6 +44,7 @@ class CourseServiceTest extends TestCase
                 $filtered = array_values(
                     array_filter($this->rows, fn ($r) => (int) $r['instructor_id'] === $instructorId)
                 );
+
                 return array_slice($filtered, ($page - 1) * $perPage, $perPage);
             }
 
@@ -57,18 +59,19 @@ class CourseServiceTest extends TestCase
             {
                 $id = $this->nextId++;
                 $this->created[] = compact('instructorId', 'title', 'code', 'semester', 'description', 'defaultLanguage');
-                $this->rows[]    = [
-                    'id'               => $id,
-                    'instructor_id'    => $instructorId,
-                    'title'            => $title,
-                    'code'             => $code,
-                    'semester'         => $semester,
-                    'description'      => $description,
+                $this->rows[] = [
+                    'id' => $id,
+                    'instructor_id' => $instructorId,
+                    'title' => $title,
+                    'code' => $code,
+                    'semester' => $semester,
+                    'description' => $description,
                     'default_language' => $defaultLanguage,
-                    'status'           => 'active',
-                    'created_at'       => date('Y-m-d H:i:s'),
-                    'updated_at'       => date('Y-m-d H:i:s'),
+                    'status' => 'active',
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s'),
                 ];
+
                 return $id;
             }
 
@@ -87,16 +90,16 @@ class CourseServiceTest extends TestCase
     private function sample(int $id = 1, int $instructorId = 10): array
     {
         return [
-            'id'               => $id,
-            'instructor_id'    => $instructorId,
-            'title'            => 'Test Course',
-            'code'             => 'CS101',
-            'semester'         => '2026-Spring',
-            'description'      => null,
+            'id' => $id,
+            'instructor_id' => $instructorId,
+            'title' => 'Test Course',
+            'code' => 'CS101',
+            'semester' => '2026-Spring',
+            'description' => null,
             'default_language' => 'en',
-            'status'           => 'active',
-            'created_at'       => '2026-05-14 00:00:00',
-            'updated_at'       => '2026-05-14 00:00:00',
+            'status' => 'active',
+            'created_at' => '2026-05-14 00:00:00',
+            'updated_at' => '2026-05-14 00:00:00',
         ];
     }
 
@@ -104,16 +107,16 @@ class CourseServiceTest extends TestCase
 
     public function testCreateCourseReturnsPositiveInt(): void
     {
-        $repo    = $this->makeRepo();
+        $repo = $this->makeRepo();
         $service = new CourseService($repo);
-        $id      = $service->createCourse(10, ['title' => 'New Course', 'default_language' => 'en']);
+        $id = $service->createCourse(10, ['title' => 'New Course', 'default_language' => 'en']);
         $this->assertIsInt($id);
         $this->assertGreaterThan(0, $id);
     }
 
     public function testCreateCourseDefaultsLanguageToEn(): void
     {
-        $repo    = $this->makeRepo();
+        $repo = $this->makeRepo();
         $service = new CourseService($repo);
         $service->createCourse(10, ['title' => 'Course']);
         $this->assertSame('en', $repo->created[0]['defaultLanguage']);
@@ -150,9 +153,9 @@ class CourseServiceTest extends TestCase
 
     public function testGetCourseSucceedsForOwner(): void
     {
-        $repo    = $this->makeRepo([$this->sample(1, 10)]);
+        $repo = $this->makeRepo([$this->sample(1, 10)]);
         $service = new CourseService($repo);
-        $result  = $service->getCourse(1, 10);
+        $result = $service->getCourse(1, 10);
         $this->assertSame('Test Course', $result['title']);
     }
 
@@ -175,7 +178,7 @@ class CourseServiceTest extends TestCase
 
     public function testUpdateCoursePassesTitleToRepository(): void
     {
-        $repo    = $this->makeRepo([$this->sample(1, 10)]);
+        $repo = $this->makeRepo([$this->sample(1, 10)]);
         $service = new CourseService($repo);
         $service->updateCourse(1, 10, ['title' => 'Updated']);
         $this->assertSame('Updated', $repo->updated[0]['fields']['title']);
@@ -193,7 +196,7 @@ class CourseServiceTest extends TestCase
 
     public function testArchiveCourseCallsRepository(): void
     {
-        $repo    = $this->makeRepo([$this->sample(1, 10)]);
+        $repo = $this->makeRepo([$this->sample(1, 10)]);
         $service = new CourseService($repo);
         $service->archiveCourse(1, 10);
         $this->assertContains(1, $repo->archived);
@@ -216,7 +219,7 @@ class CourseServiceTest extends TestCase
             $this->sample(2, 10),
             $this->sample(3, 99),
         ];
-        $repo   = $this->makeRepo($store);
+        $repo = $this->makeRepo($store);
         $result = (new CourseService($repo))->listMyCourses(10, 1, 20);
         $this->assertCount(2, $result['data']);
         $this->assertSame(2, $result['meta']['total']);

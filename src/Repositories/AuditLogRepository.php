@@ -28,8 +28,8 @@ final class AuditLogRepository implements AuditLogRepositoryInterface
         ?int    $actorId,
         string  $action,
         ?string $entityType = null,
-        ?int    $entityId   = null,
-        ?array  $metadata   = null,
+        ?int    $entityId = null,
+        ?array  $metadata = null,
     ): void {
         $stmt = $this->pdo->prepare(
             'INSERT INTO audit_logs

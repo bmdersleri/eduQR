@@ -55,3 +55,6 @@ composer.phar
 /en.json
 /tr.json
 /schema.sql
+
+# agykit local config
+.agykit.conf

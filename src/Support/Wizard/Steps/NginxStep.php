@@ -50,13 +50,15 @@ class NginxStep extends Step
         foreach ($vars as $key => $value) {
             $template = str_replace('{{' . $key . '}}', $value, $template);
         }
+
         return $template;
     }
 
     public function run(Console $console): bool
     {
-        if (!file_exists($this->templatePath)) {
+        if (! file_exists($this->templatePath)) {
             $console->error("Şablon bulunamadı: {$this->templatePath}");
+
             return false;
         }
 
@@ -64,49 +66,51 @@ class NginxStep extends Step
         $console->info('Kontrol: sudo systemctl status php8.2-fpm');
         $console->writeln();
 
-        $domain      = $console->prompt('Alan adı (server_name)', 'example.com');
+        $domain = $console->prompt('Alan adı (server_name)', 'example.com');
         $projectRoot = $console->prompt('Proje kök dizini (mutlak yol)', $this->projectRoot);
-        $fpmSocket   = $console->prompt('PHP-FPM socket', 'unix:/run/php/php8.2-fpm.sock');
-        $sslCert     = $console->prompt(
+        $fpmSocket = $console->prompt('PHP-FPM socket', 'unix:/run/php/php8.2-fpm.sock');
+        $sslCert = $console->prompt(
             'TLS sertifika (fullchain.pem)',
             "/etc/letsencrypt/live/{$domain}/fullchain.pem",
         );
-        $sslKey      = $console->prompt(
+        $sslKey = $console->prompt(
             'TLS anahtar (privkey.pem)',
             "/etc/letsencrypt/live/{$domain}/privkey.pem",
         );
-        $outputPath  = $console->prompt(
+        $outputPath = $console->prompt(
             'Yapılandırma çıktı dosyası',
             $this->projectRoot . '/deploy/nginx.conf',
         );
 
         try {
             $config = $this->render([
-                'DOMAIN'       => $domain,
+                'DOMAIN' => $domain,
                 'PROJECT_ROOT' => $projectRoot,
-                'FPM_SOCKET'   => $fpmSocket,
-                'SSL_CERT'     => $sslCert,
-                'SSL_KEY'      => $sslKey,
+                'FPM_SOCKET' => $fpmSocket,
+                'SSL_CERT' => $sslCert,
+                'SSL_KEY' => $sslKey,
                 'GENERATED_AT' => date('Y-m-d H:i:s T'),
-                'OUTPUT_PATH'  => $outputPath,
+                'OUTPUT_PATH' => $outputPath,
             ]);
         } catch (RuntimeException $e) {
             $console->error($e->getMessage());
+
             return false;
         }
 
         if (file_put_contents($outputPath, $config) === false) {
             $console->error("Dosya yazılamadı: {$outputPath}  (izin hatası?)");
+
             return false;
         }
 
         $console->success("nginx.conf oluşturuldu: {$outputPath}");
         $console->writeln();
         $console->info('Etkinleştirmek için aşağıdaki komutları çalıştırın:');
-        $console->info("  sudo nginx -t");
+        $console->info('  sudo nginx -t');
         $console->info("  sudo cp {$outputPath} /etc/nginx/sites-available/eduqr");
-        $console->info("  sudo ln -s /etc/nginx/sites-available/eduqr /etc/nginx/sites-enabled/eduqr");
-        $console->info("  sudo nginx -t && sudo systemctl reload nginx");
+        $console->info('  sudo ln -s /etc/nginx/sites-available/eduqr /etc/nginx/sites-enabled/eduqr');
+        $console->info('  sudo nginx -t && sudo systemctl reload nginx');
 
         return true;
     }

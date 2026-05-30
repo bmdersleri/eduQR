@@ -22,7 +22,8 @@ class DatabaseStep extends Step
 {
     public function __construct(
         private readonly string $projectRoot,
-    ) {}
+    ) {
+    }
 
     public function title(): string
     {
@@ -48,15 +49,16 @@ class DatabaseStep extends Step
                 $user,
                 $pass,
                 [
-                    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::ATTR_EMULATE_PREPARES   => false,
+                    PDO::ATTR_EMULATE_PREPARES => false,
                 ],
             );
             $console->success('MariaDB bağlantısı başarılı!');
         } catch (PDOException $e) {
             $console->error('Bağlantı başarısız: ' . $e->getMessage());
             $console->info('Ubuntu: sudo mysql -u root -p → GRANT ALL ON eduqr.* TO \'eduqr_app\'@\'localhost\';');
+
             return false;
         }
 
@@ -71,8 +73,9 @@ class DatabaseStep extends Step
         $console->success('.env veritabanı bilgileri kaydedildi.');
 
         // Migrasyonlar
-        if (!$console->confirm('Migrasyonlar çalıştırılsın mı?', true)) {
+        if (! $console->confirm('Migrasyonlar çalıştırılsın mı?', true)) {
             $console->warn('Migrasyonlar atlandı. Daha sonra: php bin/migrate.php');
+
             return true;
         }
 
@@ -107,33 +110,35 @@ class DatabaseStep extends Step
     private function runMigrations(PDO $pdo, Console $console): bool
     {
         try {
-            $pdo->exec("
+            $pdo->exec('
                 CREATE TABLE IF NOT EXISTS schema_migrations (
                     filename   VARCHAR(120) PRIMARY KEY,
                     applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-            ");
+            ');
 
             /** @var string[] $applied */
             $applied = $pdo->query('SELECT filename FROM schema_migrations')
                            ->fetchAll(PDO::FETCH_COLUMN);
             $applied = array_flip($applied);
 
-            $dir   = $this->projectRoot . '/database/migrations';
+            $dir = $this->projectRoot . '/database/migrations';
             $files = glob($dir . '/*.sql') ?: [];
             sort($files);
 
             if (empty($files)) {
                 $console->warn("Migrasyon dosyası bulunamadı: {$dir}");
+
                 return true;
             }
 
-            $ran     = 0;
+            $ran = 0;
             $skipped = 0;
             foreach ($files as $file) {
                 $filename = basename($file);
                 if (isset($applied[$filename])) {
                     $skipped++;
+
                     continue;
                 }
                 $sql = trim((string) file_get_contents($file));
@@ -154,6 +159,7 @@ class DatabaseStep extends Step
             $console->success($summary . '.');
         } catch (PDOException $e) {
             $console->error('Migrasyon hatası: ' . $e->getMessage());
+
             return false;
         }
 

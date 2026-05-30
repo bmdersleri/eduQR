@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace EduQR\Tests\Integration;
 
+use EduQR\Contracts\OptionRepositoryInterface;
+use EduQR\Contracts\ParticipantRepositoryInterface;
+use EduQR\Contracts\QuestionRepositoryInterface;
+use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Repositories\AnswerRepository;
 use EduQR\Services\AnswerService;
 use EduQR\Services\DuplicateAnswerException;
-use EduQR\Contracts\QuestionRepositoryInterface;
-use EduQR\Contracts\SessionRepositoryInterface;
-use EduQR\Contracts\ParticipantRepositoryInterface;
-use EduQR\Contracts\OptionRepositoryInterface;
 use PDO;
 use PHPUnit\Framework\TestCase;
 
@@ -36,8 +36,8 @@ class AnswerFlowTest extends TestCase
     {
         // ── In-memory SQLite for AnswerRepository ──────────────────────────────
         $this->pdo = new PDO('sqlite::memory:', options: [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_EMULATE_PREPARES   => false,
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_EMULATE_PREPARES => false,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
 
@@ -61,16 +61,16 @@ class AnswerFlowTest extends TestCase
     /** Build AnswerService wired to the real in-memory AnswerRepository. */
     private function makeService(
         string $questionStatus = 'active',
-        string $sessionStatus  = 'active',
+        string $sessionStatus = 'active',
         int    $participantSession = 10,
-        string $questionType   = 'multiple_choice',
-        ?array $optionRow      = null,
+        string $questionType = 'multiple_choice',
+        ?array $optionRow = null,
     ): AnswerService {
         $question = [
-            'id'            => 99,
-            'session_id'    => 10,
+            'id' => 99,
+            'session_id' => 10,
             'question_type' => $questionType,
-            'status'        => $questionStatus,
+            'status' => $questionStatus,
         ];
 
         $option = $optionRow ?? ['id' => 5, 'question_id' => 99];
@@ -129,7 +129,7 @@ class AnswerFlowTest extends TestCase
 
     public function testSuccessfulOptionAnswerPersists(): void
     {
-        $service  = $this->makeService();
+        $service = $this->makeService();
         $answerId = $service->submit(1, ['question_id' => 99, 'selected_option_id' => 5]);
 
         $this->assertGreaterThan(0, $answerId);
@@ -138,8 +138,8 @@ class AnswerFlowTest extends TestCase
         $row = $this->pdo->query("SELECT * FROM answers WHERE id = {$answerId}")->fetch();
         $this->assertIsArray($row);
         $this->assertSame(99, (int) $row['question_id']);
-        $this->assertSame(1,  (int) $row['participant_id']);
-        $this->assertSame(5,  (int) $row['selected_option_id']);
+        $this->assertSame(1, (int) $row['participant_id']);
+        $this->assertSame(5, (int) $row['selected_option_id']);
         $this->assertNull($row['answer_text']);
     }
 
@@ -147,7 +147,7 @@ class AnswerFlowTest extends TestCase
 
     public function testSuccessfulOpenTextAnswerPersists(): void
     {
-        $service  = $this->makeService(questionType: 'open_text');
+        $service = $this->makeService(questionType: 'open_text');
         $answerId = $service->submit(1, [
             'question_id' => 99,
             'answer_text' => '<b>Great</b> lecture!',
@@ -182,7 +182,7 @@ class AnswerFlowTest extends TestCase
     public function testCountByQuestionReflectsAnswers(): void
     {
         $service = $this->makeService();
-        $repo    = new AnswerRepository($this->pdo);
+        $repo = new AnswerRepository($this->pdo);
 
         $this->assertSame(0, $repo->countByQuestion(99));
 
@@ -195,7 +195,7 @@ class AnswerFlowTest extends TestCase
     public function testFetchByQuestionReturnsRows(): void
     {
         $service = $this->makeService();
-        $repo    = new AnswerRepository($this->pdo);
+        $repo = new AnswerRepository($this->pdo);
 
         $this->assertCount(0, $repo->fetchByQuestion(99));
 

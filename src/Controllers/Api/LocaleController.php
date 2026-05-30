@@ -21,7 +21,7 @@ final class LocaleController
         $locales = $stmt->fetchAll();
 
         foreach ($locales as &$row) {
-            $row['is_rtl']    = (bool) $row['is_rtl'];
+            $row['is_rtl'] = (bool) $row['is_rtl'];
             $row['is_active'] = (bool) $row['is_active'];
             $row['sort_order'] = (int) $row['sort_order'];
         }

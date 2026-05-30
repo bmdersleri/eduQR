@@ -30,7 +30,7 @@ $root = dirname(__DIR__);
 require_once $root . '/vendor/autoload.php';
 \EduQR\Config::load($root . '/.env');
 
-$base    = rtrim(\EduQR\Config::get('APP_URL', 'http://localhost'), '/');
+$base = rtrim(\EduQR\Config::get('APP_URL', 'http://localhost'), '/');
 $verbose = in_array('--verbose', $argv, true);
 
 foreach ($argv as $arg) {
@@ -39,7 +39,7 @@ foreach ($argv as $arg) {
     }
 }
 
-if (!$base) {
+if (! $base) {
     fwrite(STDERR, "Error: APP_URL not configured. Pass --url=https://example.org\n");
     exit(2);
 }
@@ -72,23 +72,23 @@ $checks = [
 $failed = 0;
 $ctx = stream_context_create([
     'http' => [
-        'method'          => 'GET',
+        'method' => 'GET',
         'follow_location' => 0,          // Do NOT follow redirects — we check status directly
-        'timeout'         => 10,
-        'ignore_errors'   => true,       // Don't throw on 4xx/5xx
-        'header'          => "Accept: application/json, text/html\r\n",
+        'timeout' => 10,
+        'ignore_errors' => true,       // Don't throw on 4xx/5xx
+        'header' => "Accept: application/json, text/html\r\n",
     ],
-    'ssl'  => [
-        'verify_peer'      => false,     // Local / staging: allow self-signed certs
+    'ssl' => [
+        'verify_peer' => false,     // Local / staging: allow self-signed certs
         'verify_peer_name' => false,
     ],
 ]);
 
 foreach ($checks as [$path, $expected]) {
-    $url     = $base . $path;
-    $body    = @file_get_contents($url, false, $ctx);
+    $url = $base . $path;
+    $body = @file_get_contents($url, false, $ctx);
     $headers = $http_response_header ?? [];
-    $status  = 0;
+    $status = 0;
 
     foreach ($headers as $h) {
         if (preg_match('#HTTP/\S+ (\d+)#', $h, $m)) {
@@ -99,16 +99,16 @@ foreach ($checks as [$path, $expected]) {
     // Auth-gated routes: accept 401 JSON or 302 redirect
     $ok = match (true) {
         $expected === 401 => in_array($status, [401, 302, 403], true),
-        default           => $status === $expected,
+        default => $status === $expected,
     };
 
-    if (!$ok) {
+    if (! $ok) {
         $failed++;
     }
 
     $icon = $ok ? 'PASS' : 'FAIL';
 
-    if ($verbose || !$ok) {
+    if ($verbose || ! $ok) {
         printf("[%s] %-50s  expected=%d  got=%d\n", $icon, $path, $expected, $status);
     } else {
         echo '.';
@@ -118,7 +118,7 @@ foreach ($checks as [$path, $expected]) {
 echo "\n";
 
 if ($failed === 0) {
-    echo "All " . count($checks) . " smoke checks passed.\n";
+    echo 'All ' . count($checks) . " smoke checks passed.\n";
     exit(0);
 } else {
     echo "{$failed} check(s) failed.\n";

@@ -151,6 +151,7 @@ See `I18N_SPEC.md` for the implementation contract.
 | --- | --- | --- |
 | FR-90 | SHOULD | The system SHOULD write an `audit_logs` row for these actions: `session.created`, `session.closed`, `session.anonymized`, `session.deleted`, `question.activated`, `question.closed`, `report.exported`, `user.created`. |
 | FR-91 | MAY  | An admin UI for browsing the audit log MAY be added in Phase 11. |
+| FR-92 | SHOULD | A session SHOULD support quiz mode (is_quiz=1). In quiz mode, multiple_choice questions with at least one correct option (is_correct=1) contribute to a per-participant score. The session report SHOULD display each participant's score and a ranking. |
 
 ---
 

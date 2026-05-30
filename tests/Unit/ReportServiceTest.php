@@ -25,7 +25,7 @@ class ReportServiceTest extends TestCase
     protected function setUp(): void
     {
         $this->pdo = new PDO('sqlite::memory:', options: [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
 
@@ -66,16 +66,16 @@ class ReportServiceTest extends TestCase
 
     private function makeService(
         ?array $questionRow = null,
-        ?array $sessionRow  = null,
-        ?array $courseRow   = null,
+        ?array $sessionRow = null,
+        ?array $courseRow = null,
     ): ReportService {
         $q = $questionRow ?? [
-            'id'            => 1,
-            'session_id'    => 10,
+            'id' => 1,
+            'session_id' => 10,
             'question_type' => 'multiple_choice',
             'question_text' => 'Test?',
-            'status'        => 'closed',
-            'show_results'  => 1,
+            'status' => 'closed',
+            'show_results' => 1,
         ];
 
         $questions = $this->createMock(QuestionRepositoryInterface::class);
@@ -104,6 +104,7 @@ class ReportServiceTest extends TestCase
             )->execute([$questionId, $text, (string) ($i + 1), $i + 1]);
             $ids[] = (int) $this->pdo->lastInsertId();
         }
+
         return $ids;
     }
 
@@ -134,7 +135,7 @@ class ReportServiceTest extends TestCase
 
     public function testAggregateReturnsZeroCountsWithNoAnswers(): void
     {
-        $optIds  = $this->seedOptions(1, ['Yes', 'No']);
+        $optIds = $this->seedOptions(1, ['Yes', 'No']);
         $service = $this->makeService();
 
         $result = $service->aggregate(1);
@@ -156,7 +157,7 @@ class ReportServiceTest extends TestCase
         $this->seedAnswer(3, 1, $optB);
 
         $service = $this->makeService();
-        $result  = $service->aggregate(1);
+        $result = $service->aggregate(1);
 
         $this->assertSame(3, $result['answer_count']);
 
@@ -176,7 +177,7 @@ class ReportServiceTest extends TestCase
         $this->seedAnswer(3, 1, $optC);
 
         $service = $this->makeService();
-        $result  = $service->aggregate(1);
+        $result = $service->aggregate(1);
 
         foreach ($result['options'] as $opt) {
             $this->assertEqualsWithDelta(33.3, $opt['percent'], 0.5);
@@ -189,7 +190,7 @@ class ReportServiceTest extends TestCase
     {
         $this->seedOptions(1, ['A', 'B']);
         $service = $this->makeService();
-        $result  = $service->aggregate(1);
+        $result = $service->aggregate(1);
 
         $this->assertSame(0.0, $result['options'][0]['percent']);
         $this->assertSame(0.0, $result['options'][1]['percent']);
@@ -205,7 +206,7 @@ class ReportServiceTest extends TestCase
         $this->seedHiddenAnswer(2, 1, $optB); // hidden → should not count
 
         $service = $this->makeService();
-        $result  = $service->aggregate(1);
+        $result = $service->aggregate(1);
 
         $this->assertSame(1, $result['answer_count']); // only the visible one
         $this->assertSame(1, $result['options'][0]['count']); // optA
@@ -220,12 +221,12 @@ class ReportServiceTest extends TestCase
         $this->pdo->exec("INSERT INTO answers (question_id, participant_id, answer_text) VALUES (2, 1, 'Great lecture')");
 
         $service = $this->makeService(questionRow: [
-            'id'            => 2,
-            'session_id'    => 10,
+            'id' => 2,
+            'session_id' => 10,
             'question_type' => 'open_text',
             'question_text' => 'Tell us.',
-            'status'        => 'closed',
-            'show_results'  => 1,
+            'status' => 'closed',
+            'show_results' => 1,
         ]);
 
         $answers = $service->openTextAnswers(2, true);
@@ -243,12 +244,12 @@ class ReportServiceTest extends TestCase
         $this->pdo->exec("INSERT INTO answers (question_id, participant_id, answer_text, is_hidden) VALUES (2, 2, 'Hidden', 1)");
 
         $service = $this->makeService(questionRow: [
-            'id'            => 2,
-            'session_id'    => 10,
+            'id' => 2,
+            'session_id' => 10,
             'question_type' => 'open_text',
             'question_text' => 'Tell us.',
-            'status'        => 'closed',
-            'show_results'  => 1,
+            'status' => 'closed',
+            'show_results' => 1,
         ]);
 
         // Students: includeHidden = false
@@ -269,9 +270,9 @@ class ReportServiceTest extends TestCase
         $this->expectExceptionMessage('results_hidden');
 
         $service = $this->makeService(sessionRow: [
-            'id'                      => 10,
-            'status'                  => 'active',
-            'course_id'               => 5,
+            'id' => 10,
+            'status' => 'active',
+            'course_id' => 5,
             'show_results_to_students' => 0,
         ]);
 
@@ -292,15 +293,15 @@ class ReportServiceTest extends TestCase
         $this->seedOptions(1, ['A', 'B']);
         $report = $service->buildReport(10, 99);
 
-        $this->assertArrayHasKey('session',   $report);
-        $this->assertArrayHasKey('summary',   $report);
+        $this->assertArrayHasKey('session', $report);
+        $this->assertArrayHasKey('summary', $report);
         $this->assertArrayHasKey('questions', $report);
 
         $this->assertSame('Test Session', $report['session']['title']);
         $this->assertSame(false, $report['session']['anonymized']);
-        $this->assertArrayHasKey('participant_count',  $report['summary']);
-        $this->assertArrayHasKey('question_count',     $report['summary']);
-        $this->assertArrayHasKey('answer_count',       $report['summary']);
+        $this->assertArrayHasKey('participant_count', $report['summary']);
+        $this->assertArrayHasKey('question_count', $report['summary']);
+        $this->assertArrayHasKey('answer_count', $report['summary']);
         $this->assertArrayHasKey('participation_rate', $report['summary']);
     }
 
@@ -337,7 +338,7 @@ class ReportServiceTest extends TestCase
         ]);
 
         $report = $service->buildReport(10, 99);
-        $q      = $report['questions'][0];
+        $q = $report['questions'][0];
 
         $this->assertArrayHasKey('distribution', $q);
         $this->assertSame(2, $q['distribution'][0]['count']); // Yes
@@ -348,12 +349,12 @@ class ReportServiceTest extends TestCase
     {
         // Use an open_text question so we can check nicknames
         $openQ = [
-            'id'            => 3,
-            'session_id'    => 10,
+            'id' => 3,
+            'session_id' => 10,
             'question_type' => 'open_text',
             'question_text' => 'Tell us.',
-            'status'        => 'closed',
-            'show_results'  => 1,
+            'status' => 'closed',
+            'show_results' => 1,
         ];
 
         $this->pdo->exec("INSERT INTO participants (id, session_id, nickname) VALUES (1, 10, 'Alice')");
@@ -376,7 +377,7 @@ class ReportServiceTest extends TestCase
         foreach ($nicknames as $nick) {
             $this->assertStringStartsWith('Participant ', $nick);
             $this->assertStringNotContainsStringIgnoringCase('Alice', $nick);
-            $this->assertStringNotContainsStringIgnoringCase('Bob',   $nick);
+            $this->assertStringNotContainsStringIgnoringCase('Bob', $nick);
         }
     }
 
@@ -392,7 +393,7 @@ class ReportServiceTest extends TestCase
         $this->pdo->exec("INSERT INTO answers (question_id, participant_id, answer_text) VALUES (11, 1, 'Ans2')");
 
         // Mock returns BOTH questions
-        $sessions  = $this->createMock(\EduQR\Contracts\SessionRepositoryInterface::class);
+        $sessions = $this->createMock(\EduQR\Contracts\SessionRepositoryInterface::class);
         $sessionRow = [
             'id' => 10, 'status' => 'closed', 'course_id' => 5,
             'show_results_to_students' => 1, 'title' => 'S',
@@ -411,7 +412,7 @@ class ReportServiceTest extends TestCase
         $options = $this->createMock(\EduQR\Contracts\OptionRepositoryInterface::class);
 
         $service = new \EduQR\Services\ReportService($sessions, $questions, $options, $courses, $this->pdo);
-        $report  = $service->buildReport(10, 99, anonymize: true);
+        $report = $service->buildReport(10, 99, anonymize: true);
 
         $nick1 = $report['questions'][0]['answers'][0]['nickname'];
         $nick2 = $report['questions'][1]['answers'][0]['nickname'];
@@ -434,13 +435,13 @@ class ReportServiceTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('session_not_found');
 
-        $sessions  = $this->createMock(\EduQR\Contracts\SessionRepositoryInterface::class);
+        $sessions = $this->createMock(\EduQR\Contracts\SessionRepositoryInterface::class);
         $sessions->method('findById')->willReturn(null);
         $sessions->method('findByShortCode')->willReturn(null);
 
         $questions = $this->createMock(\EduQR\Contracts\QuestionRepositoryInterface::class);
-        $courses   = $this->createMock(\EduQR\Contracts\CourseRepositoryInterface::class);
-        $options   = $this->createMock(\EduQR\Contracts\OptionRepositoryInterface::class);
+        $courses = $this->createMock(\EduQR\Contracts\CourseRepositoryInterface::class);
+        $options = $this->createMock(\EduQR\Contracts\OptionRepositoryInterface::class);
 
         $service = new \EduQR\Services\ReportService($sessions, $questions, $options, $courses, $this->pdo);
         $service->buildReport(99, 1);

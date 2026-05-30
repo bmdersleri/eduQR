@@ -14,18 +14,19 @@ namespace EduQR\Support\Wizard;
  */
 class Console
 {
-    private const RESET  = "\033[0m";
-    private const GREEN  = "\033[32m";
-    private const RED    = "\033[31m";
+    private const RESET = "\033[0m";
+    private const GREEN = "\033[32m";
+    private const RED = "\033[31m";
     private const YELLOW = "\033[33m";
-    private const CYAN   = "\033[36m";
-    private const BOLD   = "\033[1m";
+    private const CYAN = "\033[36m";
+    private const BOLD = "\033[1m";
 
     /** @param resource $stdin @param resource $stdout */
     public function __construct(
-        private mixed $stdin  = STDIN,
+        private mixed $stdin = STDIN,
         private mixed $stdout = STDOUT,
-    ) {}
+    ) {
+    }
 
     public function writeln(string $text = ''): void
     {
@@ -34,29 +35,29 @@ class Console
 
     public function success(string $text): void
     {
-        fwrite($this->stdout, self::GREEN . "  ✓ " . self::RESET . $text . "\n");
+        fwrite($this->stdout, self::GREEN . '  ✓ ' . self::RESET . $text . "\n");
     }
 
     public function error(string $text): void
     {
-        fwrite($this->stdout, self::RED . "  ✗ " . self::RESET . $text . "\n");
+        fwrite($this->stdout, self::RED . '  ✗ ' . self::RESET . $text . "\n");
     }
 
     public function warn(string $text): void
     {
-        fwrite($this->stdout, self::YELLOW . "  ! " . self::RESET . $text . "\n");
+        fwrite($this->stdout, self::YELLOW . '  ! ' . self::RESET . $text . "\n");
     }
 
     public function info(string $text): void
     {
-        fwrite($this->stdout, self::CYAN . "  → " . self::RESET . $text . "\n");
+        fwrite($this->stdout, self::CYAN . '  → ' . self::RESET . $text . "\n");
     }
 
     public function banner(string $title): void
     {
         $width = 48;
-        $line  = str_repeat('═', $width);
-        $pad   = str_pad($title, $width, ' ', STR_PAD_BOTH);
+        $line = str_repeat('═', $width);
+        $pad = str_pad($title, $width, ' ', STR_PAD_BOTH);
         $this->writeln();
         $this->writeln(self::BOLD . "╔{$line}╗" . self::RESET);
         $this->writeln(self::BOLD . "║{$pad}║" . self::RESET);
@@ -83,6 +84,7 @@ class Console
             return $default;
         }
         $input = trim($line);
+
         return $input !== '' ? $input : $default;
     }
 
@@ -102,6 +104,7 @@ class Console
             system('stty echo');
             fwrite($this->stdout, "\n");
         }
+
         return $line !== false ? trim($line) : '';
     }
 
@@ -123,6 +126,7 @@ class Console
         if ($input === '') {
             return $default;
         }
+
         return in_array($input, ['e', 'evet', 'y', 'yes', '1'], true);
     }
 }

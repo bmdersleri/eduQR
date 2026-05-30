@@ -11,14 +11,15 @@ use EduQR\Support\ShortCode;
 
 final class SessionService
 {
-    private const MAX_TITLE_LEN    = 200;
-    private const ALLOWED_LANGS    = ['en', 'tr'];
+    private const MAX_TITLE_LEN = 200;
+    private const ALLOWED_LANGS = ['en', 'tr'];
     private const MAX_CODE_RETRIES = 10;
 
     public function __construct(
         private readonly SessionRepositoryInterface $sessions,
         private readonly CourseRepositoryInterface  $courses,
-    ) {}
+    ) {
+    }
 
     // ── Create ─────────────────────────────────────────────────────────────────
 
@@ -32,22 +33,22 @@ final class SessionService
             throw new \RuntimeException('forbidden');
         }
 
-        $title    = $this->validateTitle($data['title'] ?? null);
+        $title = $this->validateTitle($data['title'] ?? null);
         $language = $this->validateLanguage($data['language'] ?? $course['default_language']);
 
         $shortCode = $this->generateUniqueCode();
 
         $id = $this->sessions->create($courseId, $title, $shortCode, $language);
 
-        $appUrl  = rtrim(Config::get('APP_URL', ''), '/');
+        $appUrl = rtrim(Config::get('APP_URL', ''), '/');
         $joinUrl = $appUrl . '/join/' . $shortCode;
 
         return [
-            'id'         => $id,
+            'id' => $id,
             'short_code' => $shortCode,
-            'join_url'   => $joinUrl,
-            'qr_url'     => '/api/v1/sessions/' . $id . '/qr.png',
-            'status'     => 'active',
+            'join_url' => $joinUrl,
+            'qr_url' => '/api/v1/sessions/' . $id . '/qr.png',
+            'status' => 'active',
         ];
     }
 
@@ -63,12 +64,13 @@ final class SessionService
         if ($course === null || (int) $course['instructor_id'] !== $instructorId) {
             throw new \RuntimeException('forbidden');
         }
+
         return $session;
     }
 
     public function resolveByShortCode(string $code): array
     {
-        $code    = strtoupper(trim($code));
+        $code = strtoupper(trim($code));
         $session = $this->sessions->findByShortCode($code);
         if ($session === null) {
             throw new \RuntimeException('session_not_found');
@@ -77,17 +79,17 @@ final class SessionService
             throw new \RuntimeException('session_closed');
         }
 
-        $course  = $this->courses->findById((int) $session['course_id']);
-        $appUrl  = rtrim(Config::get('APP_URL', ''), '/');
+        $course = $this->courses->findById((int) $session['course_id']);
+        $appUrl = rtrim(Config::get('APP_URL', ''), '/');
         $joinUrl = $appUrl . '/join/' . $session['short_code'];
 
         return [
-            'short_code'   => $session['short_code'],
-            'title'        => $session['title'],
+            'short_code' => $session['short_code'],
+            'title' => $session['title'],
             'course_title' => $course['title'] ?? '',
-            'status'       => $session['status'],
-            'language'     => $session['language'],
-            'join_url'     => $joinUrl,
+            'status' => $session['status'],
+            'language' => $session['language'],
+            'join_url' => $joinUrl,
         ];
     }
 
@@ -109,7 +111,7 @@ final class SessionService
             $fields['moderation_mode'] = $data['moderation_mode'] ? 1 : 0;
         }
 
-        if (!empty($fields)) {
+        if (! empty($fields)) {
             $this->sessions->update($id, $fields);
         }
     }
@@ -123,7 +125,7 @@ final class SessionService
             throw new \RuntimeException('invalid_state_transition');
         }
         $this->sessions->update($id, [
-            'status'    => 'paused',
+            'status' => 'paused',
             'paused_at' => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s'),
         ]);
     }
@@ -135,7 +137,7 @@ final class SessionService
             throw new \RuntimeException('invalid_state_transition');
         }
         $this->sessions->update($id, [
-            'status'    => 'active',
+            'status' => 'active',
             'paused_at' => null,
         ]);
     }
@@ -147,7 +149,7 @@ final class SessionService
             throw new \RuntimeException('invalid_state_transition');
         }
         $this->sessions->update($id, [
-            'status'    => 'closed',
+            'status' => 'closed',
             'closed_at' => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s'),
         ]);
     }
@@ -157,6 +159,7 @@ final class SessionService
     public function getParticipantCount(int $id, int $instructorId): int
     {
         $this->getSession($id, $instructorId);
+
         return $this->sessions->countParticipants($id);
     }
 
@@ -214,15 +217,17 @@ final class SessionService
         if (mb_strlen($title) > self::MAX_TITLE_LEN) {
             throw new \InvalidArgumentException('title:too_long');
         }
+
         return $title;
     }
 
     private function validateLanguage(mixed $raw): string
     {
         $lang = (string) $raw;
-        if (!in_array($lang, self::ALLOWED_LANGS, true)) {
+        if (! in_array($lang, self::ALLOWED_LANGS, true)) {
             throw new \InvalidArgumentException('language:invalid');
         }
+
         return $lang;
     }
 
@@ -230,10 +235,11 @@ final class SessionService
     {
         for ($i = 0; $i < self::MAX_CODE_RETRIES; $i++) {
             $code = ShortCode::generate();
-            if (!$this->sessions->shortCodeExists($code)) {
+            if (! $this->sessions->shortCodeExists($code)) {
                 return $code;
             }
         }
+
         throw new \RuntimeException('short_code_exhausted');
     }
 }

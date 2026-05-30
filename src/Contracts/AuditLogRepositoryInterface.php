@@ -27,8 +27,8 @@ interface AuditLogRepositoryInterface
         ?int    $actorId,
         string  $action,
         ?string $entityType = null,
-        ?int    $entityId   = null,
-        ?array  $metadata   = null,
+        ?int    $entityId = null,
+        ?array  $metadata = null,
     ): void;
 
     /**

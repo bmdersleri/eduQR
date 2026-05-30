@@ -34,6 +34,7 @@ final class LoginAttemptRepository implements LoginAttemptRepositoryInterface
                 AND created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL ? SECOND)'
         );
         $stmt->execute([$email, $windowSeconds]);
+
         return (int) $stmt->fetchColumn();
     }
 }

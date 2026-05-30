@@ -18,7 +18,8 @@ final class ParticipantService
     public function __construct(
         private readonly ParticipantRepositoryInterface $participants,
         private readonly SessionRepositoryInterface     $sessions,
-    ) {}
+    ) {
+    }
 
     /**
      * Join a session by short code.
@@ -42,7 +43,7 @@ final class ParticipantService
             throw new \RuntimeException('session_paused');
         }
 
-        $nickname           = $this->validateNickname($rawNickname, $session['language'] ?? 'en');
+        $nickname = $this->validateNickname($rawNickname, $session['language'] ?? 'en');
         $nicknameNormalized = self::normalize($nickname);
 
         if ($this->participants->existsByNicknameNormalized((int) $session['id'], $nicknameNormalized)) {
@@ -62,9 +63,9 @@ final class ParticipantService
         );
 
         return [
-            'participant_id'     => $participantId,
+            'participant_id' => $participantId,
             'session_short_code' => $session['short_code'],
-            'nickname'           => $nickname,
+            'nickname' => $nickname,
         ];
     }
 
@@ -72,6 +73,7 @@ final class ParticipantService
     public static function normalize(string $nickname): string
     {
         $normalized = mb_strtolower(trim($nickname), 'UTF-8');
+
         return (string) preg_replace('/\s+/u', ' ', $normalized);
     }
 
@@ -89,7 +91,7 @@ final class ParticipantService
         }
 
         // FR-41: allowed charset
-        if (!preg_match('/^[\p{L}\p{N}_\- ]+$/u', $trimmed)) {
+        if (! preg_match('/^[\p{L}\p{N}_\- ]+$/u', $trimmed)) {
             throw new \InvalidArgumentException('nickname:invalid_chars');
         }
 

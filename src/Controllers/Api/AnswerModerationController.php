@@ -6,7 +6,6 @@ namespace EduQR\Controllers\Api;
 
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
-use EduQR\Repositories\AnswerRepository;
 use EduQR\Repositories\CourseRepository;
 use EduQR\Repositories\QuestionRepository;
 use EduQR\Repositories\SessionRepository;
@@ -52,21 +51,21 @@ final class AnswerModerationController
 
         // Resolve question → session → ownership
         $questionRepo = new QuestionRepository();
-        $question     = $questionRepo->findById((int) $answer['question_id']);
+        $question = $questionRepo->findById((int) $answer['question_id']);
 
         if ($question === null) {
             $this->error(404, 'question_not_found', t('error.question_not_found'));
         }
 
         $sessionRepo = new SessionRepository();
-        $session     = $sessionRepo->findById((int) $question['session_id']);
+        $session = $sessionRepo->findById((int) $question['session_id']);
 
         if ($session === null) {
             $this->error(404, 'session_not_found', t('error.session_not_found'));
         }
 
         $courseRepo = new CourseRepository();
-        $course     = $courseRepo->findById((int) $session['course_id']);
+        $course = $courseRepo->findById((int) $session['course_id']);
 
         if ($course === null || (int) $course['instructor_id'] !== (int) $user['id']) {
             $this->error(403, 'forbidden', t('error.forbidden'));
@@ -78,7 +77,7 @@ final class AnswerModerationController
 
         $this->json(200, [
             'success' => true,
-            'data'    => ['id' => $answerId, 'is_hidden' => (bool) $isHidden],
+            'data' => ['id' => $answerId, 'is_hidden' => (bool) $isHidden],
         ]);
     }
 

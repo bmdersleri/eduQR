@@ -43,6 +43,7 @@ final class QuestionRepository implements QuestionRepositoryInterface
             $allowMultipleAnswers ? 1 : 0,
             $orderNo,
         ]);
+
         return (int) $this->pdo->lastInsertId();
     }
 
@@ -51,6 +52,7 @@ final class QuestionRepository implements QuestionRepositoryInterface
         $stmt = $this->pdo->prepare('SELECT * FROM questions WHERE id = ? LIMIT 1');
         $stmt->execute([$id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
         return $row !== false ? $row : null;
     }
 
@@ -60,6 +62,7 @@ final class QuestionRepository implements QuestionRepositoryInterface
             'SELECT * FROM questions WHERE session_id = ? ORDER BY order_no ASC, id ASC'
         );
         $stmt->execute([$sessionId]);
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -73,18 +76,19 @@ final class QuestionRepository implements QuestionRepositoryInterface
         );
         $stmt->execute([$shortCode]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
         return $row !== false ? $row : null;
     }
 
     public function update(int $id, array $fields): void
     {
         $allowed = ['question_text', 'show_results', 'allow_multiple_answers'];
-        $sets    = [];
-        $values  = [];
+        $sets = [];
+        $values = [];
 
         foreach ($allowed as $col) {
             if (array_key_exists($col, $fields)) {
-                $sets[]   = "{$col} = ?";
+                $sets[] = "{$col} = ?";
                 $values[] = $fields[$col];
             }
         }
@@ -107,6 +111,7 @@ final class QuestionRepository implements QuestionRepositoryInterface
     public function activate(int $id, int $sessionId): void
     {
         $this->pdo->beginTransaction();
+
         try {
             $this->pdo
                 ->prepare(
@@ -127,6 +132,7 @@ final class QuestionRepository implements QuestionRepositoryInterface
             $this->pdo->commit();
         } catch (\Throwable $e) {
             $this->pdo->rollBack();
+
             throw $e;
         }
     }

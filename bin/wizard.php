@@ -33,9 +33,9 @@ if (PHP_SAPI !== 'cli') {
 }
 
 $projectRoot = dirname(__DIR__);
-$autoload    = $projectRoot . '/vendor/autoload.php';
+$autoload = $projectRoot . '/vendor/autoload.php';
 
-if (!file_exists($autoload)) {
+if (! file_exists($autoload)) {
     fwrite(STDERR, "Hata: vendor/ dizini bulunamadı.\n");
     fwrite(STDERR, "Önce çalıştırın: composer install --no-dev --optimize-autoloader\n");
     exit(1);
@@ -62,19 +62,19 @@ foreach ($argv as $arg) {
 // ── Adım sırası ───────────────────────────────────────────────────────────────
 $steps = [
     'requirements' => new RequirementsStep($projectRoot),
-    'env'          => new EnvStep($projectRoot),
-    'database'     => new DatabaseStep($projectRoot),
+    'env' => new EnvStep($projectRoot),
+    'database' => new DatabaseStep($projectRoot),
 ];
 
-if (!in_array('nginx', $skip, true)) {
+if (! in_array('nginx', $skip, true)) {
     $steps['nginx'] = new NginxStep($projectRoot);
 }
 
-if (!in_array('admin', $skip, true)) {
+if (! in_array('admin', $skip, true)) {
     $steps['admin'] = new AdminStep($projectRoot);
 }
 
-if (!in_array('verify', $skip, true)) {
+if (! in_array('verify', $skip, true)) {
     $steps['verify'] = new VerifyStep($projectRoot);
 }
 
@@ -83,13 +83,13 @@ $console = new Console();
 $console->banner('eduQR Kurulum Sihirbazı — Ubuntu + Nginx + MariaDB');
 
 $total = count($steps);
-$i     = 0;
+$i = 0;
 
 foreach ($steps as $step) {
     $i++;
     $console->section($i, $total, $step->title());
 
-    if (!$step->run($console)) {
+    if (! $step->run($console)) {
         $console->writeln();
         $console->error('Kurulum başarısız oldu.');
         $console->info('Sorunu düzeltin ve sihirbazı yeniden başlatın.');
@@ -100,12 +100,13 @@ foreach ($steps as $step) {
 }
 
 // ── Başarı mesajı ─────────────────────────────────────────────────────────────
-$appUrl  = '';
+$appUrl = '';
 $envPath = $projectRoot . '/.env';
 if (file_exists($envPath)) {
     foreach ((array) file($envPath) as $line) {
         if (str_starts_with((string) $line, 'APP_URL=')) {
             $appUrl = trim(substr((string) $line, 8));
+
             break;
         }
     }

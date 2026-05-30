@@ -17,14 +17,14 @@ final class I18nServiceTest extends TestCase
         mkdir($this->fixtures, 0777, true);
 
         file_put_contents($this->fixtures . '/en.json', (string) json_encode([
-            'common.hello'      => 'Hello',
-            'common.welcome'    => 'Welcome, {name}!',
-            'items.count.one'   => 'One item',
+            'common.hello' => 'Hello',
+            'common.welcome' => 'Welcome, {name}!',
+            'items.count.one' => 'One item',
             'items.count.other' => '{count} items',
         ]));
 
         file_put_contents($this->fixtures . '/tr.json', (string) json_encode([
-            'common.hello'   => 'Merhaba',
+            'common.hello' => 'Merhaba',
             'common.welcome' => 'Hoş geldiniz, {name}!',
         ]));
     }

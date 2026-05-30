@@ -28,18 +28,19 @@ final class RateLimitMiddleware
      */
     public static function check(string $bucket, int $max, int $windowSeconds): void
     {
-        if (!extension_loaded('apcu') || !apcu_enabled()) {
+        if (! extension_loaded('apcu') || ! apcu_enabled()) {
             // APCu not available — best-effort only; DB-level guards remain
             return;
         }
 
-        $key   = 'rl.' . hash('sha256', $bucket);
+        $key = 'rl.' . hash('sha256', $bucket);
         $count = apcu_inc($key, 1);
 
         if ($count === false) {
             // Key did not exist yet — create it with TTL = window size.
             // First request in this window is always allowed.
             apcu_store($key, 1, $windowSeconds);
+
             return;
         }
 
@@ -55,8 +56,8 @@ final class RateLimitMiddleware
         header('Retry-After: ' . $retryAfter);
         echo json_encode([
             'success' => false,
-            'error'   => [
-                'code'    => 'rate_limited',
+            'error' => [
+                'code' => 'rate_limited',
                 'message' => 'Too many requests. Please wait and try again.',
             ],
         ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);

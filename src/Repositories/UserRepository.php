@@ -28,6 +28,7 @@ final class UserRepository implements UserRepositoryInterface
         );
         $stmt->execute([$email]);
         $row = $stmt->fetch();
+
         return $row === false ? null : $row;
     }
 
@@ -43,6 +44,7 @@ final class UserRepository implements UserRepositoryInterface
              VALUES (?, ?, ?, ?, ?)'
         );
         $stmt->execute([$email, $passwordHash, $displayName, $role, $preferredLanguage]);
+
         return (int) $this->pdo->lastInsertId();
     }
 

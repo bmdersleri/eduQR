@@ -45,30 +45,34 @@ final class Router
         foreach (['GET', 'POST', 'PATCH', 'DELETE', 'PUT'] as $method) {
             $this->add($method, $pattern, $handler);
         }
+
         return $this;
     }
 
     private function add(string $method, string $pattern, callable $handler): self
     {
         $this->routes[] = [
-            'method'  => strtoupper($method),
+            'method' => strtoupper($method),
             'pattern' => $pattern,
             'handler' => $handler,
-            'regex'   => $this->patternToRegex($pattern),
-            'params'  => $this->extractParamNames($pattern),
+            'regex' => $this->patternToRegex($pattern),
+            'params' => $this->extractParamNames($pattern),
         ];
+
         return $this;
     }
 
     public function setNotFound(callable $handler): self
     {
         $this->notFoundHandler = $handler;
+
         return $this;
     }
 
     public function setErrorHandler(callable $handler): self
     {
         $this->errorHandler = $handler;
+
         return $this;
     }
 
@@ -95,7 +99,7 @@ final class Router
             if ($route['method'] !== $method) {
                 continue;
             }
-            if (!preg_match($route['regex'], $path, $matches)) {
+            if (! preg_match($route['regex'], $path, $matches)) {
                 continue;
             }
 
@@ -116,6 +120,7 @@ final class Router
                     throw $e;
                 }
             }
+
             return;
         }
 
@@ -145,12 +150,14 @@ final class Router
                 $regex .= preg_quote($part, '#');
             }
         }
+
         return '#^' . $regex . '$#';
     }
 
     private function extractParamNames(string $pattern): array
     {
         preg_match_all('/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/', $pattern, $m);
+
         return $m[1];
     }
 }

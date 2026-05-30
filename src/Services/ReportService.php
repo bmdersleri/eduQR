@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace EduQR\Services;
 
-use EduQR\Contracts\AnswerRepositoryInterface;
 use EduQR\Contracts\CourseRepositoryInterface;
 use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
@@ -29,7 +28,8 @@ final class ReportService
         private readonly OptionRepositoryInterface   $options,
         private readonly CourseRepositoryInterface   $courses,
         private readonly ?PDO                        $pdo = null,
-    ) {}
+    ) {
+    }
 
     // ── Instructor: get full results for a question (T-803) ───────────────────
 
@@ -53,7 +53,7 @@ final class ReportService
             $qs = [$q];
         }
 
-        return array_map(fn(array $q) => $this->buildQuestionResults($q, false), $qs);
+        return array_map(fn (array $q) => $this->buildQuestionResults($q, false), $qs);
     }
 
     // ── Student: get results gated by show_results flags (T-804) ─────────────
@@ -70,7 +70,7 @@ final class ReportService
             throw new \RuntimeException('session_not_found');
         }
 
-        if (!(bool) $session['show_results_to_students']) {
+        if (! (bool) $session['show_results_to_students']) {
             throw new \RuntimeException('results_hidden');
         }
 
@@ -85,9 +85,9 @@ final class ReportService
         }
 
         // Filter: only questions that have show_results = 1
-        $qs = array_filter($qs, fn(array $q) => (bool) $q['show_results']);
+        $qs = array_filter($qs, fn (array $q) => (bool) $q['show_results']);
 
-        return array_map(fn(array $q) => $this->buildQuestionResults($q, true), array_values($qs));
+        return array_map(fn (array $q) => $this->buildQuestionResults($q, true), array_values($qs));
     }
 
     // ── Aggregate: counts + percentages per option (T-801) ────────────────────
@@ -132,6 +132,7 @@ final class ReportService
              ORDER BY a.created_at ASC"
         );
         $stmt->execute([$questionId]);
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -139,25 +140,26 @@ final class ReportService
 
     private function buildQuestionResults(array $question, bool $studentView): array
     {
-        $qId   = (int) $question['id'];
+        $qId = (int) $question['id'];
         $qType = $question['question_type'];
 
         $base = [
-            'question_id'   => $qId,
+            'question_id' => $qId,
             'question_text' => $question['question_text'],
             'question_type' => $qType,
-            'status'        => $question['status'],
+            'status' => $question['status'],
         ];
 
         if ($qType === 'open_text') {
-            $rows = $this->openTextAnswers($qId, !$studentView);
+            $rows = $this->openTextAnswers($qId, ! $studentView);
+
             return array_merge($base, [
                 'answer_count' => count($rows),
-                'answers'      => array_map(fn(array $r) => [
-                    'id'         => (int) $r['id'],
-                    'text'       => $r['text'],
-                    'nickname'   => $r['nickname'],
-                    'is_hidden'  => (bool) $r['is_hidden'],
+                'answers' => array_map(fn (array $r) => [
+                    'id' => (int) $r['id'],
+                    'text' => $r['text'],
+                    'nickname' => $r['nickname'],
+                    'is_hidden' => (bool) $r['is_hidden'],
                     'created_at' => $r['created_at'],
                 ], $rows),
             ]);
@@ -200,24 +202,24 @@ final class ReportService
         $total = array_sum(array_column($rows, 'cnt'));
 
         $options = array_map(function (array $row) use ($total): array {
-            $count   = (int) $row['cnt'];
+            $count = (int) $row['cnt'];
             $percent = $total > 0
                 ? (float) round($count / $total * 100, 1)
                 : 0.0;
 
             return [
-                'id'       => (int) $row['id'],
-                'text'     => $row['option_text'],
-                'value'    => $row['option_value'],
+                'id' => (int) $row['id'],
+                'text' => $row['option_text'],
+                'value' => $row['option_value'],
                 'order_no' => (int) $row['order_no'],
-                'count'    => $count,
-                'percent'  => $percent,
+                'count' => $count,
+                'percent' => $percent,
             ];
         }, $rows);
 
         return [
             'answer_count' => (int) $total,
-            'options'      => $options,
+            'options' => $options,
         ];
     }
 
@@ -232,8 +234,8 @@ final class ReportService
     public function buildReport(int $sessionId, int $userId, bool $anonymize = false): array
     {
         $session = $this->requireSession($sessionId, $userId);
-        $course  = $this->courses->findById((int) $session['course_id']);
-        $pdo     = $this->pdo ?? \EduQR\Support\Database::connection();
+        $course = $this->courses->findById((int) $session['course_id']);
+        $pdo = $this->pdo ?? \EduQR\Support\Database::connection();
 
         // Participant count
         $stmt = $pdo->prepare('SELECT COUNT(*) FROM participants WHERE session_id = ?');
@@ -255,18 +257,18 @@ final class ReportService
 
         // Participation rate: avg(answerers per question / participant_count)
         // Simplified: total_answers / (question_count * participant_count), capped at 1.0
-        $questionCount    = count($questions);
+        $questionCount = count($questions);
         $participationRate = ($questionCount > 0 && $participantCount > 0)
             ? round(min(1.0, $totalAnswers / ($questionCount * $participantCount)), 4)
             : 0.0;
 
         // Build nickname → "Participant N" map for anonymization
         $nicknameMap = [];
-        $counter     = 1;
+        $counter = 1;
 
         $questionResults = [];
         foreach ($questions as $q) {
-            $qId   = (int) $q['id'];
+            $qId = (int) $q['id'];
             $qType = $q['question_type'];
 
             $stmt = $pdo->prepare(
@@ -276,10 +278,10 @@ final class ReportService
             $qAnswerCount = (int) $stmt->fetchColumn();
 
             $base = [
-                'id'           => $qId,
-                'type'         => $qType,
-                'text'         => $q['question_text'],
-                'status'       => $q['status'],
+                'id' => $qId,
+                'type' => $qType,
+                'text' => $q['question_text'],
+                'status' => $q['status'],
                 'answer_count' => $qAnswerCount,
             ];
 
@@ -289,26 +291,26 @@ final class ReportService
                 foreach ($rows as $r) {
                     $nick = $r['nickname'];
                     if ($anonymize) {
-                        if (!isset($nicknameMap[$nick])) {
+                        if (! isset($nicknameMap[$nick])) {
                             $nicknameMap[$nick] = $counter++;
                         }
                         $nick = 'Participant ' . $nicknameMap[$nick];
                     }
                     $answers[] = [
-                        'nickname'    => $nick,
+                        'nickname' => $nick,
                         'answer_text' => $r['text'],
-                        'is_hidden'   => (bool) $r['is_hidden'],
-                        'created_at'  => $r['created_at'],
+                        'is_hidden' => (bool) $r['is_hidden'],
+                        'created_at' => $r['created_at'],
                     ];
                 }
                 $questionResults[] = array_merge($base, ['answers' => $answers]);
             } else {
                 $agg = $this->aggregateOptions($qId);
                 $questionResults[] = array_merge($base, [
-                    'distribution' => array_map(fn(array $o) => [
+                    'distribution' => array_map(fn (array $o) => [
                         'option_text' => $o['text'],
-                        'count'       => $o['count'],
-                        'percentage'  => $o['percent'],
+                        'count' => $o['count'],
+                        'percentage' => $o['percent'],
                     ], $agg['options']),
                 ]);
             }
@@ -316,18 +318,18 @@ final class ReportService
 
         return [
             'session' => [
-                'id'           => (int) $session['id'],
-                'title'        => $session['title'],
+                'id' => (int) $session['id'],
+                'title' => $session['title'],
                 'course_title' => $course['title'] ?? '',
-                'language'     => $session['language'],
-                'started_at'   => $session['started_at'],
-                'closed_at'    => $session['closed_at'],
-                'anonymized'   => (bool) $session['anonymized'],
+                'language' => $session['language'],
+                'started_at' => $session['started_at'],
+                'closed_at' => $session['closed_at'],
+                'anonymized' => (bool) $session['anonymized'],
             ],
             'summary' => [
-                'participant_count'  => $participantCount,
-                'question_count'     => $questionCount,
-                'answer_count'       => $totalAnswers,
+                'participant_count' => $participantCount,
+                'question_count' => $questionCount,
+                'answer_count' => $totalAnswers,
                 'participation_rate' => $participationRate,
             ],
             'questions' => $questionResults,
@@ -344,6 +346,7 @@ final class ReportService
         if ($course === null || (int) $course['instructor_id'] !== $userId) {
             throw new \RuntimeException('forbidden');
         }
+
         return $session;
     }
 }

@@ -27,26 +27,26 @@ final class AuditLogController
     {
         AuthMiddleware::requireRole('admin');
 
-        $limit     = min(100, max(1, (int) ($_GET['limit'] ?? 50)));
-        $page      = max(1, (int) ($_GET['page'] ?? 1));
-        $offset    = ($page - 1) * $limit;
+        $limit = min(100, max(1, (int) ($_GET['limit'] ?? 50)));
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $offset = ($page - 1) * $limit;
         $actorType = in_array($_GET['actor_type'] ?? '', ['instructor', 'admin', 'system'], true)
             ? $_GET['actor_type']
             : null;
 
         $total = $this->repo->count($actorType);
-        $logs  = $this->repo->list($limit, $offset, $actorType);
+        $logs = $this->repo->list($limit, $offset, $actorType);
 
         http_response_code(200);
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode([
             'success' => true,
-            'data'    => [
-                'logs'   => $logs,
-                'total'  => $total,
-                'page'   => $page,
-                'limit'  => $limit,
-                'pages'  => $total > 0 ? (int) ceil($total / $limit) : 1,
+            'data' => [
+                'logs' => $logs,
+                'total' => $total,
+                'page' => $page,
+                'limit' => $limit,
+                'pages' => $total > 0 ? (int) ceil($total / $limit) : 1,
             ],
         ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         exit;

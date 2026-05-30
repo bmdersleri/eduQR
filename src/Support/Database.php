@@ -26,6 +26,7 @@ final class Database
         if (self::$instance === null) {
             self::$instance = self::createConnection();
         }
+
         return self::$instance;
     }
 
@@ -37,11 +38,11 @@ final class Database
 
     private static function createConnection(): PDO
     {
-        $host    = Config::get('DB_HOST', 'localhost');
-        $port    = Config::int('DB_PORT', 3306);
-        $name    = Config::require('DB_NAME');
-        $user    = Config::require('DB_USER');
-        $pass    = Config::get('DB_PASS', '');
+        $host = Config::get('DB_HOST', 'localhost');
+        $port = Config::int('DB_PORT', 3306);
+        $name = Config::require('DB_NAME');
+        $user = Config::require('DB_USER');
+        $pass = Config::get('DB_PASS', '');
 
         $dsn = sprintf(
             'mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4',
@@ -51,8 +52,8 @@ final class Database
         );
 
         $options = [
-            PDO::ATTR_EMULATE_PREPARES   => false,
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_EMULATE_PREPARES => false,
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci, time_zone = '+00:00'",
         ];

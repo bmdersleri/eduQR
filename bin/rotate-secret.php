@@ -24,20 +24,20 @@ if (PHP_SAPI !== 'cli') {
     exit(1);
 }
 
-$secret  = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
-$apply   = in_array('--apply', $argv, true);
+$secret = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
+$apply = in_array('--apply', $argv, true);
 $envFile = dirname(__DIR__) . '/.env';
 
 echo "Generated APP_SECRET: {$secret}\n\n";
 
-if (!$apply) {
+if (! $apply) {
     echo "Add this line to your .env file:\n";
     echo "  APP_SECRET={$secret}\n\n";
     echo "Run with --apply to update .env automatically.\n";
     exit(0);
 }
 
-if (!file_exists($envFile)) {
+if (! file_exists($envFile)) {
     fwrite(STDERR, "Error: .env not found at {$envFile}\n");
     exit(1);
 }

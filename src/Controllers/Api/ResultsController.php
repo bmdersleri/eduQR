@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace EduQR\Controllers\Api;
 
 use EduQR\Middleware\AuthMiddleware;
-use EduQR\Repositories\AnswerRepository;
 use EduQR\Repositories\CourseRepository;
 use EduQR\Repositories\OptionRepository;
 use EduQR\Repositories\QuestionRepository;
@@ -36,7 +35,7 @@ final class ResultsController
 
     public function instructorResults(int $sessionId): void
     {
-        $user       = AuthMiddleware::require();
+        $user = AuthMiddleware::require();
         $questionId = isset($_GET['question_id']) ? (int) $_GET['question_id'] : null;
 
         try {
@@ -68,11 +67,11 @@ final class ResultsController
     private function handleError(\RuntimeException $e): never
     {
         match ($e->getMessage()) {
-            'session_not_found'  => $this->error(404, 'session_not_found', t('error.session_not_found')),
-            'forbidden'          => $this->error(403, 'forbidden',         t('error.forbidden')),
+            'session_not_found' => $this->error(404, 'session_not_found', t('error.session_not_found')),
+            'forbidden' => $this->error(403, 'forbidden', t('error.forbidden')),
             'question_not_found' => $this->error(404, 'question_not_found', t('error.question_not_found')),
-            'results_hidden'     => $this->error(403, 'results_hidden',    t('error.results_hidden')),
-            default              => $this->error(500, 'server_error',      t('error.server_error')),
+            'results_hidden' => $this->error(403, 'results_hidden', t('error.results_hidden')),
+            default => $this->error(500, 'server_error', t('error.server_error')),
         };
     }
 

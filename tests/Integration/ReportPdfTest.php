@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace EduQR\Tests\Integration;
 
-use EduQR\Router;
 use EduQR\Bootstrap;
+use EduQR\Router;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
@@ -35,6 +35,7 @@ class ReportPdfTest extends TestCase
         foreach ($routes as $route) {
             if ($route['method'] === 'GET' && $route['pattern'] === '/api/v1/sessions/{id}/report.pdf') {
                 $found = true;
+
                 break;
             }
         }
