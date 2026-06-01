@@ -250,8 +250,26 @@ Instructor can import staged questions into a session with:
 
 `POST /api/v1/sessions/{id}/questions/import`
 
-Supported payload:
+Supported formats:
 
+### 1. Legacy Format:
+```json
+{
+  "questions": [
+    {
+      "question_text": "How well did you understand linked lists?",
+      "question_type": "multiple_choice",
+      "options": [
+        { "option_text": "Very well" },
+        { "option_text": "Mostly" }
+      ],
+      "stage": "opening"
+    }
+  ]
+}
+```
+
+### 2. Staged Flow Format:
 ```json
 {
   "course_name": "Physics 101",
@@ -270,7 +288,7 @@ Supported payload:
 }
 ```
 
-Import order is always `opening -> middle -> closing`. Each question is stored with `stage` metadata.
+Import order is always `opening -> middle -> closing`. Each question is stored with `stage` metadata (`opening`, `middle`, or `closing`). The staged flow format automatically prefixes question texts with `[Course Name | Topic Name | StageLabel]`.
 
 ---
 

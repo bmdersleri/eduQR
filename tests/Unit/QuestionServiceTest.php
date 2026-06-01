@@ -203,7 +203,7 @@ class QuestionServiceTest extends TestCase
             {
             }
 
-            public function create(int $s, string $t, string $tp, bool $sr, bool $am): int
+            public function create(int $s, string $t, string $tp, bool $sr, bool $am, string $stage = 'middle'): int
             {
                 return $this->nextId++;
             }
@@ -251,7 +251,7 @@ class QuestionServiceTest extends TestCase
         $this->expectExceptionMessage('invalid_state_transition');
 
         $questionRepo = new class () implements QuestionRepositoryInterface {
-            public function create(int $s, string $t, string $tp, bool $sr, bool $am): int
+            public function create(int $s, string $t, string $tp, bool $sr, bool $am, string $stage = 'middle'): int
             {
                 return 1;
             }
@@ -294,7 +294,7 @@ class QuestionServiceTest extends TestCase
         $this->expectExceptionMessage('session_not_active');
 
         $questionRepo = new class () implements QuestionRepositoryInterface {
-            public function create(int $s, string $t, string $tp, bool $sr, bool $am): int
+            public function create(int $s, string $t, string $tp, bool $sr, bool $am, string $stage = 'middle'): int
             {
                 return 1;
             }
@@ -339,7 +339,7 @@ class QuestionServiceTest extends TestCase
         $this->expectExceptionMessage('question_not_draft');
 
         $questionRepo = new class () implements QuestionRepositoryInterface {
-            public function create(int $s, string $t, string $tp, bool $sr, bool $am): int
+            public function create(int $s, string $t, string $tp, bool $sr, bool $am, string $stage = 'middle'): int
             {
                 return 1;
             }
@@ -376,6 +376,116 @@ class QuestionServiceTest extends TestCase
         $service->delete(1, 1);
     }
 
+    // ── image attachment (FR-39) ──────────────────────────────────────────────
+
+    public function testSetImagePathUpdatesDraftQuestion_FR39(): void
+    {
+        $updatedFields = [];
+        $questionRepo = $this->questionRepoForDraft($updatedFields);
+        $service = $this->makeServiceWithRepo($questionRepo);
+
+        $service->setImagePath(1, 1, 'uploads/questions/1_a1b2c3d4e5f60789.png');
+
+        $this->assertSame(
+            ['image_path' => 'uploads/questions/1_a1b2c3d4e5f60789.png'],
+            $updatedFields
+        );
+    }
+
+    public function testSetImagePathRejectsUnsafeRelativePath_FR39(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('image_path:invalid');
+
+        $updatedFields = [];
+        $questionRepo = $this->questionRepoForDraft($updatedFields);
+        $service = $this->makeServiceWithRepo($questionRepo);
+
+        $service->setImagePath(1, 1, '../app.log');
+    }
+
+    public function testGenericUpdateIgnoresImagePath_FR39(): void
+    {
+        $updatedFields = [];
+        $questionRepo = $this->questionRepoForDraft($updatedFields);
+        $service = $this->makeServiceWithRepo($questionRepo);
+
+        $service->update(1, 1, ['image_path' => 'uploads/questions/1_a1b2c3d4e5f60789.png']);
+
+        $this->assertSame([], $updatedFields);
+    }
+
+    public function testCreateManySetsStageAndMaintainsOrder_FR31(): void
+    {
+        $captured = [];
+        $questionRepo = new class ($captured) implements QuestionRepositoryInterface {
+            public function __construct(private array &$captured)
+            {
+            }
+            public function create(int $s, string $t, string $tp, bool $sr, bool $am, string $stage = 'middle'): int
+            {
+                $this->captured[] = [
+                    'session_id' => $s,
+                    'text' => $t,
+                    'type' => $tp,
+                    'show_results' => $sr,
+                    'allow_multiple' => $am,
+                    'stage' => $stage,
+                ];
+
+                return count($this->captured);
+            }
+            public function findById(int $id): ?array
+            {
+                return null;
+            }
+            public function findBySession(int $s): array
+            {
+                return [];
+            }
+            public function findActiveBySessionCode(string $c): ?array
+            {
+                return null;
+            }
+            public function update(int $id, array $fields): void
+            {
+            }
+            public function delete(int $id): void
+            {
+            }
+            public function activate(int $id, int $sessionId): void
+            {
+            }
+            public function close(int $id): void
+            {
+            }
+            public function reorder(int $s, array $ids): void
+            {
+            }
+        };
+
+        $service = $this->makeServiceWithRepo($questionRepo);
+        $items = [
+            ['question_text' => 'Opening Q', 'question_type' => 'open_text', 'stage' => 'opening'],
+            ['question_text' => 'Middle Q', 'question_type' => 'open_text', 'stage' => 'middle'],
+            ['question_text' => 'Closing Q', 'question_type' => 'open_text', 'stage' => 'closing'],
+        ];
+
+        $ids = $service->createMany(1, 1, $items);
+
+        $this->assertCount(3, $ids);
+        $this->assertCount(3, $captured);
+
+        $this->assertSame('opening', $captured[0]['stage']);
+        $this->assertSame('Opening Q', $captured[0]['text']);
+
+        $this->assertSame('middle', $captured[1]['stage']);
+        $this->assertSame('Middle Q', $captured[1]['text']);
+
+        $this->assertSame('closing', $captured[2]['stage']);
+        $this->assertSame('Closing Q', $captured[2]['text']);
+    }
+
     // ── Stub factories ─────────────────────────────────────────────────────────
 
     private function makeService(
@@ -391,7 +501,7 @@ class QuestionServiceTest extends TestCase
 
         $questionRepo = new class () implements QuestionRepositoryInterface {
             private int $nextId = 1;
-            public function create(int $s, string $t, string $tp, bool $sr, bool $am): int
+            public function create(int $s, string $t, string $tp, bool $sr, bool $am, string $stage = 'middle'): int
             {
                 return $this->nextId++;
             }
@@ -480,6 +590,53 @@ class QuestionServiceTest extends TestCase
         };
 
         return $this->buildService($session, $questionRepo, $optionRepo);
+    }
+
+    private function questionRepoForDraft(array &$updatedFields): QuestionRepositoryInterface
+    {
+        return new class ($updatedFields) implements QuestionRepositoryInterface {
+            public function __construct(private array &$updatedFields)
+            {
+            }
+            public function create(int $s, string $t, string $tp, bool $sr, bool $am, string $stage = 'middle'): int
+            {
+                return 1;
+            }
+            public function findById(int $id): ?array
+            {
+                return [
+                    'id' => $id,
+                    'session_id' => 1,
+                    'status' => 'draft',
+                    'question_type' => 'open_text',
+                    'image_path' => null,
+                ];
+            }
+            public function findBySession(int $s): array
+            {
+                return [];
+            }
+            public function findActiveBySessionCode(string $c): ?array
+            {
+                return null;
+            }
+            public function update(int $id, array $fields): void
+            {
+                $this->updatedFields = $fields;
+            }
+            public function delete(int $id): void
+            {
+            }
+            public function activate(int $id, int $sessionId): void
+            {
+            }
+            public function close(int $id): void
+            {
+            }
+            public function reorder(int $s, array $ids): void
+            {
+            }
+        };
     }
 
     private function buildService(

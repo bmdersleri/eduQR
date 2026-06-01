@@ -301,7 +301,7 @@ Not part of the MVP. Each item must be escalated to the human owner before work 
 [ ] T-1103  Cross-session course-level analytics                                            [FR-64]
 [x] T-1104  Quiz mode with scoring (uses options.is_correct)                                [FR-92]
 [ ] T-1105  Light gamification (badges, streaks)                                            [FR-48]
-[ ] T-1106  Question image attachments                                                      [FR-39]
+[x] T-1106  Question image attachments                                                      [FR-39]
 [ ] T-1107  Email-based password reset                                                      [FR-06]
 [ ] T-1108  Add de.json, fr.json (>= 95% coverage each)                                     [FR-86]
 [ ] T-1109  RTL support + ar.json                                                           [FR-86]
@@ -311,6 +311,7 @@ Not part of the MVP. Each item must be escalated to the human owner before work 
 [ ] T-1113  LMS integration (Moodle / Canvas export)                                        [—]
 [ ] T-1114  Multi-instructor course ownership                                               [—]
 [ ] T-1115  Containerize (docker-compose: PHP + MySQL [+ Node later])                       [—]
+[x] T-1116  Question import V2 supporting legacy format and staged flow with metadata       [FR-31]
 ```
 
 ---

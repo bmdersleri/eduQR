@@ -40,7 +40,7 @@
 | 8 | Canlı Sonuçlar | 🟢 | 13 / 13 | 2026-05-15 | 2026-05-15 |
 | 9 | Raporlama & Dışa Aktarma | 🟢 | 13 / 13 | 2026-05-15 | 2026-05-15 |
 | 10 | Güvenlik & Kalite Sertleştirme | 🟢 | 17 / 17 | 2026-05-15 | 2026-05-15 |
-| 11 | Gelecek İyileştirmeler (post-MVP) | ⏸ | 4 / 16 | — | — |
+| 11 | Gelecek İyileştirmeler (post-MVP) | ⏸ | 6 / 17 | — | — |
 
 **MVP Toplam (Faz 0–10):** 157 / 157 görev tamamlandı (%100) 🎉
 
@@ -577,7 +577,7 @@
 
 ---
 
-## Faz 11 — Gelecek İyileştirmeler (post-MVP) 🔄 (4/16)
+## Faz 11 — Gelecek İyileştirmeler (post-MVP) 🔄 (6/17)
 
 **Hedef:** MVP sonrası geliştirmeler — her görev başlamadan önce proje sahibi onayı gerektirir.
 **Başlangıç:** 2026-05-15 | **Bitiş:** —
@@ -593,7 +593,7 @@
 [ ] T-1103  Cross-session course-level analytics                                         [FR-64]
 [x] T-1104  Quiz mode with scoring (uses options.is_correct)                             [FR-92]
 [ ] T-1105  Light gamification (badges, streaks)                                         [FR-48]
-[ ] T-1106  Question image attachments                                                   [FR-39]
+[x] T-1106  Question image attachments                                                   [FR-39]
 [ ] T-1107  Email-based password reset                                                   [FR-06]
 [ ] T-1108  Add de.json, fr.json (>= 95% coverage each)                                  [FR-86]
 [ ] T-1109  RTL support + ar.json                                                        [FR-86]
@@ -603,10 +603,15 @@
 [ ] T-1113  LMS integration (Moodle / Canvas export)                                    [—]
 [ ] T-1114  Multi-instructor course ownership                                            [—]
 [ ] T-1115  Containerize (docker-compose: PHP + MySQL [+ Node later])                   [—]
+[x] T-1116  Question import V2 supporting legacy format and staged flow with metadata   [FR-31]
 ```
 
 ### Notlar
-> _(Buraya önemli kararlar, engeller veya notlar ekleyin)_
+- T-1106: `questions.image_path` alanı, `0012_question_image.sql`, POST/DELETE `/api/v1/questions/{id}/image` endpointleri ve admin/student/live görsel gösterimi eklendi.
+- Görsel yükleme yalnızca taslak sorular için geçerli; JPG/PNG, en fazla 10 MB, `public/uploads/questions/` altında saklanıyor.
+- Genel `PATCH /api/v1/questions/{id}` artık `image_path` yazmaz; görsel yolu yalnızca upload/delete endpointleri üzerinden servis katmanında doğrulanarak güncellenir.
+- T-1116: POST `/api/v1/sessions/{id}/questions/import` endpointi hem legacy `{questions:[...]}` hem de yeni staged flow `{course_name, topic_name, sections:{opening:[], middle:[], closing:[]}}` yapısını destekleyecek şekilde güncellendi.
+- Sorular veritabanına `stage` kolonu/metadata bilgisiyle kaydedilir ve staged flow'da `opening -> middle -> closing` sırasında içe aktarım yapılır. Geçersiz formatlar için stable `invalid_import_payload` hata kodu döndürülür.
 
 ---
 

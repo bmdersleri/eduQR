@@ -36,16 +36,37 @@ final class QuestionService
         $type = $this->validateType($body['question_type'] ?? null);
         $showResults = (bool) ($body['show_results'] ?? false);
         $allowMulti = (bool) ($body['allow_multiple_answers'] ?? false);
+        $stage = $this->validateStage($body['stage'] ?? 'middle');
 
         $opts = $this->buildOptions($type, $body['options'] ?? [], $language);
 
-        $questionId = $this->questions->create($sessionId, $text, $type, $showResults, $allowMulti);
+        $questionId = $this->questions->create($sessionId, $text, $type, $showResults, $allowMulti, $stage);
 
         if (! empty($opts)) {
             $this->options->createBulk($questionId, $opts);
         }
 
         return $questionId;
+    }
+
+    // ── Bulk create from JSON payload ────────────────────────────────────────
+
+    /**
+     * @param array<int,array<string,mixed>> $items
+     * @return array<int,int> created question ids
+     */
+    public function createMany(int $sessionId, int $userId, array $items): array
+    {
+        if (count($items) < 1) {
+            throw new \InvalidArgumentException('questions:required');
+        }
+
+        $ids = [];
+        foreach ($items as $item) {
+            $ids[] = $this->create($sessionId, $userId, (array) $item);
+        }
+
+        return $ids;
     }
 
     // ── Update (draft only) ────────────────────────────────────────────────────
@@ -69,9 +90,6 @@ final class QuestionService
         if (array_key_exists('allow_multiple_answers', $body)) {
             $fields['allow_multiple_answers'] = $body['allow_multiple_answers'] ? 1 : 0;
         }
-        if (array_key_exists('image_path', $body)) {
-            $fields['image_path'] = $body['image_path'] !== '' ? $body['image_path'] : null;
-        }
 
         if (! empty($fields)) {
             $this->questions->update($questionId, $fields);
@@ -82,6 +100,21 @@ final class QuestionService
             $this->options->deleteByQuestion($questionId);
             $this->options->createBulk($questionId, $opts);
         }
+    }
+
+    // ── Image attachment (FR-39) ──────────────────────────────────────────────
+
+    public function setImagePath(int $questionId, int $userId, ?string $imagePath): void
+    {
+        $question = $this->requireQuestion($questionId, $userId);
+
+        if ($question['status'] !== 'draft') {
+            throw new \RuntimeException('question_not_draft');
+        }
+
+        $this->questions->update($questionId, [
+            'image_path' => $this->validateImagePath($imagePath),
+        ]);
     }
 
     // ── Activate — one-active-question rule (FR-33) ───────────────────────────
@@ -128,7 +161,7 @@ final class QuestionService
             throw new \RuntimeException('question_not_draft');
         }
 
-        if (! empty($question['image_path'])) {
+        if (! empty($question['image_path']) && $this->isManagedImagePath($question['image_path'])) {
             $abs = dirname(__DIR__, 2) . '/public/' . $question['image_path'];
             if (is_file($abs)) {
                 @unlink($abs);
@@ -250,6 +283,36 @@ final class QuestionService
         return $type;
     }
 
+    private function validateStage(?string $stage): string
+    {
+        if ($stage === null || $stage === '') {
+            return 'middle';
+        }
+        if (! in_array($stage, ['opening', 'middle', 'closing'], true)) {
+            throw new \InvalidArgumentException('stage:invalid');
+        }
+
+        return $stage;
+    }
+
+    private function validateImagePath(?string $imagePath): ?string
+    {
+        if ($imagePath === null || $imagePath === '') {
+            return null;
+        }
+
+        if (! $this->isManagedImagePath($imagePath)) {
+            throw new \InvalidArgumentException('image_path:invalid');
+        }
+
+        return $imagePath;
+    }
+
+    private function isManagedImagePath(string $imagePath): bool
+    {
+        return preg_match('#^uploads/questions/[0-9]+_[a-f0-9]{16}\.(jpe?g|png)$#', $imagePath) === 1;
+    }
+
     private function buildOptions(string $type, mixed $rawOptions, string $language): array
     {
         return match ($type) {
@@ -347,6 +410,7 @@ final class QuestionService
             'order_no' => (int) $question['order_no'],
             'show_results' => (bool) $question['show_results'],
             'allow_multiple_answers' => (bool) $question['allow_multiple_answers'],
+            'stage' => $question['stage'] ?? 'middle',
             'options' => array_map(fn ($o) => [
                 'id' => (int) $o['id'],
                 'option_text' => $o['option_text'],

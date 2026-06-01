@@ -11,7 +11,8 @@ interface QuestionRepositoryInterface
         string $questionText,
         string $questionType,
         bool   $showResults,
-        bool   $allowMultipleAnswers
+        bool   $allowMultipleAnswers,
+        string $stage = 'middle'
     ): int;
 
     public function findById(int $id): ?array;

@@ -183,6 +183,7 @@ Response 200 (question available):
       "id": 4001,
       "type": "multiple_choice",
       "text": "How well did you understand linked lists?",
+      "image_url": "/uploads/questions/4001_a1b2c3d4e5f60789.png",
       "options": [
         { "id": 9001, "text": "Very well" },
         { "id": 9002, "text": "Mostly" },
@@ -380,10 +381,13 @@ Errors: 404 `session_not_found`, 403 `forbidden`, 422 `invalid_state_transition`
 | --- | --- | --- |
 | GET | `/api/v1/sessions/{id}/questions` | List questions for a session |
 | POST | `/api/v1/sessions/{id}/questions` | Create a question |
+| POST | `/api/v1/sessions/{id}/questions/import` | Import questions in bulk |
 | PATCH | `/api/v1/questions/{id}` | Update a draft question (text, options) |
 | POST | `/api/v1/questions/{id}/activate` | Publish (closes any other active question) |
 | POST | `/api/v1/questions/{id}/close` | Close the question |
 | DELETE | `/api/v1/questions/{id}` | Delete a question |
+| POST | `/api/v1/questions/{id}/image` | Upload or replace a draft question image |
+| DELETE | `/api/v1/questions/{id}/image` | Remove a draft question image |
 | POST | `/api/v1/sessions/{id}/questions/reorder` | Reorder questions |
 
 Create body (multiple-choice):
@@ -415,6 +419,7 @@ Create body (open text):
 
 Create body (yes/no): `question_type: "yes_no"` — options auto-generated.
 Create body (Likert): `question_type: "likert_5"` — 5 options auto-generated.
+Question images are attached through the separate multipart endpoint below; JSON create/update bodies MUST NOT contain `image_path`.
 
 Create response:
 
@@ -438,6 +443,96 @@ Activate rules:
 - Any currently `active` question in the same session is set to `closed` in the same transaction (the one-active-question rule, `FR-33`).
 
 Errors: 404 `question_not_found`, 422 `invalid_question_type`, 422 `invalid_option_count`, 422 `session_not_active`.
+
+#### 5.3.1 Question image attachment
+
+`POST /api/v1/questions/{id}/image`
+
+Request: `multipart/form-data` with field `image`.
+
+Validation:
+
+- Question must exist, belong to the authenticated instructor, and still be `draft`.
+- File must be JPG or PNG.
+- File size must be 10 MB or smaller.
+- Stored path is server-generated under `public/uploads/questions/`; clients never provide `image_path`.
+- Replacing an image deletes the previous file when present.
+
+Response 200:
+
+```json
+{
+  "success": true,
+  "data": {
+    "image_url": "/uploads/questions/4001_a1b2c3d4e5f60789.png"
+  }
+}
+```
+
+`DELETE /api/v1/questions/{id}/image` removes the stored image reference and deletes the file when present.
+
+Errors: 400 `missing_fields`, 400 `upload_error`, 404 `question_not_found`, 422 `file_too_large`, 422 `invalid_file_type`, 422 `invalid_state_transition`, 500 `upload_failed`.
+
+#### 5.3.2 Question bulk import
+
+`POST /api/v1/sessions/{id}/questions/import`
+
+Imports questions in bulk into the session. Supports two JSON payload formats:
+
+1) Legacy Format:
+```json
+{
+  "questions": [
+    {
+      "question_text": "How well did you understand linked lists?",
+      "question_type": "multiple_choice",
+      "options": [
+        { "option_text": "Very well" },
+        { "option_text": "Mostly" }
+      ],
+      "stage": "opening"
+    }
+  ]
+}
+```
+
+2) Staged Flow Format:
+```json
+{
+  "course_name": "CS101",
+  "topic_name": "Loops",
+  "sections": {
+    "opening": [
+      {
+        "question_text": "What is a loop?",
+        "question_type": "open_text"
+      }
+    ],
+    "middle": [],
+    "closing": []
+  }
+}
+```
+
+Validation & Rules:
+- Staged flow format processes questions strictly in the order `opening` -> `middle` -> `closing`.
+- Stored questions include their corresponding `stage` metadata ('opening', 'middle', 'closing').
+- Staged flow format prefixes imported question text with `[Course Name | Topic Name | StageLabel]`.
+- Invalid payload structure returns stable error code `invalid_import_payload` (400).
+
+Response 201:
+```json
+{
+  "success": true,
+  "data": {
+    "ids": [4001],
+    "count": 1
+  },
+  "message": "Questions imported successfully."
+}
+```
+
+Errors: 400 `invalid_import_payload`, 400 `missing_fields`, 404 `session_not_found`, 403 `forbidden`, 422 `invalid_question_type`, 422 `invalid_option_count`.
 
 ### 5.4 QR code image
 
@@ -610,6 +705,7 @@ Stable, machine-readable codes. Add to this table when introducing a new code.
 | `course_not_found` | 404 | |
 | `question_not_found` | 404 | |
 | `answer_not_found` | 404 | |
+| `upload_error` | 400 | Uploaded image transfer failed |
 | `email_taken` | 409 | Account email already exists |
 | `duplicate_nickname` | 409 | Nickname already taken in this session |
 | `duplicate_answer` | 409 | Participant already answered this question |
@@ -618,10 +714,13 @@ Stable, machine-readable codes. Add to this table when introducing a new code.
 | `invalid_answer_shape` | 422 | Answer body does not match the question type |
 | `invalid_question_type` | 422 | Unknown `question_type` value |
 | `invalid_option_count` | 422 | Wrong number of options for the type |
+| `file_too_large` | 422 | Uploaded image is larger than allowed |
+| `invalid_file_type` | 422 | Uploaded image is not JPG or PNG |
 | `invalid_state_transition` | 422 | e.g. resuming a closed session |
 | `session_paused` | 422 | Action not allowed while session is paused |
 | `session_not_active` | 422 | Action requires an active session |
 | `too_many_attempts` | 429 | Rate limit hit |
+| `upload_failed` | 500 | Uploaded image could not be saved |
 | `server_error` | 500 | Unhandled exception |
 
 Internal logs use the same `snake_case` codes; user-facing messages come from translation keys (`error.<code>`). See `I18N_SPEC.md` §11.

@@ -68,6 +68,158 @@ final class QuestionController
         ]);
     }
 
+    // ── POST /api/v1/sessions/{id}/questions/import ─────────────────────────
+
+    public function import(int $sessionId): void
+    {
+        $user = AuthMiddleware::require();
+        CsrfMiddleware::verify();
+
+        $body = $this->jsonBody();
+        $items = $this->normalizeImportPayload($body);
+
+        try {
+            $ids = $this->service->createMany($sessionId, (int) $user['id'], $items);
+        } catch (\RuntimeException $e) {
+            $this->handleRuntimeException($e);
+        } catch (\InvalidArgumentException $e) {
+            $this->handleValidationException($e);
+        }
+
+        $this->json(201, [
+            'success' => true,
+            'data' => ['ids' => $ids, 'count' => count($ids)],
+            'message' => t('question.imported'),
+        ]);
+    }
+
+    /**
+     * Supports two formats:
+     * 1) {"questions":[...]}
+     * 2) {
+     *      "course_name":"...",
+     *      "topic_name":"...",
+     *      "sections":{
+     *        "opening":[...],
+     *        "middle":[...],
+     *        "closing":[...]
+     *      }
+     *    }
+     *
+     * Questions are ordered as opening -> middle -> closing.
+     */
+    private function normalizeImportPayload(array $body): array
+    {
+        $opening = [];
+        $middle = [];
+        $closing = [];
+        $hasQuestions = isset($body['questions']);
+        $hasSections = isset($body['sections']);
+
+        if (!$hasQuestions && !$hasSections) {
+            throw new \InvalidArgumentException('import:invalid_payload');
+        }
+
+        if ($hasQuestions) {
+            if (! is_array($body['questions'])) {
+                throw new \InvalidArgumentException('import:invalid_payload');
+            }
+
+            foreach ($body['questions'] as $row) {
+                if (! is_array($row)) {
+                    throw new \InvalidArgumentException('import:invalid_payload');
+                }
+
+                $stage = $row['stage'] ?? 'middle';
+                if (! in_array($stage, ['opening', 'middle', 'closing'], true)) {
+                    $stage = 'middle';
+                }
+                $row['stage'] = $stage;
+                if ($stage === 'opening') {
+                    $opening[] = $row;
+                } elseif ($stage === 'middle') {
+                    $middle[] = $row;
+                } else {
+                    $closing[] = $row;
+                }
+            }
+        }
+
+        if ($hasSections) {
+            $sections = $body['sections'];
+            if (! is_array($sections)) {
+                throw new \InvalidArgumentException('import:invalid_payload');
+            }
+
+            foreach (array_keys($sections) as $key) {
+                if (! in_array($key, ['opening', 'middle', 'closing'], true)) {
+                    throw new \InvalidArgumentException('import:invalid_payload');
+                }
+            }
+
+            if ((isset($sections['opening']) && ! is_array($sections['opening'])) ||
+                (isset($sections['middle']) && ! is_array($sections['middle'])) ||
+                (isset($sections['closing']) && ! is_array($sections['closing']))) {
+                throw new \InvalidArgumentException('import:invalid_payload');
+            }
+
+            $courseName = trim((string) ($body['course_name'] ?? ''));
+            $topicName = trim((string) ($body['topic_name'] ?? ''));
+
+            $ordered = [
+                'opening' => $sections['opening'] ?? [],
+                'middle' => $sections['middle'] ?? [],
+                'closing' => $sections['closing'] ?? [],
+            ];
+
+            foreach ($ordered as $phase => $rows) {
+                foreach ($rows as $row) {
+                    if (! is_array($row)) {
+                        throw new \InvalidArgumentException('import:invalid_payload');
+                    }
+
+                    $text = trim((string) ($row['question_text'] ?? ''));
+                    if ($text === '') {
+                        throw new \InvalidArgumentException('question_text:required');
+                    }
+
+                    $prefixParts = [];
+                    if ($courseName !== '') {
+                        $prefixParts[] = $courseName;
+                    }
+                    if ($topicName !== '') {
+                        $prefixParts[] = $topicName;
+                    }
+                    $phaseLabel = match ($phase) {
+                        'opening' => 'Acilis',
+                        'middle' => 'Orta',
+                        default => 'Kapanis',
+                    };
+                    $prefixParts[] = $phaseLabel;
+
+                    $row['question_text'] = '[' . implode(' | ', $prefixParts) . '] ' . $text;
+                    $row['stage'] = $phase;
+
+                    if ($phase === 'opening') {
+                        $opening[] = $row;
+                    } elseif ($phase === 'middle') {
+                        $middle[] = $row;
+                    } else {
+                        $closing[] = $row;
+                    }
+                }
+            }
+        }
+
+        $result = array_merge($opening, $middle, $closing);
+        if (count($result) === 0) {
+            throw new \InvalidArgumentException('questions:required');
+        }
+
+        return $result;
+    }
+
+
     // ── PATCH /api/v1/questions/{id} ──────────────────────────────────────────
 
     public function update(int $questionId): void
@@ -195,6 +347,9 @@ final class QuestionController
             'options:empty_text' => $this->error(400, 'validation_error', t('validation.required'), 'options'),
             'options:text_too_long' => $this->error(400, 'validation_error', t('validation.text_too_long'), 'options'),
             'order:required' => $this->error(400, 'missing_fields', t('validation.required'), 'order'),
+            'questions:required' => $this->error(400, 'missing_fields', t('validation.required'), 'questions'),
+            'import:invalid_payload' => $this->error(400, 'invalid_import_payload', t('error.invalid_import_payload')),
+            'stage:invalid' => $this->error(422, 'invalid_stage', t('common.error')),
             default => $this->error(400, 'validation_error', t('common.error')),
         };
     }

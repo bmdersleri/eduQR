@@ -22,7 +22,8 @@ final class QuestionRepository implements QuestionRepositoryInterface
         string $questionText,
         string $questionType,
         bool   $showResults,
-        bool   $allowMultipleAnswers
+        bool   $allowMultipleAnswers,
+        string $stage = 'middle'
     ): int {
         $stmt = $this->pdo->prepare(
             'SELECT COALESCE(MAX(order_no), 0) + 1 FROM questions WHERE session_id = ?'
@@ -32,8 +33,8 @@ final class QuestionRepository implements QuestionRepositoryInterface
 
         $stmt = $this->pdo->prepare(
             'INSERT INTO questions
-                (session_id, question_text, question_type, show_results, allow_multiple_answers, order_no)
-             VALUES (?, ?, ?, ?, ?, ?)'
+                (session_id, question_text, question_type, show_results, allow_multiple_answers, order_no, stage)
+             VALUES (?, ?, ?, ?, ?, ?, ?)'
         );
         $stmt->execute([
             $sessionId,
@@ -42,6 +43,7 @@ final class QuestionRepository implements QuestionRepositoryInterface
             $showResults ? 1 : 0,
             $allowMultipleAnswers ? 1 : 0,
             $orderNo,
+            $stage,
         ]);
 
         return (int) $this->pdo->lastInsertId();
