@@ -187,6 +187,18 @@ ob_start();
                     </button>
                 </div>
 
+                <div class="mb-3">
+                    <label for="q-image" class="form-label fw-semibold">
+                        <?= htmlspecialchars(t('question.field.image'), ENT_QUOTES, 'UTF-8') ?>
+                    </label>
+                    <input type="file" id="q-image" class="form-control form-control-sm"
+                           accept="image/jpeg,image/png">
+                    <div id="q-image-preview" class="mt-2 d-none">
+                        <img src="" alt="<?= htmlspecialchars(t('question.image.preview_alt'), ENT_QUOTES, 'UTF-8') ?>"
+                             class="img-thumbnail" style="max-height:120px">
+                    </div>
+                </div>
+
                 <div class="form-check mb-3">
                     <input class="form-check-input" type="checkbox" id="q-show-results">
                     <label class="form-check-label" for="q-show-results">
@@ -243,6 +255,9 @@ const L = {
     closeQ:      <?= json_encode(t('question.action.close')) ?>,
     del:         <?= json_encode(t('common.delete')) ?>,
     correctAnswer: <?= json_encode(t('question.correct_answer')) ?>,
+    imgUpload:   <?= json_encode(t('question.image.upload')) ?>,
+    imgRemove:   <?= json_encode(t('question.image.remove')) ?>,
+    imgAlt:      <?= json_encode(t('question.image.preview_alt')) ?>,
     types: {
         multiple_choice: <?= json_encode(t('question.type.multiple_choice')) ?>,
         open_text:       <?= json_encode(t('question.type.open_text')) ?>,
@@ -400,9 +415,14 @@ function buildQuestionRow(q) {
         }
     }
 
+    const thumbHtml = q.image_url
+        ? `<img src="${escHtml(q.image_url)}" alt="${escHtml(L.imgAlt)}" class="rounded border" style="width:48px;height:48px;object-fit:cover;flex-shrink:0">`
+        : '';
+
     div.innerHTML = `
         <div class="card-body py-2 px-3 d-flex align-items-start gap-3">
             <span class="grip-handle text-muted" style="cursor:grab;user-select:none;font-size:1.1rem;padding-top:2px">&#8801;</span>
+            ${thumbHtml}
             <div class="flex-grow-1">
                 <div class="d-flex align-items-center gap-2 mb-1">
                     <span class="badge text-bg-${color}">${label}</span>
@@ -641,11 +661,27 @@ document.getElementById('btn-create-question')?.addEventListener('click', async 
         });
         const data = await res.json();
         if (data.success) {
+            const newId = data.data?.id;
+            // Upload image if selected
+            const imageFile = document.getElementById('q-image')?.files?.[0];
+            if (newId && imageFile) {
+                const fd = new FormData();
+                fd.append('image', imageFile);
+                try {
+                    await fetch('/api/v1/questions/' + newId + '/image', {
+                        method: 'POST',
+                        headers: { 'X-CSRF-Token': CSRF_TOKEN },
+                        body: fd,
+                    });
+                } catch {}
+            }
             // Reset form and close panel
             document.getElementById('q-text').value = '';
             document.getElementById('q-show-results').checked = false;
             document.getElementById('q-type').value = 'multiple_choice';
             document.getElementById('options-section').style.display = '';
+            document.getElementById('q-image').value = '';
+            document.getElementById('q-image-preview').classList.add('d-none');
             initOptions();
             bootstrap.Collapse.getOrCreateInstance(
                 document.getElementById('create-question-panel')
@@ -660,6 +696,22 @@ document.getElementById('btn-create-question')?.addEventListener('click', async 
         errEl.classList.remove('d-none');
     } finally {
         btn.disabled = false;
+    }
+});
+
+// ── Image file preview ────────────────────────────────────────────────────────
+
+document.getElementById('q-image')?.addEventListener('change', function () {
+    const preview = document.getElementById('q-image-preview');
+    if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            preview.querySelector('img').src = e.target.result;
+            preview.classList.remove('d-none');
+        };
+        reader.readAsDataURL(this.files[0]);
+    } else {
+        preview.classList.add('d-none');
     }
 });
 

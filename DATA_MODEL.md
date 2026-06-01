@@ -75,6 +75,7 @@ erDiagram
         bigint id PK
         bigint session_id FK
         text question_text
+        varchar image_path
         string question_type
         string status
         int order_no
@@ -243,6 +244,7 @@ CREATE TABLE questions (
     id                      BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     session_id              BIGINT UNSIGNED NOT NULL,
     question_text           TEXT         NOT NULL,
+    image_path              VARCHAR(500) NULL DEFAULT NULL,
     question_type           ENUM('multiple_choice','open_text','yes_no','likert_5') NOT NULL,
     status                  ENUM('draft','active','closed') NOT NULL DEFAULT 'draft',
     order_no                INT          NOT NULL DEFAULT 0,
@@ -266,6 +268,7 @@ Rules:
 - Closed questions reject new answers (`FR-44`).
 - Draft questions are never visible to students.
 - `question_text` 1–500 chars (`FR-36`). Sanitized before display.
+- `image_path` optional, relative path under `public/uploads/questions/` (`FR-39`). NULL when no image. Deleted on question delete (CASCADE) or when replaced via the image endpoint.
 - `allow_multiple_answers` default `false`; controls the `answers` uniqueness rule.
 
 ### 2.5 `options`

@@ -91,6 +91,7 @@ CREATE TABLE questions (
     id                      BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     session_id              BIGINT UNSIGNED NOT NULL,
     question_text           TEXT         NOT NULL,
+    image_path              VARCHAR(500) NULL DEFAULT NULL,
     question_type           ENUM('multiple_choice','open_text','yes_no','likert_5') NOT NULL,
     status                  ENUM('draft','active','closed') NOT NULL DEFAULT 'draft',
     order_no                INT          NOT NULL DEFAULT 0,

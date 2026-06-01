@@ -161,6 +161,14 @@ ob_start();
                 <p class="text-muted small mb-2">
                     <?= htmlspecialchars(t('question.type.' . $qType), ENT_QUOTES, 'UTF-8') ?>
                 </p>
+                <?php if (! empty($question['image_path'])): ?>
+                <div class="text-center mb-3">
+                    <img src="/<?= htmlspecialchars($question['image_path'], ENT_QUOTES, 'UTF-8') ?>"
+                         alt="<?= htmlspecialchars(t('question.image.preview_alt'), ENT_QUOTES, 'UTF-8') ?>"
+                         class="img-fluid rounded"
+                         style="max-height:300px">
+                </div>
+                <?php endif; ?>
                 <h2 class="h5 mb-4"><?= $qText ?></h2>
 
                 <?php if ($noJsError !== ''): ?>

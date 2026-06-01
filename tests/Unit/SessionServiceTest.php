@@ -135,7 +135,7 @@ class SessionServiceTest extends TestCase
                 return $this->findByShortCode($code) !== null;
             }
 
-            public function create(int $courseId, string $title, string $shortCode, string $language): int
+            public function create(int $courseId, string $title, string $shortCode, string $language, int $isQuiz = 0): int
             {
                 $id = $this->nextId++;
                 $this->created[] = compact('courseId', 'title', 'shortCode', 'language');

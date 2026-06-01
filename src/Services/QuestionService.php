@@ -69,6 +69,9 @@ final class QuestionService
         if (array_key_exists('allow_multiple_answers', $body)) {
             $fields['allow_multiple_answers'] = $body['allow_multiple_answers'] ? 1 : 0;
         }
+        if (array_key_exists('image_path', $body)) {
+            $fields['image_path'] = $body['image_path'] !== '' ? $body['image_path'] : null;
+        }
 
         if (! empty($fields)) {
             $this->questions->update($questionId, $fields);
@@ -125,6 +128,13 @@ final class QuestionService
             throw new \RuntimeException('question_not_draft');
         }
 
+        if (! empty($question['image_path'])) {
+            $abs = dirname(__DIR__, 2) . '/public/' . $question['image_path'];
+            if (is_file($abs)) {
+                @unlink($abs);
+            }
+        }
+
         $this->questions->delete($questionId);
     }
 
@@ -178,6 +188,9 @@ final class QuestionService
             'id' => (int) $question['id'],
             'type' => $question['question_type'],
             'text' => $question['question_text'],
+            'image_url' => $question['image_path'] !== null
+                ? '/' . $question['image_path']
+                : null,
             'options' => array_map(fn ($o) => [
                 'id' => (int) $o['id'],
                 'text' => $o['option_text'],
@@ -326,6 +339,9 @@ final class QuestionService
         return [
             'id' => (int) $question['id'],
             'question_text' => $question['question_text'],
+            'image_url' => $question['image_path'] !== null
+                ? '/' . $question['image_path']
+                : null,
             'question_type' => $question['question_type'],
             'status' => $question['status'],
             'order_no' => (int) $question['order_no'],

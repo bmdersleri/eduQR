@@ -503,7 +503,7 @@ class QuestionServiceTest extends TestCase
             {
                 return false;
             }
-            public function create(int $courseId, string $title, string $shortCode, string $language): int
+            public function create(int $courseId, string $title, string $shortCode, string $language, int $isQuiz = 0): int
             {
                 return 1;
             }

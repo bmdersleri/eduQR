@@ -82,7 +82,7 @@ final class QuestionRepository implements QuestionRepositoryInterface
 
     public function update(int $id, array $fields): void
     {
-        $allowed = ['question_text', 'show_results', 'allow_multiple_answers'];
+        $allowed = ['question_text', 'image_path', 'show_results', 'allow_multiple_answers'];
         $sets = [];
         $values = [];
 

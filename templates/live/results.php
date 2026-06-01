@@ -45,6 +45,9 @@ ob_start();
     <!-- Question text -->
     <div class="col-12 text-center mb-4" id="question-text-area">
         <p class="text-white-50 mb-2" id="question-type-label" style="font-size:clamp(0.9rem,1.5vw,1.2rem)"></p>
+        <div id="question-image-area" class="mb-3 d-none">
+            <img src="" alt="" class="img-fluid rounded" style="max-height:280px">
+        </div>
         <h2 id="question-text" class="fw-bold mb-3" style="font-size:clamp(1.6rem,3.5vw,3rem)">
             <?= $activeQ
                 ? htmlspecialchars($activeQ['question_text'], ENT_QUOTES, 'UTF-8')
@@ -128,6 +131,15 @@ async function pollResults() {
         questionText.textContent = q.text;
         questionType.textContent = TYPE_LABELS[q.type] ?? q.type;
         waitingArea.classList.add('d-none');
+
+        // Question image
+        const imgArea = document.getElementById('question-image-area');
+        if (q.image_url) {
+            imgArea.querySelector('img').src = q.image_url;
+            imgArea.classList.remove('d-none');
+        } else {
+            imgArea.classList.add('d-none');
+        }
 
         // Fetch results for this question
         const rRes  = await fetch('/api/v1/sessions/' + SESSION_ID + '/results?question_id=' + ACTIVE_Q_ID);

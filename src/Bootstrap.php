@@ -321,6 +321,15 @@ final class Bootstrap
             (new Controllers\Api\QuestionController())->close((int) $p['id']);
         });
 
+        // image upload / delete (FR-39)
+        $router->post('/api/v1/questions/{id}/image', function (array $p): void {
+            (new Controllers\Api\QuestionImageController())->upload((int) $p['id']);
+        });
+
+        $router->delete('/api/v1/questions/{id}/image', function (array $p): void {
+            (new Controllers\Api\QuestionImageController())->delete((int) $p['id']);
+        });
+
         // ── API: Public active-question (student polling) ──────────────────────
         $router->get('/api/v1/sessions/{short_code}/active-question', function (array $p): void {
             (new Controllers\Api\PublicQuestionController())->activeQuestion($p['short_code']);
