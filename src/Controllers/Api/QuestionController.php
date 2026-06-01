@@ -116,7 +116,7 @@ final class QuestionController
         $hasQuestions = isset($body['questions']);
         $hasSections = isset($body['sections']);
 
-        if (!$hasQuestions && !$hasSections) {
+        if (! $hasQuestions && ! $hasSections) {
             throw new \InvalidArgumentException('import:invalid_payload');
         }
 
@@ -218,7 +218,6 @@ final class QuestionController
 
         return $result;
     }
-
 
     // ── PATCH /api/v1/questions/{id} ──────────────────────────────────────────
 

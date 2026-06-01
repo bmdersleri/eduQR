@@ -138,4 +138,85 @@ final class QuestionControllerTest extends TestCase
 
         $this->callNormalizeImportPayload($body);
     }
+
+    public function testCombinedFormatNormalizationAndOrdering(): void
+    {
+        $body = [
+            'course_name' => 'CS101',
+            'topic_name' => 'Loops',
+            'questions' => [
+                [
+                    'question_text' => 'Legacy Middle',
+                    'question_type' => 'open_text',
+                    'stage' => 'middle',
+                ],
+                [
+                    'question_text' => 'Legacy Closing',
+                    'question_type' => 'open_text',
+                    'stage' => 'closing',
+                ],
+            ],
+            'sections' => [
+                'opening' => [
+                    [
+                        'question_text' => 'Opening Q',
+                        'question_type' => 'open_text',
+                    ],
+                ],
+                'middle' => [
+                    [
+                        'question_text' => 'Middle Q',
+                        'question_type' => 'open_text',
+                    ],
+                ],
+                'closing' => [
+                    [
+                        'question_text' => 'Closing Q',
+                        'question_type' => 'open_text',
+                    ],
+                ],
+            ],
+        ];
+
+        $normalized = $this->callNormalizeImportPayload($body);
+
+        // Strict ordering opening -> middle -> closing
+        // Within each bucket, questions are appended in order they are processed
+        // Total questions: 1 opening, 2 middle (Legacy Middle, Middle Q), 2 closing (Legacy Closing, Closing Q)
+        $this->assertCount(5, $normalized);
+
+        $this->assertSame('opening', $normalized[0]['stage']);
+        $this->assertSame('[CS101 | Loops | Acilis] Opening Q', $normalized[0]['question_text']);
+
+        $this->assertSame('middle', $normalized[1]['stage']);
+        $this->assertSame('Legacy Middle', $normalized[1]['question_text']);
+
+        $this->assertSame('middle', $normalized[2]['stage']);
+        $this->assertSame('[CS101 | Loops | Orta] Middle Q', $normalized[2]['question_text']);
+
+        $this->assertSame('closing', $normalized[3]['stage']);
+        $this->assertSame('Legacy Closing', $normalized[3]['question_text']);
+
+        $this->assertSame('closing', $normalized[4]['stage']);
+        $this->assertSame('[CS101 | Loops | Kapanis] Closing Q', $normalized[4]['question_text']);
+    }
+
+    public function testInvalidSectionKeysThrows(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('import:invalid_payload');
+
+        $body = [
+            'sections' => [
+                'invalid_key' => [
+                    [
+                        'question_text' => 'Q',
+                        'question_type' => 'open_text',
+                    ],
+                ],
+            ],
+        ];
+
+        $this->callNormalizeImportPayload($body);
+    }
 }
