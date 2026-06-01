@@ -94,6 +94,7 @@ final class QuestionController
     }
 
     /**
+     * Normalizes and validates the question import payload.
      * Supports two formats:
      * 1) {"questions":[...]}
      * 2) {
