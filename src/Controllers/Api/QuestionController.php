@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Contracts\AuditLogRepositoryInterface;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
 use EduQR\Repositories\AuditLogRepository;
@@ -16,17 +17,19 @@ use EduQR\Services\QuestionService;
 final class QuestionController
 {
     private QuestionService $service;
-    private AuditLogRepository $auditLog;
+    private AuditLogRepositoryInterface $auditLog;
 
-    public function __construct()
-    {
-        $this->service = new QuestionService(
+    public function __construct(
+        ?QuestionService $service = null,
+        ?AuditLogRepositoryInterface $auditLog = null
+    ) {
+        $this->service = $service ?? new QuestionService(
             new QuestionRepository(),
             new OptionRepository(),
             new SessionRepository(),
             new CourseRepository(),
         );
-        $this->auditLog = new AuditLogRepository();
+        $this->auditLog = $auditLog ?? new AuditLogRepository();
     }
 
     // ── GET /api/v1/sessions/{id}/questions ───────────────────────────────────

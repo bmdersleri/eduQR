@@ -4,7 +4,13 @@ declare(strict_types=1);
 
 namespace EduQR\Tests\Unit;
 
+use EduQR\Contracts\AuditLogRepositoryInterface;
+use EduQR\Contracts\CourseRepositoryInterface;
+use EduQR\Contracts\OptionRepositoryInterface;
+use EduQR\Contracts\QuestionRepositoryInterface;
+use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Controllers\Api\QuestionController;
+use EduQR\Services\QuestionService;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
@@ -12,7 +18,14 @@ final class QuestionControllerTest extends TestCase
 {
     private function callNormalizeImportPayload(array $body): array
     {
-        $controller = new QuestionController();
+        $questions = $this->createMock(QuestionRepositoryInterface::class);
+        $options = $this->createMock(OptionRepositoryInterface::class);
+        $sessions = $this->createMock(SessionRepositoryInterface::class);
+        $courses = $this->createMock(CourseRepositoryInterface::class);
+        $service = new QuestionService($questions, $options, $sessions, $courses);
+
+        $auditLog = $this->createMock(AuditLogRepositoryInterface::class);
+        $controller = new QuestionController($service, $auditLog);
         $method = new ReflectionMethod($controller, 'normalizeImportPayload');
         $method->setAccessible(true);
 
