@@ -203,6 +203,7 @@ CREATE TABLE sessions (
     id                        BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     course_id                 BIGINT UNSIGNED NOT NULL,
     title                     VARCHAR(200) NOT NULL,
+    topic_name                VARCHAR(200) NULL,
     short_code                VARCHAR(8)   NOT NULL UNIQUE,
     status                    ENUM('draft','active','paused','closed') NOT NULL DEFAULT 'active',
     language                  VARCHAR(8)   NOT NULL DEFAULT 'en',
@@ -228,6 +229,7 @@ CREATE TABLE sessions (
 Rules:
 
 - `short_code` is unique, 6 characters, charset `A-H J-N P-Z 2-9`. Generated server-side with collision retry.
+- `topic_name` stores the instructor-selected lecture topic for this session (optional, max 200).
 - Status lifecycle: `draft → active → paused ⇄ active → closed`. Once `closed`, no transitions back.
 - `closed` sessions reject new participants and new answers (`FR-24`).
 - `paused` sessions reject new answers (`FR-25`).
@@ -246,6 +248,7 @@ CREATE TABLE questions (
     question_text           TEXT         NOT NULL,
     image_path              VARCHAR(500) NULL DEFAULT NULL,
     question_type           ENUM('multiple_choice','open_text','yes_no','likert_5') NOT NULL,
+    stage                   ENUM('opening','middle','closing') NOT NULL DEFAULT 'middle',
     status                  ENUM('draft','active','closed') NOT NULL DEFAULT 'draft',
     order_no                INT          NOT NULL DEFAULT 0,
     allow_multiple_answers  TINYINT(1)   NOT NULL DEFAULT 0,
@@ -257,6 +260,7 @@ CREATE TABLE questions (
                                                   ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_questions_session (session_id),
     INDEX idx_questions_session_status (session_id, status),
+    INDEX idx_questions_session_stage_order (session_id, stage, order_no),
     CONSTRAINT fk_questions_session
         FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -265,6 +269,7 @@ CREATE TABLE questions (
 Rules:
 
 - **One-active-question rule (`FR-33`):** at most one row per `session_id` may have `status = 'active'`. MySQL InnoDB has no partial unique index, so this is enforced in `QuestionService::activate()` inside a transaction that closes any other active question first.
+- `stage` marks instructional phase: `opening`, `middle`, `closing`; import and UI should schedule in this order.
 - Closed questions reject new answers (`FR-44`).
 - Draft questions are never visible to students.
 - `question_text` 1–500 chars (`FR-36`). Sanitized before display.

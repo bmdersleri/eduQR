@@ -244,6 +244,34 @@ php -S localhost:8080 -t public/
 
 Open `http://localhost:8080` in your browser. Default seeded credentials are in `bin/seed.php`; change them immediately on a real deployment.
 
+## JSON Question Import (staged lesson flow)
+
+Instructor can import staged questions into a session with:
+
+`POST /api/v1/sessions/{id}/questions/import`
+
+Supported payload:
+
+```json
+{
+  "course_name": "Physics 101",
+  "topic_name": "Force and Motion",
+  "sections": {
+    "opening": [
+      {"question_text": "Warm-up question", "question_type": "open_text"}
+    ],
+    "middle": [
+      {"question_text": "Core concept check", "question_type": "yes_no"}
+    ],
+    "closing": [
+      {"question_text": "Exit ticket", "question_type": "open_text"}
+    ]
+  }
+}
+```
+
+Import order is always `opening -> middle -> closing`. Each question is stored with `stage` metadata.
+
 ---
 
 ## Folder Layout (target implementation)

@@ -62,6 +62,7 @@ CREATE TABLE sessions (
     id                        BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     course_id                 BIGINT UNSIGNED NOT NULL,
     title                     VARCHAR(200) NOT NULL,
+    topic_name                VARCHAR(200) NULL,
     short_code                VARCHAR(8)   NOT NULL UNIQUE,
     status                    ENUM('draft','active','paused','closed') NOT NULL DEFAULT 'active',
     language                  VARCHAR(8)   NOT NULL DEFAULT 'en',
@@ -93,6 +94,7 @@ CREATE TABLE questions (
     question_text           TEXT         NOT NULL,
     image_path              VARCHAR(500) NULL DEFAULT NULL,
     question_type           ENUM('multiple_choice','open_text','yes_no','likert_5') NOT NULL,
+    stage                   ENUM('opening','middle','closing') NOT NULL DEFAULT 'middle',
     status                  ENUM('draft','active','closed') NOT NULL DEFAULT 'draft',
     order_no                INT          NOT NULL DEFAULT 0,
     allow_multiple_answers  TINYINT(1)   NOT NULL DEFAULT 0,
@@ -104,6 +106,7 @@ CREATE TABLE questions (
                                                   ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_questions_session (session_id),
     INDEX idx_questions_session_status (session_id, status),
+    INDEX idx_questions_session_stage_order (session_id, stage, order_no),
     CONSTRAINT fk_questions_session
         FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
