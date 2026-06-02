@@ -89,64 +89,62 @@ if ($returningParticipant !== null) {
 
 ob_start();
 ?>
-<div class="row justify-content-center" style="margin-top:clamp(1.5rem,6vh,3rem)">
+<div class="eduqr-student-screen">
+  <div class="row justify-content-center w-100 g-0">
     <div class="col-12 col-sm-10 col-md-7 col-lg-5 col-xl-4">
 
-        <div class="text-center mb-4">
-            <div class="d-inline-flex align-items-center justify-content-center mb-3"
-                 style="width:4.5rem;height:4.5rem;border-radius:1.5rem;
-                        background:linear-gradient(135deg,var(--brand),var(--brand-2));
-                        color:#fff;font-size:2rem;font-weight:700;
-                        box-shadow:0 16px 36px color-mix(in oklab,var(--brand),24%,transparent)">
-                <?= htmlspecialchars($session['short_code'][0] ?? '?', ENT_QUOTES, 'UTF-8') ?>
-            </div>
-            <h1 class="h3 fw-bold mb-1" style="letter-spacing:-.03em"><?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></h1>
-            <div class="text-muted small">
-                <code><?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?></code>
-            </div>
+      <div class="eduqr-join-hero mb-0">
+        <div class="eduqr-join-avatar mx-auto mb-3">
+          <?= htmlspecialchars($session['short_code'][0] ?? '?', ENT_QUOTES, 'UTF-8') ?>
         </div>
-
-        <div style="background:var(--surface);border:1px solid var(--line);border-radius:1.5rem;box-shadow:var(--shadow);padding:clamp(1.5rem,3vw,2rem)">
-            <div id="join-error" class="alert alert-danger d-none" role="alert"></div>
-
-            <form id="join-form" novalidate>
-                <div class="mb-3">
-                    <label for="nickname" class="form-label fw-semibold">
-                        <?= htmlspecialchars(t('student.join.nickname.label'), ENT_QUOTES, 'UTF-8') ?>
-                    </label>
-                    <input
-                        type="text"
-                        id="nickname"
-                        name="nickname"
-                        class="form-control form-control-lg"
-                        placeholder="<?= htmlspecialchars(t('student.join.nickname.placeholder'), ENT_QUOTES, 'UTF-8') ?>"
-                        maxlength="24"
-                        autocomplete="nickname"
-                        required
-                        autofocus
-                    >
-                    <div class="d-flex justify-content-between mt-1">
-                        <div class="invalid-feedback d-block" id="nickname-feedback" style="display:none"></div>
-                        <div class="form-text text-end ms-auto" id="nick-char">0 / 24</div>
-                    </div>
-                </div>
-
-                <button type="submit" id="join-btn" class="btn btn-primary btn-lg w-100">
-                    <?= htmlspecialchars(t('student.join.submit'), ENT_QUOTES, 'UTF-8') ?>
-                </button>
-            </form>
-
-            <div class="mt-3 text-center">
-                <small class="text-muted">
-                    <?= htmlspecialchars(t('student.join.return_desc'), ENT_QUOTES, 'UTF-8') ?>
-                </small>
-            </div>
+        <h1 class="h3 fw-bold mb-1"><?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></h1>
+        <div class="d-flex justify-content-center">
+          <span class="eduqr-chip"><?= eduqr_icon('qr') ?> <code><?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?></code></span>
         </div>
+      </div>
+
+      <div class="eduqr-join-panel">
+        <div id="join-error" class="alert alert-danger d-none" role="alert"></div>
+
+        <form id="join-form" novalidate>
+          <div class="mb-3">
+            <label for="nickname" class="form-label fw-semibold">
+              <?= htmlspecialchars(t('student.join.nickname.label'), ENT_QUOTES, 'UTF-8') ?>
+            </label>
+            <input
+              type="text"
+              id="nickname"
+              name="nickname"
+              class="form-control form-control-lg"
+              placeholder="<?= htmlspecialchars(t('student.join.nickname.placeholder'), ENT_QUOTES, 'UTF-8') ?>"
+              maxlength="24"
+              autocomplete="nickname"
+              required
+              autofocus
+            >
+            <div class="d-flex justify-content-between mt-1">
+              <div class="invalid-feedback d-block" id="nickname-feedback" style="display:none"></div>
+              <div class="form-text text-end ms-auto" id="nick-char">0 / 24</div>
+            </div>
+          </div>
+
+          <button type="submit" id="join-btn" class="btn btn-primary btn-lg w-100">
+            <?= htmlspecialchars(t('student.join.submit'), ENT_QUOTES, 'UTF-8') ?>
+          </button>
+        </form>
 
         <div class="mt-3 text-center">
-            <?php include __DIR__ . '/../partials/privacy-notice.php'; ?>
+          <small class="text-muted">
+            <?= htmlspecialchars(t('student.join.return_desc'), ENT_QUOTES, 'UTF-8') ?>
+          </small>
         </div>
+      </div>
+
+      <div class="mt-3 text-center">
+        <?php include __DIR__ . '/../partials/privacy-notice.php'; ?>
+      </div>
     </div>
+  </div>
 </div>
 
 <script>
