@@ -4,11 +4,42 @@ use EduQR\Middleware\CsrfMiddleware;
 ob_start();
 $csrfToken = CsrfMiddleware::getToken();
 ?>
-<div class="row justify-content-center">
+<div class="row justify-content-center align-items-stretch g-4 py-4 py-lg-5">
+    <div class="col-12 col-lg-5 d-none d-lg-block">
+        <div class="eduqr-hero h-100">
+            <div class="eduqr-kicker">
+                <span class="eduqr-icon-badge"><?= eduqr_icon('shield') ?></span>
+                <span><?= htmlspecialchars(t('auth.login.title'), ENT_QUOTES, 'UTF-8') ?></span>
+            </div>
+            <h1 class="display-5 fw-bold mb-3"><?= htmlspecialchars(t('app.name'), ENT_QUOTES, 'UTF-8') ?></h1>
+            <p class="lead text-muted mb-4">
+                <?= htmlspecialchars(t('app.tagline'), ENT_QUOTES, 'UTF-8') ?>
+            </p>
+            <div class="eduqr-panel-grid">
+                <div class="eduqr-statcard">
+                    <div class="d-flex align-items-center gap-2 mb-2"><?= eduqr_icon('qr') ?><strong><?= htmlspecialchars(t('auth.login.title'), ENT_QUOTES, 'UTF-8') ?></strong></div>
+                    <p class="text-muted mb-0"><?= htmlspecialchars(t('home.status_ready'), ENT_QUOTES, 'UTF-8') ?></p>
+                </div>
+                <div class="eduqr-statcard">
+                    <div class="d-flex align-items-center gap-2 mb-2"><?= eduqr_icon('chart') ?><strong><?= htmlspecialchars(t('results.title'), ENT_QUOTES, 'UTF-8') ?></strong></div>
+                    <p class="text-muted mb-0"><?= htmlspecialchars(t('auth.login.analytics_desc'), ENT_QUOTES, 'UTF-8') ?></p>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="col-sm-10 col-md-6 col-lg-4">
-        <div class="card shadow-sm">
-            <div class="card-body p-4">
-                <h1 class="h4 mb-4 text-primary"><?= htmlspecialchars(t('auth.login.title'), ENT_QUOTES, 'UTF-8') ?></h1>
+        <div class="eduqr-surface h-100">
+            <div class="p-4 p-lg-5">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <p class="eduqr-kicker mb-2">
+                            <span class="eduqr-icon-badge"><?= eduqr_icon('spark') ?></span>
+                            <span><?= htmlspecialchars(t('auth.login.title'), ENT_QUOTES, 'UTF-8') ?></span>
+                        </p>
+                        <h2 class="h4 mb-0"><?= htmlspecialchars(t('auth.login.title'), ENT_QUOTES, 'UTF-8') ?></h2>
+                    </div>
+                    <span class="eduqr-chip"><?= eduqr_icon('shield') ?> <?= htmlspecialchars(t('auth.login.secure_badge'), ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
 
                 <div id="login-error" class="alert alert-danger d-none" role="alert"></div>
 

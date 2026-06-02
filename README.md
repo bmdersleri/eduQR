@@ -14,6 +14,8 @@ If you are an AI agent reading this, your first stop after this file is `AGENTS.
 
 If you are a human evaluating the spec, read in this order: this README → `PROJECT_BRIEF.md` → `PRODUCT_REQUIREMENTS.md` → `SYSTEM_ARCHITECTURE.md`.
 
+Implementation plans for larger work items live under `docs/superpowers/plans/`. The current UI redesign plan is [`docs/superpowers/plans/2026-06-02-ui-premium-redesign-plan.md`](docs/superpowers/plans/2026-06-02-ui-premium-redesign-plan.md).
+
 ## Status
 
 | Item | Value |
@@ -288,7 +290,7 @@ Supported formats:
 }
 ```
 
-Import order is always `opening -> middle -> closing`. Each question is stored with `stage` metadata (`opening`, `middle`, or `closing`). The staged flow format automatically prefixes question texts with `[Course Name | Topic Name | StageLabel]`.
+Import order is always `opening -> middle -> closing`. Each question is stored with `stage` metadata (`opening`, `middle`, or `closing`) to persist its instructional stage. The staged flow format automatically prefixes question texts with `[Course Name | Topic Name | StageLabel]`. Any invalid payload structure triggers the stable error code `invalid_import_payload` (HTTP 400).
 
 ---
 

@@ -3,7 +3,8 @@
  * Projector live results view — /live/{short_code}/results  (T-807)
  *
  * Large-type display of current question results for classroom projection.
- * Polls results every 3 seconds and renders a horizontal bar chart.
+ * Polls results every 3 seconds and renders a horizontal bar chart with
+ * plain Bootstrap markup so it works without external JS assets.
  * No authentication required — uses the public short_code.
  *
  * When session.show_results_to_students = 0, the projector still shows
@@ -31,62 +32,60 @@ $activeQId    = $activeQ !== null ? (int) $activeQ['id'] : 0;
 
 ob_start();
 ?>
-<div class="row g-0" style="min-height:90vh">
-
-    <!-- Session header -->
-    <div class="col-12 py-2 text-center border-bottom border-secondary mb-4">
-        <span class="text-white-50" style="font-size:clamp(0.9rem,1.5vw,1.3rem)">
-            <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?>
-            &nbsp;&mdash;&nbsp;
-            <code style="letter-spacing:0.2em"><?= htmlspecialchars($shortCode, ENT_QUOTES, 'UTF-8') ?></code>
-        </span>
-    </div>
-
-    <!-- Question text -->
-    <div class="col-12 text-center mb-4" id="question-text-area">
-        <p class="text-white-50 mb-2" id="question-type-label" style="font-size:clamp(0.9rem,1.5vw,1.2rem)"></p>
-        <div id="question-image-area" class="mb-3 d-none">
-            <img src="" alt="" class="img-fluid rounded" style="max-height:280px">
+<div class="eduqr-live-surface p-3 p-lg-4" style="min-height:90vh">
+    <div class="eduqr-projector-header">
+        <div class="eduqr-projector-title">
+            <span class="eduqr-icon-badge"><?= eduqr_icon('chart') ?></span>
+            <div>
+                <h1 class="h4 mb-1"><?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></h1>
+                <div class="text-white-50" style="font-size:clamp(0.9rem,1.5vw,1.1rem)">
+                    <code><?= htmlspecialchars($shortCode, ENT_QUOTES, 'UTF-8') ?></code>
+                </div>
+            </div>
         </div>
-        <h2 id="question-text" class="fw-bold mb-3" style="font-size:clamp(1.6rem,3.5vw,3rem)">
-            <?= $activeQ
-                ? htmlspecialchars($activeQ['question_text'], ENT_QUOTES, 'UTF-8')
-                : htmlspecialchars(t('question.no_active'), ENT_QUOTES, 'UTF-8') ?>
-        </h2>
-        <p class="text-white-50" id="answer-count-label" style="font-size:clamp(1rem,2vw,1.5rem)"></p>
-    </div>
-
-    <!-- Chart (option-based) -->
-    <div class="col-12" id="chart-area">
-        <canvas id="results-chart"></canvas>
-    </div>
-
-    <!-- Open-text list -->
-    <div class="col-12 d-none" id="open-text-area">
-        <ul id="open-text-list" class="list-unstyled px-4"></ul>
-    </div>
-
-    <!-- No results yet -->
-    <div class="col-12 text-center text-white-50 d-none" id="waiting-area">
-        <div class="spinner-border text-secondary mb-3" role="status">
-            <span class="visually-hidden"><?= htmlspecialchars(t('common.loading'), ENT_QUOTES, 'UTF-8') ?></span>
+        <div class="eduqr-chip">
+            <?= eduqr_icon('clock') ?>
+            <?= htmlspecialchars(t('results.title'), ENT_QUOTES, 'UTF-8') ?>
         </div>
-        <p><?= htmlspecialchars(t('student.waiting.message'), ENT_QUOTES, 'UTF-8') ?></p>
     </div>
 
+    <div class="row g-0">
+        <!-- Question text -->
+        <div class="col-12 text-center mb-4" id="question-text-area">
+            <p class="text-white-50 mb-2" id="question-type-label" style="font-size:clamp(0.9rem,1.5vw,1.2rem)"></p>
+            <div id="question-image-area" class="mb-3 d-none">
+                <img src="" alt="" class="img-fluid rounded" style="max-height:280px">
+            </div>
+            <h2 id="question-text" class="fw-bold mb-3" style="font-size:clamp(1.6rem,3.5vw,3rem)">
+                <?= $activeQ
+                    ? htmlspecialchars($activeQ['question_text'], ENT_QUOTES, 'UTF-8')
+                    : htmlspecialchars(t('question.no_active'), ENT_QUOTES, 'UTF-8') ?>
+            </h2>
+            <p class="text-white-50" id="answer-count-label" style="font-size:clamp(1rem,2vw,1.5rem)"></p>
+        </div>
+
+        <!-- Chart (option-based) -->
+        <div class="col-12 d-none" id="chart-area"></div>
+
+        <!-- Open-text list -->
+        <div class="col-12 d-none" id="open-text-area">
+            <ul id="open-text-list" class="list-unstyled px-4"></ul>
+        </div>
+
+        <!-- No results yet -->
+        <div class="col-12 text-center text-white-50 d-none" id="waiting-area">
+            <div class="spinner-border text-secondary mb-3" role="status">
+                <span class="visually-hidden"><?= htmlspecialchars(t('common.loading'), ENT_QUOTES, 'UTF-8') ?></span>
+            </div>
+            <p><?= htmlspecialchars(t('student.waiting.message'), ENT_QUOTES, 'UTF-8') ?></p>
+        </div>
+    </div>
 </div>
-
-<!-- Chart.js -->
-<script src="/assets/js/chart.umd.min.js"
-        onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js'">
-</script>
 
 <script>
 const SESSION_ID      = <?= $sessionId ?>;
 const SHORT_CODE      = <?= json_encode($shortCode) ?>;
 let   ACTIVE_Q_ID     = <?= $activeQId ?>;
-
-let chart = null;
 
 const questionText  = document.getElementById('question-text');
 const questionType  = document.getElementById('question-type-label');
@@ -105,13 +104,26 @@ const TYPE_LABELS = <?= json_encode([
 const MSG_ANSWER_COUNT = <?= json_encode(t('results.answer_count')) ?>;
 const MSG_NO_ACTIVE    = <?= json_encode(t('question.no_active')) ?>;
 
+function extractActiveQuestion(payload) {
+    if (!payload || !payload.success || !payload.data) {
+        return null;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(payload.data, 'question')) {
+        return payload.data.question;
+    }
+
+    return payload.data;
+}
+
 async function pollResults() {
     try {
         // Check for an active question change
         const qRes  = await fetch('/api/v1/sessions/' + SHORT_CODE + '/active-question');
         const qData = await qRes.json();
+        const q = extractActiveQuestion(qData);
 
-        if (!qData.success || !qData.data) {
+        if (!q) {
             // No active question
             ACTIVE_Q_ID = 0;
             questionText.textContent = MSG_NO_ACTIVE;
@@ -120,11 +132,10 @@ async function pollResults() {
             chartArea.classList.add('d-none');
             textArea.classList.add('d-none');
             waitingArea.classList.remove('d-none');
-            if (chart) { chart.destroy(); chart = null; }
+            document.getElementById('chart-area').innerHTML = '';
             return;
         }
 
-        const q = qData.data;
         ACTIVE_Q_ID = q.id;
 
         // Update question header
@@ -154,11 +165,11 @@ async function pollResults() {
             chartArea.classList.add('d-none');
             textArea.classList.remove('d-none');
             renderOpenText(result.answers ?? []);
-            if (chart) { chart.destroy(); chart = null; }
+            document.getElementById('chart-area').innerHTML = '';
         } else {
             textArea.classList.add('d-none');
             chartArea.classList.remove('d-none');
-            renderChart(result.options ?? []);
+            renderBarChart(result.options ?? []);
         }
 
     } catch {
@@ -166,52 +177,61 @@ async function pollResults() {
     }
 }
 
-function renderChart(options) {
-    const labels = options.map(o => o.text);
-    const counts = options.map(o => o.count);
-    const pcts   = options.map(o => o.percent);
+function renderBarChart(options) {
+    const chartArea = document.getElementById('chart-area');
+    chartArea.classList.remove('d-none');
+    chartArea.innerHTML = '';
 
-    const ctx = document.getElementById('results-chart').getContext('2d');
-    if (chart) chart.destroy();
-    chart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [{
-                label: '',
-                data: counts,
-                backgroundColor: [
-                    '#0d6efd','#198754','#ffc107','#dc3545','#0dcaf0',
-                    '#6f42c1','#fd7e14','#20c997',
-                ],
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: ctx => ` ${ctx.parsed.x}  (${pcts[ctx.dataIndex]}%)`,
-                    }
-                },
-                datalabels: { display: false },
-            },
-            scales: {
-                x: {
-                    beginAtZero: true,
-                    ticks: { color: '#adb5bd', font: { size: 22 } },
-                    grid: { color: '#343a40' },
-                },
-                y: {
-                    ticks: { color: '#fff', font: { size: 24 } },
-                    grid: { display: false },
-                }
-            }
-        }
+    const max = Math.max(...options.map((o) => Number(o.count) || 0), 1);
+
+    options.forEach((o, index) => {
+        const count = Number(o.count) || 0;
+        const percent = Number(o.percent) || 0;
+        const row = document.createElement('div');
+        row.className = 'eduqr-statcard mb-4';
+        row.style.background = 'rgba(255,255,255,.05)';
+        row.style.borderColor = 'rgba(255,255,255,.08)';
+
+        const header = document.createElement('div');
+        header.className = 'd-flex justify-content-between align-items-end mb-2';
+        header.innerHTML = `
+            <span class="fw-semibold" style="font-size:clamp(1.2rem,2vw,1.8rem)">${escapeHtml(o.text)}</span>
+            <span class="eduqr-chip" style="background:rgba(255,255,255,.06);color:#eef2ff;border-color:rgba(255,255,255,.08)">${count} (${percent}%)</span>
+        `;
+
+        const progress = document.createElement('div');
+        progress.className = 'progress';
+        progress.style.height = '2.4rem';
+        progress.style.borderRadius = '999px';
+        progress.style.background = 'rgba(255,255,255,.08)';
+
+        const bar = document.createElement('div');
+        bar.className = 'progress-bar progress-bar-striped progress-bar-animated';
+        bar.style.width = `${Math.max(4, (count / max) * 100)}%`;
+        bar.style.background = `linear-gradient(135deg, ${BAR_COLORS[index % BAR_COLORS.length]}, color-mix(in oklab, ${BAR_COLORS[index % BAR_COLORS.length]} 45%, white))`;
+        bar.style.transition = 'width .7s cubic-bezier(.22,1,.36,1)';
+        bar.style.boxShadow = '0 14px 28px rgba(0,0,0,.18)';
+        bar.style.borderRadius = '999px';
+        bar.style.fontSize = '1rem';
+        bar.textContent = count > 0 ? String(count) : '';
+
+        progress.appendChild(bar);
+        row.appendChild(header);
+        row.appendChild(progress);
+        chartArea.appendChild(row);
     });
 }
+
+function escapeHtml(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+const BAR_COLORS = ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#0dcaf0', '#6f42c1', '#fd7e14', '#20c997'];
 
 function renderOpenText(answers) {
     const list = document.getElementById('open-text-list');
@@ -219,7 +239,7 @@ function renderOpenText(answers) {
     const visible = answers.filter(a => !a.is_hidden).slice(0, 8); // max 8 lines on screen
     visible.forEach(a => {
         const li = document.createElement('li');
-        li.className = 'mb-3';
+        li.className = 'mb-3 eduqr-statcard';
         li.innerHTML = `
             <span class="text-white-50 me-3" style="font-size:clamp(1rem,1.5vw,1.3rem)">
                 ${escHtml(a.nickname)}:

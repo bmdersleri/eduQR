@@ -2,6 +2,8 @@
 
 This is the working backlog. Tasks are grouped into **phases**; phases ship in order. Each task has a stable ID (`T-xxx`), a one-line description, and the requirement IDs it satisfies.
 
+Implementation plans that drive multi-step work live under `docs/superpowers/plans/`. Current premium UI plan: [docs/superpowers/plans/2026-06-02-ui-premium-redesign-plan.md](docs/superpowers/plans/2026-06-02-ui-premium-redesign-plan.md).
+
 **Rules for AI agents:**
 
 - Implement **phase by phase**. Do not build all phases at once.
@@ -153,6 +155,7 @@ Goal: students join with a nickname, no account.
 [x] T-511  i18n keys for all student UI                                                   [FR-80]
 [x] T-512  Unit tests: nickname validation, normalization, profanity                      [NFR-52]
 [x] T-513  Integration test: full join flow                                               [—]
+[ ] T-514  Returning student auto-restore via persistent device cookie                    [FR-49]
 ```
 
 Acceptance checkpoint: student opens the join link, enters a nickname, joins an active session, lands on a waiting screen; closed/paused sessions show a clear message; the privacy notice is visible.
@@ -311,7 +314,7 @@ Not part of the MVP. Each item must be escalated to the human owner before work 
 [ ] T-1113  LMS integration (Moodle / Canvas export)                                        [—]
 [ ] T-1114  Multi-instructor course ownership                                               [—]
 [ ] T-1115  Containerize (docker-compose: PHP + MySQL [+ Node later])                       [—]
-[x] T-1116  Question import V2 supporting legacy format and staged flow with metadata       [FR-31]
+[x] T-1116  Question import V2 (legacy questions[] and staged sections opening->middle->closing, processing order, metadata, error: invalid_import_payload) [FR-31]
 ```
 
 ---

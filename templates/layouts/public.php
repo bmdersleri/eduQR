@@ -11,12 +11,21 @@
 </head>
 <body class="eduqr-public bg-light">
 
-<nav class="navbar navbar-light bg-white border-bottom py-2 px-3">
-    <span class="navbar-brand fw-bold"><?= t('app.name') ?></span>
-    <?php include __DIR__ . '/../partials/language-switcher.php'; ?>
+<nav class="navbar navbar-expand-lg eduqr-topbar px-3 px-lg-4">
+    <a class="navbar-brand fw-bold" href="/">
+        <span class="eduqr-icon-badge"><?= eduqr_icon('qr') ?></span>
+        <span class="eduqr-brand-copy">
+            <span><?= htmlspecialchars(t('app.name'), ENT_QUOTES, 'UTF-8') ?></span>
+            <small><?= htmlspecialchars(t('app.tagline'), ENT_QUOTES, 'UTF-8') ?></small>
+        </span>
+    </a>
+    <div class="d-flex align-items-center gap-2 ms-auto flex-wrap justify-content-end">
+        <?php include __DIR__ . '/../partials/theme-toggle.php'; ?>
+        <?php include __DIR__ . '/../partials/language-switcher.php'; ?>
+    </div>
 </nav>
 
-<main class="container-fluid py-4">
+<main class="container-fluid py-4 py-lg-5 eduqr-shell">
     <?= $content ?? '' ?>
 </main>
 

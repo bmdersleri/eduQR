@@ -37,6 +37,8 @@ For any non-trivial task, read in this order:
 
 If you cannot answer the question "which `FR-xx` or `NFR-xx` does my change satisfy?" you are not ready to code. Go back to `PRODUCT_REQUIREMENTS.md`.
 
+Implementation plans for larger multi-step work live under `docs/superpowers/plans/`. Start with the plan that matches the current work item before touching code.
+
 ---
 
 ## 3. The Five Iron Laws

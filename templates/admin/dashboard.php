@@ -1,25 +1,86 @@
 <?php
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
+use EduQR\Repositories\CourseRepository;
+use EduQR\Services\CourseService;
 
 $instructor = AuthMiddleware::require();
 $csrfToken  = CsrfMiddleware::getToken();
 
+$courseService = new CourseService(new CourseRepository());
+$coursesData   = $courseService->listMyCourses((int) $instructor['id'], 1, 3);
+$recentCourses = $coursesData['data'] ?? [];
+
 ob_start();
 ?>
-<div class="row">
-    <div class="col">
-        <h2 class="mb-1"><?= htmlspecialchars(t('instructor.dashboard.title'), ENT_QUOTES, 'UTF-8') ?></h2>
-        <p class="text-muted">
-            <?= htmlspecialchars(t('instructor.dashboard.welcome', ['name' => $instructor['display_name']]), ENT_QUOTES, 'UTF-8') ?>
-        </p>
+<div class="eduqr-admin-hero mb-4">
+    <div>
+        <div class="eduqr-kicker mb-3">
+            <span class="eduqr-icon-badge"><?= eduqr_icon('spark') ?></span>
+            <span><?= htmlspecialchars(t('instructor.dashboard.title'), ENT_QUOTES, 'UTF-8') ?></span>
+        </div>
+        <h1 class="h2 mb-2"><?= htmlspecialchars(t('instructor.dashboard.welcome', ['name' => $instructor['display_name']]), ENT_QUOTES, 'UTF-8') ?></h1>
+        <p class="text-muted mb-0"><?= htmlspecialchars(t('app.tagline'), ENT_QUOTES, 'UTF-8') ?></p>
+    </div>
+    <a href="/admin/courses/new" class="btn btn-primary align-self-start">
+        <?= eduqr_icon('spark') ?> <?= htmlspecialchars(t('course.action.create'), ENT_QUOTES, 'UTF-8') ?>
+    </a>
+</div>
+
+<div class="eduqr-admin-grid mb-4">
+    <div class="eduqr-data-card">
+        <div class="label"><?= htmlspecialchars(t('instructor.dashboard.recent_sessions'), ENT_QUOTES, 'UTF-8') ?></div>
+        <div class="value"><?= count($recentCourses) ?></div>
+        <div class="hint"><?= htmlspecialchars(t('course.list.title'), ENT_QUOTES, 'UTF-8') ?></div>
+    </div>
+    <div class="eduqr-data-card">
+        <div class="label"><?= htmlspecialchars(t('session.action.view_live'), ENT_QUOTES, 'UTF-8') ?></div>
+        <div class="value">QR</div>
+        <div class="hint"><?= htmlspecialchars(t('session.qr.title'), ENT_QUOTES, 'UTF-8') ?></div>
+    </div>
+    <div class="eduqr-data-card">
+        <div class="label"><?= htmlspecialchars(t('results.title'), ENT_QUOTES, 'UTF-8') ?></div>
+        <div class="value">Live</div>
+        <div class="hint"><?= htmlspecialchars(t('results.answer_count'), ENT_QUOTES, 'UTF-8') ?></div>
     </div>
 </div>
 
-<hr>
+<div class="eduqr-section-head">
+    <h2 class="h4 mb-0"><?= htmlspecialchars(t('instructor.dashboard.recent_sessions'), ENT_QUOTES, 'UTF-8') ?></h2>
+</div>
 
-<h5 class="mb-3"><?= htmlspecialchars(t('instructor.dashboard.recent_sessions'), ENT_QUOTES, 'UTF-8') ?></h5>
-<p class="text-muted"><?= htmlspecialchars(t('instructor.dashboard.no_sessions'), ENT_QUOTES, 'UTF-8') ?></p>
+<?php if (empty($recentCourses)): ?>
+<div class="eduqr-surface eduqr-empty-state text-start">
+    <span class="eduqr-icon-badge mb-3"><?= eduqr_icon('clock') ?></span>
+    <p class="text-muted mb-0"><?= htmlspecialchars(t('instructor.dashboard.no_sessions'), ENT_QUOTES, 'UTF-8') ?></p>
+</div>
+<?php else: ?>
+<div class="eduqr-card-list">
+    <?php foreach ($recentCourses as $course): ?>
+    <div class="eduqr-card-row">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                <a href="/admin/courses/<?= (int) $course['id'] ?>" class="h5 mb-0 text-decoration-none">
+                    <?= htmlspecialchars($course['title'], ENT_QUOTES, 'UTF-8') ?>
+                </a>
+                <?php if ($course['status'] === 'archived'): ?>
+                <span class="badge text-bg-secondary"><?= htmlspecialchars(t('course.archived_badge'), ENT_QUOTES, 'UTF-8') ?></span>
+                <?php endif; ?>
+            </div>
+            <div class="d-flex flex-wrap gap-2 meta">
+                <span class="eduqr-chip"><code><?= htmlspecialchars($course['code'] ?? '', ENT_QUOTES, 'UTF-8') ?></code></span>
+                <span class="eduqr-chip"><?= htmlspecialchars($course['status'], ENT_QUOTES, 'UTF-8') ?></span>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/admin/courses/<?= (int) $course['id'] ?>" class="btn btn-outline-secondary btn-sm">
+                <?= eduqr_icon('chart') ?> <?= htmlspecialchars(t('common.actions'), ENT_QUOTES, 'UTF-8') ?>
+            </a>
+        </div>
+    </div>
+    <?php endforeach; ?>
+</div>
+<?php endif; ?>
 <?php
 $content   = ob_get_clean();
 $pageTitle = t('instructor.dashboard.title') . ' — ' . t('app.name');

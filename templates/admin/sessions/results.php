@@ -3,7 +3,8 @@
  * Admin live results page — /admin/sessions/{id}/results  (T-805)
  *
  * Polls GET /api/v1/sessions/{id}/results?question_id=... every 2 seconds
- * and renders bar charts via Chart.js (CDN via data URI / local asset).
+ * and renders bar charts with plain Bootstrap markup so the screen works
+ * without an external JS asset.
  * Also surfaces hide/unhide controls for open-text in moderation_mode (T-809).
  */
 
@@ -35,29 +36,38 @@ $questions    = $questionRepo->findBySession($sessionId);
 
 ob_start();
 ?>
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <a href="/admin/sessions/<?= $sessionId ?>" class="btn btn-outline-secondary btn-sm">
-        &larr; <?= htmlspecialchars(t('common.back'), ENT_QUOTES, 'UTF-8') ?>
-    </a>
-    <h2 class="mb-0 h4">
-        <?= htmlspecialchars(t('results.title'), ENT_QUOTES, 'UTF-8') ?>
-        &mdash; <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?>
-    </h2>
-    <a href="/live/<?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?>"
-       target="_blank" class="btn btn-outline-primary btn-sm">
-        <?= htmlspecialchars(t('session.action.view_live'), ENT_QUOTES, 'UTF-8') ?>
-    </a>
+<div class="eduqr-admin-hero mb-4">
+    <div>
+        <div class="eduqr-kicker mb-3">
+            <span class="eduqr-icon-badge"><?= eduqr_icon('chart') ?></span>
+            <span><?= htmlspecialchars(t('results.title'), ENT_QUOTES, 'UTF-8') ?></span>
+        </div>
+        <h1 class="h2 mb-2"><?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></h1>
+        <p class="text-muted mb-0"><code><?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?></code></p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap align-self-start">
+        <a href="/admin/sessions/<?= $sessionId ?>" class="btn btn-outline-secondary btn-sm">
+            <?= eduqr_icon('user') ?> <?= htmlspecialchars(t('common.back'), ENT_QUOTES, 'UTF-8') ?>
+        </a>
+        <a href="/live/<?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?>" target="_blank" class="btn btn-primary btn-sm">
+            <?= eduqr_icon('spark') ?> <?= htmlspecialchars(t('session.action.view_live'), ENT_QUOTES, 'UTF-8') ?>
+        </a>
+    </div>
 </div>
 
 <div class="row g-4">
 
     <!-- Left: question list -->
     <div class="col-lg-3">
-        <div class="list-group" id="question-list">
+        <div class="eduqr-surface p-3 p-lg-4">
+            <div class="eduqr-section-head mb-3">
+                <h2 class="h5 mb-0"><?= htmlspecialchars(t('nav.sessions'), ENT_QUOTES, 'UTF-8') ?></h2>
+            </div>
+            <div class="list-group" id="question-list">
         <?php foreach ($questions as $i => $q): ?>
             <button
                 type="button"
-                class="list-group-item list-group-item-action <?= $i === 0 ? 'active' : '' ?>"
+                class="list-group-item list-group-item-action <?= $i === 0 ? 'active' : '' ?> eduqr-card-row mb-2"
                 data-question-id="<?= (int) $q['id'] ?>"
                 data-question-type="<?= htmlspecialchars($q['question_type'], ENT_QUOTES, 'UTF-8') ?>"
             >
@@ -69,13 +79,13 @@ ob_start();
                 </span>
             </button>
         <?php endforeach; ?>
+            </div>
         </div>
     </div>
 
     <!-- Right: results panel -->
     <div class="col-lg-9">
-        <div class="card">
-            <div class="card-body">
+        <div class="eduqr-surface p-4 p-lg-5">
 
                 <!-- Answer count + refresh indicator -->
                 <div class="d-flex align-items-center gap-3 mb-3">
@@ -86,9 +96,7 @@ ob_start();
                 </div>
 
                 <!-- Chart area (option-based questions) -->
-                <div id="chart-area">
-                    <canvas id="results-chart" height="200"></canvas>
-                </div>
+                <div id="chart-area" class="d-none"></div>
 
                 <!-- Open-text area -->
                 <div id="open-text-area" class="d-none">
@@ -99,16 +107,11 @@ ob_start();
                     <?= htmlspecialchars(t('results.no_answers'), ENT_QUOTES, 'UTF-8') ?>
                 </p>
 
-            </div>
+        </div>
         </div>
     </div>
 
 </div>
-
-<!-- Chart.js (loaded from local assets if present, else CDN) -->
-<script src="/assets/js/chart.umd.min.js"
-        onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js'">
-</script>
 
 <script>
 const SESSION_ID       = <?= $sessionId ?>;
@@ -168,50 +171,59 @@ function renderResults(result) {
         textArea.classList.add('d-none');
         chartArea.classList.remove('d-none');
         noMsg.classList.toggle('d-none', answerCount > 0);
-        renderChart(result.options ?? []);
+        renderBarChart(result.options ?? []);
     }
 }
 
-function renderChart(options) {
-    const labels = options.map(o => o.text);
-    const counts = options.map(o => o.count);
-    const pcts   = options.map(o => o.percent);
+function renderBarChart(options) {
+    const chartArea = document.getElementById('chart-area');
+    chartArea.classList.remove('d-none');
+    chartArea.innerHTML = '';
 
-    const ctx = document.getElementById('results-chart').getContext('2d');
-    if (chart) chart.destroy();
-    chart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [{
-                label: '',
-                data: counts,
-                backgroundColor: [
-                    '#0d6efd','#198754','#ffc107','#dc3545','#0dcaf0',
-                    '#6f42c1','#fd7e14','#20c997',
-                ],
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            plugins: {
-                legend:  { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: ctx => ` ${ctx.parsed.x}  (${pcts[ctx.dataIndex]}%)`,
-                    }
-                },
-            },
-            scales: {
-                x: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1 },
-                }
-            }
-        }
+    const max = Math.max(...options.map((o) => Number(o.count) || 0), 1);
+
+    options.forEach((o, index) => {
+        const count = Number(o.count) || 0;
+        const percent = Number(o.percent) || 0;
+        const row = document.createElement('div');
+        row.className = 'mb-3';
+
+        const header = document.createElement('div');
+        header.className = 'd-flex justify-content-between align-items-end mb-1';
+        header.innerHTML = `
+            <span class="fw-semibold">${escapeHtml(o.text)}</span>
+            <span class="text-muted small">${count} (${percent}%)</span>
+        `;
+
+        const progress = document.createElement('div');
+        progress.className = 'progress';
+
+        const bar = document.createElement('div');
+        bar.className = 'progress-bar progress-bar-striped progress-bar-animated';
+        bar.style.width = `${Math.max(4, (count / max) * 100)}%`;
+        bar.style.backgroundColor = BAR_COLORS[index % BAR_COLORS.length];
+        bar.setAttribute('aria-valuenow', String(count));
+        bar.setAttribute('aria-valuemin', '0');
+        bar.setAttribute('aria-valuemax', String(max));
+        bar.textContent = count > 0 ? `${count}` : '';
+
+        progress.appendChild(bar);
+        row.appendChild(header);
+        row.appendChild(progress);
+        chartArea.appendChild(row);
     });
 }
+
+function escapeHtml(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+const BAR_COLORS = ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#0dcaf0', '#6f42c1', '#fd7e14', '#20c997'];
 
 function renderOpenText(answers) {
     const list = document.getElementById('open-text-list');

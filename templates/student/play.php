@@ -97,7 +97,7 @@ $alreadyDone = $answerRepo->existsByParticipantAndQuestion($participantId, (int)
 if ($alreadyDone) {
     // Already answered — show confirmation screen
     http_response_code(302);
-    header('Location: /play/' . rawurlencode($shortCode) . '/answered');
+    header('Location: /play/' . rawurlencode($shortCode) . '/answered?answered_q=' . (int) $question['id']);
     exit;
 }
 
@@ -124,11 +124,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $service->submit($participantId, $body);
         // Redirect to confirmation (PRG pattern)
         http_response_code(303);
-        header('Location: /play/' . rawurlencode($shortCode) . '/answered');
+        header('Location: /play/' . rawurlencode($shortCode) . '/answered?answered_q=' . (int) $question['id']);
         exit;
     } catch (DuplicateAnswerException) {
         http_response_code(303);
-        header('Location: /play/' . rawurlencode($shortCode) . '/answered');
+        header('Location: /play/' . rawurlencode($shortCode) . '/answered?answered_q=' . (int) $question['id']);
         exit;
     } catch (\InvalidArgumentException $e) {
         $noJsError = t('error.invalid_answer_shape');
@@ -150,17 +150,15 @@ $qText = htmlspecialchars($question['question_text'], ENT_QUOTES, 'UTF-8');
 ob_start();
 ?>
 <div class="row justify-content-center mt-4 mt-md-5">
-    <div class="col-12 col-sm-10 col-md-8 col-lg-6">
-        <div class="card shadow-sm">
-            <div class="card-header text-muted small">
-                <code><?= htmlspecialchars($shortCode, ENT_QUOTES, 'UTF-8') ?></code>
-                &mdash; <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?>
+    <div class="col-12 col-sm-10 col-md-8 col-lg-7">
+        <div class="eduqr-surface eduqr-question-card">
+            <div class="eduqr-question-meta mb-3">
+                <span class="eduqr-chip"><?= eduqr_icon('qr') ?> <code><?= htmlspecialchars($shortCode, ENT_QUOTES, 'UTF-8') ?></code></span>
+                <span class="eduqr-chip"><?= eduqr_icon('spark') ?> <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></span>
+                <span class="eduqr-chip"><?= eduqr_icon('clock') ?> <?= htmlspecialchars(t('question.type.' . $qType), ENT_QUOTES, 'UTF-8') ?></span>
             </div>
-            <div class="card-body p-4">
 
-                <p class="text-muted small mb-2">
-                    <?= htmlspecialchars(t('question.type.' . $qType), ENT_QUOTES, 'UTF-8') ?>
-                </p>
+            <div class="mb-3">
                 <?php if (! empty($question['image_path'])): ?>
                 <div class="text-center mb-3">
                     <img src="/<?= htmlspecialchars($question['image_path'], ENT_QUOTES, 'UTF-8') ?>"
@@ -169,7 +167,7 @@ ob_start();
                          style="max-height:300px">
                 </div>
                 <?php endif; ?>
-                <h2 class="h5 mb-4"><?= $qText ?></h2>
+                <h2 class="eduqr-question-title mb-4"><?= $qText ?></h2>
 
                 <?php if ($noJsError !== ''): ?>
                 <div class="alert alert-danger" role="alert">
@@ -190,14 +188,14 @@ ob_start();
                     <!-- Open text (T-604) -->
                     <div class="mb-3">
                         <textarea
-                            id="answer_text"
-                            name="answer_text"
-                            class="form-control"
-                            rows="4"
-                            maxlength="2000"
-                            placeholder="<?= htmlspecialchars(t('student.answer.text_placeholder'), ENT_QUOTES, 'UTF-8') ?>"
-                            required
-                        ></textarea>
+                        id="answer_text"
+                        name="answer_text"
+                        class="form-control"
+                        rows="5"
+                        maxlength="2000"
+                        placeholder="<?= htmlspecialchars(t('student.answer.text_placeholder'), ENT_QUOTES, 'UTF-8') ?>"
+                        required
+                    ></textarea>
                         <div class="form-text text-end">
                             <span id="char-count">0</span> / 2000
                         </div>
@@ -214,6 +212,7 @@ ob_start();
                             class="btn btn-outline-primary text-start option-btn"
                             data-option-id="<?= (int) $opt['id'] ?>"
                         >
+                            <span class="me-2"><?= eduqr_icon('check') ?></span>
                             <?= htmlspecialchars($opt['option_text'], ENT_QUOTES, 'UTF-8') ?>
                         </button>
                     <?php endforeach; ?>
@@ -249,6 +248,11 @@ ob_start();
                     >
                         <?= htmlspecialchars(t('student.answer.submit'), ENT_QUOTES, 'UTF-8') ?>
                     </button>
+
+                    <a href="/play/<?= rawurlencode($shortCode) ?>/batch"
+                       class="btn btn-outline-secondary w-100 mt-2">
+                        <?= htmlspecialchars(t('student.batch.open'), ENT_QUOTES, 'UTF-8') ?>
+                    </a>
                 </form>
 
             </div>
@@ -341,7 +345,7 @@ form.addEventListener('submit', async function (e) {
 
         if (data.success || res.status === 409) {
             // 409 = duplicate: treat as success (already answered)
-            window.location.href = '/play/' + SHORT_CODE + '/answered';
+            window.location.href = '/play/' + SHORT_CODE + '/answered?answered_q=' + QUESTION_ID;
         } else {
             showError((data.error && data.error.message) ? data.error.message : MSG_SERVER);
             submitBtn.disabled = false;

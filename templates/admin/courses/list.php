@@ -16,55 +16,58 @@ $meta    = $result['meta'];
 
 ob_start();
 ?>
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0"><?= htmlspecialchars(t('course.list.title'), ENT_QUOTES, 'UTF-8') ?></h2>
-    <a href="/admin/courses/new" class="btn btn-primary">
-        + <?= htmlspecialchars(t('course.action.create'), ENT_QUOTES, 'UTF-8') ?>
+<div class="eduqr-admin-hero mb-4">
+    <div>
+        <div class="eduqr-kicker mb-3">
+            <span class="eduqr-icon-badge"><?= eduqr_icon('qr') ?></span>
+            <span><?= htmlspecialchars(t('course.list.title'), ENT_QUOTES, 'UTF-8') ?></span>
+        </div>
+        <h1 class="h2 mb-2"><?= htmlspecialchars(t('course.list.title'), ENT_QUOTES, 'UTF-8') ?></h1>
+        <p class="text-muted mb-0"><?= htmlspecialchars(t('instructor.dashboard.welcome', ['name' => $instructor['display_name']]), ENT_QUOTES, 'UTF-8') ?></p>
+    </div>
+    <a href="/admin/courses/new" class="btn btn-primary align-self-start">
+        <?= eduqr_icon('spark') ?> <?= htmlspecialchars(t('course.action.create'), ENT_QUOTES, 'UTF-8') ?>
     </a>
 </div>
 
 <?php if (empty($courses)): ?>
-<p class="text-muted"><?= htmlspecialchars(t('course.list.empty'), ENT_QUOTES, 'UTF-8') ?></p>
+<div class="eduqr-surface eduqr-empty-state text-start">
+    <span class="eduqr-icon-badge mb-3"><?= eduqr_icon('qr') ?></span>
+    <h2 class="h5 mb-2"><?= htmlspecialchars(t('course.list.empty'), ENT_QUOTES, 'UTF-8') ?></h2>
+    <p class="text-muted mb-0"><?= htmlspecialchars(t('course.list.empty'), ENT_QUOTES, 'UTF-8') ?></p>
+</div>
 <?php else: ?>
-<div class="table-responsive">
-    <table class="table table-hover align-middle">
-        <thead class="table-light">
-            <tr>
-                <th><?= htmlspecialchars(t('course.field.title'),    ENT_QUOTES, 'UTF-8') ?></th>
-                <th><?= htmlspecialchars(t('course.field.code'),     ENT_QUOTES, 'UTF-8') ?></th>
-                <th><?= htmlspecialchars(t('course.field.semester'), ENT_QUOTES, 'UTF-8') ?></th>
-                <th><?= htmlspecialchars(t('common.status'),         ENT_QUOTES, 'UTF-8') ?></th>
-                <th><?= htmlspecialchars(t('common.created_at'),     ENT_QUOTES, 'UTF-8') ?></th>
-                <th><?= htmlspecialchars(t('common.actions'),        ENT_QUOTES, 'UTF-8') ?></th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($courses as $course): ?>
-            <tr>
-                <td>
-                    <a href="/admin/courses/<?= (int) $course['id'] ?>" class="fw-medium text-decoration-none">
-                        <?= htmlspecialchars($course['title'], ENT_QUOTES, 'UTF-8') ?>
-                    </a>
-                    <?php if ($course['status'] === 'archived'): ?>
-                    <span class="badge text-bg-secondary ms-1">
-                        <?= htmlspecialchars(t('course.archived_badge'), ENT_QUOTES, 'UTF-8') ?>
-                    </span>
-                    <?php endif; ?>
-                </td>
-                <td class="text-muted"><?= htmlspecialchars($course['code'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
-                <td class="text-muted"><?= htmlspecialchars($course['semester'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
-                <td><?= htmlspecialchars($course['status'], ENT_QUOTES, 'UTF-8') ?></td>
-                <td class="text-muted small"><?= htmlspecialchars(substr($course['created_at'], 0, 10), ENT_QUOTES, 'UTF-8') ?></td>
-                <td>
-                    <a href="/admin/courses/<?= (int) $course['id'] ?>/edit"
-                       class="btn btn-sm btn-outline-secondary">
-                        <?= htmlspecialchars(t('common.edit'), ENT_QUOTES, 'UTF-8') ?>
-                    </a>
-                </td>
-            </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
+<div class="eduqr-card-list">
+    <?php foreach ($courses as $course): ?>
+    <div class="eduqr-card-row">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                <a href="/admin/courses/<?= (int) $course['id'] ?>" class="h5 mb-0 text-decoration-none">
+                    <?= htmlspecialchars($course['title'], ENT_QUOTES, 'UTF-8') ?>
+                </a>
+                <?php if ($course['status'] === 'archived'): ?>
+                <span class="badge text-bg-secondary">
+                    <?= htmlspecialchars(t('course.archived_badge'), ENT_QUOTES, 'UTF-8') ?>
+                </span>
+                <?php endif; ?>
+            </div>
+            <div class="d-flex flex-wrap gap-2 meta">
+                <span class="eduqr-chip"><code><?= htmlspecialchars($course['code'] ?? '', ENT_QUOTES, 'UTF-8') ?></code></span>
+                <span class="eduqr-chip"><?= htmlspecialchars($course['semester'] ?? '', ENT_QUOTES, 'UTF-8') ?></span>
+                <span class="eduqr-chip"><?= htmlspecialchars($course['status'], ENT_QUOTES, 'UTF-8') ?></span>
+                <span class="eduqr-chip"><?= htmlspecialchars(substr($course['created_at'], 0, 10), ENT_QUOTES, 'UTF-8') ?></span>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+            <a href="/admin/courses/<?= (int) $course['id'] ?>" class="btn btn-outline-secondary btn-sm">
+                <?= eduqr_icon('chart') ?> <?= htmlspecialchars(t('common.actions'), ENT_QUOTES, 'UTF-8') ?>
+            </a>
+            <a href="/admin/courses/<?= (int) $course['id'] ?>/edit" class="btn btn-primary btn-sm">
+                <?= eduqr_icon('spark') ?> <?= htmlspecialchars(t('common.edit'), ENT_QUOTES, 'UTF-8') ?>
+            </a>
+        </div>
+    </div>
+    <?php endforeach; ?>
 </div>
 
 <?php if ($meta['total'] > $meta['per_page']): ?>

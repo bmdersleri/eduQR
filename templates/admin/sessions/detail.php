@@ -34,207 +34,175 @@ $isClosed = $session['status'] === 'closed';
 
 ob_start();
 ?>
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <a href="/admin/courses/<?= (int) $session['course_id'] ?>" class="btn btn-outline-secondary btn-sm">
-        &larr; <?= htmlspecialchars($course['title'] ?? '', ENT_QUOTES, 'UTF-8') ?>
-    </a>
-    <?php if (!$isClosed): ?>
-    <a href="/live/<?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?>"
-       target="_blank" class="btn btn-outline-primary btn-sm">
-        <?= htmlspecialchars(t('session.action.view_live'), ENT_QUOTES, 'UTF-8') ?>
-    </a>
-    <?php endif; ?>
-</div>
-
-<div class="row g-4">
-    <!-- Left: info + controls + question manager -->
-    <div class="col-lg-7">
-        <div class="d-flex align-items-center gap-3 mb-3">
-            <h2 class="mb-0"><?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></h2>
+<div class="eduqr-admin-hero mb-4">
+    <div>
+        <div class="eduqr-kicker mb-3">
+            <span class="eduqr-icon-badge"><?= eduqr_icon('qr') ?></span>
+            <span><?= htmlspecialchars($course['title'] ?? '', ENT_QUOTES, 'UTF-8') ?></span>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+            <h1 class="h2 mb-0"><?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></h1>
             <span class="badge <?= $isActive ? 'text-bg-success' : ($isPaused ? 'text-bg-warning' : 'text-bg-secondary') ?>">
                 <?= htmlspecialchars(t('session.status.' . $session['status']), ENT_QUOTES, 'UTF-8') ?>
             </span>
         </div>
-
-        <dl class="row mb-4">
-            <dt class="col-sm-4"><?= htmlspecialchars(t('session.short_code.label'), ENT_QUOTES, 'UTF-8') ?></dt>
-            <dd class="col-sm-8">
-                <code class="fs-5 fw-bold"><?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?></code>
-            </dd>
-
-            <dt class="col-sm-4"><?= htmlspecialchars(t('session.join_url.label'), ENT_QUOTES, 'UTF-8') ?></dt>
-            <dd class="col-sm-8">
-                <a href="<?= htmlspecialchars($joinUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank">
-                    <?= htmlspecialchars($joinUrl, ENT_QUOTES, 'UTF-8') ?>
-                </a>
-            </dd>
-
-            <dt class="col-sm-4"><?= htmlspecialchars(t('session.participants.count'), ENT_QUOTES, 'UTF-8') ?></dt>
-            <dd class="col-sm-8">
-                <span id="participant-count" class="fw-bold">0</span>
-            </dd>
-        </dl>
-
+        <p class="text-muted mb-0">
+            <code><?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?></code>
+            &middot; <?= htmlspecialchars($course['title'] ?? '', ENT_QUOTES, 'UTF-8') ?>
+        </p>
+    </div>
+    <div class="d-flex flex-wrap gap-2 align-self-start">
+        <a href="/admin/courses/<?= (int) $session['course_id'] ?>" class="btn btn-outline-secondary btn-sm">
+            <?= eduqr_icon('user') ?> <?= htmlspecialchars(t('common.back'), ENT_QUOTES, 'UTF-8') ?>
+        </a>
         <?php if (!$isClosed): ?>
-        <div class="d-flex gap-2 flex-wrap mb-4">
-            <?php if ($isActive): ?>
-            <button id="btn-pause" class="btn btn-warning btn-sm">
-                <?= htmlspecialchars(t('session.action.pause'), ENT_QUOTES, 'UTF-8') ?>
-            </button>
-            <?php endif; ?>
-
-            <?php if ($isPaused): ?>
-            <button id="btn-resume" class="btn btn-success btn-sm">
-                <?= htmlspecialchars(t('session.action.resume'), ENT_QUOTES, 'UTF-8') ?>
-            </button>
-            <?php endif; ?>
-
-            <button id="btn-close" class="btn btn-outline-danger btn-sm">
-                <?= htmlspecialchars(t('session.action.close'), ENT_QUOTES, 'UTF-8') ?>
-            </button>
-        </div>
+        <a href="/live/<?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?>" target="_blank" class="btn btn-primary btn-sm">
+            <?= eduqr_icon('chart') ?> <?= htmlspecialchars(t('session.action.view_live'), ENT_QUOTES, 'UTF-8') ?>
+        </a>
         <?php endif; ?>
+    </div>
+</div>
 
-        <!-- ── show_results + moderation toggles (T-808, T-809) ─────────────── -->
-        <div class="d-flex flex-wrap gap-3 mb-3 align-items-center">
-            <!-- Live results link -->
-            <a href="/admin/sessions/<?= $sessionId ?>/results"
-               class="btn btn-sm btn-outline-success">
-                📊 <?= htmlspecialchars(t('session.action.view_live'), ENT_QUOTES, 'UTF-8') ?>
-            </a>
+<div class="eduqr-admin-grid mb-4">
+    <div class="eduqr-data-card">
+        <div class="label"><?= htmlspecialchars(t('session.short_code.label'), ENT_QUOTES, 'UTF-8') ?></div>
+        <div class="value"><code><?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?></code></div>
+    </div>
+    <div class="eduqr-data-card">
+        <div class="label"><?= htmlspecialchars(t('session.join_url.label'), ENT_QUOTES, 'UTF-8') ?></div>
+        <div class="value" style="font-size:1rem;word-break:break-all"><a href="<?= htmlspecialchars($joinUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank"><?= htmlspecialchars($joinUrl, ENT_QUOTES, 'UTF-8') ?></a></div>
+    </div>
+    <div class="eduqr-data-card">
+        <div class="label"><?= htmlspecialchars(t('session.participants.count'), ENT_QUOTES, 'UTF-8') ?></div>
+        <div class="value"><span id="participant-count">0</span></div>
+    </div>
+    <div class="eduqr-data-card">
+        <div class="label"><?= htmlspecialchars(t('common.status'), ENT_QUOTES, 'UTF-8') ?></div>
+        <div class="value"><?= htmlspecialchars(t('session.status.' . $session['status']), ENT_QUOTES, 'UTF-8') ?></div>
+    </div>
+</div>
 
-            <!-- show_results_to_students toggle (T-808) -->
-            <div class="form-check form-switch mb-0">
-                <input class="form-check-input" type="checkbox" role="switch"
-                       id="toggle-show-results"
-                       <?= (bool) $session['show_results_to_students'] ? 'checked' : '' ?>>
-                <label class="form-check-label" for="toggle-show-results">
-                    <?= htmlspecialchars(t('results.show_to_students'), ENT_QUOTES, 'UTF-8') ?>
-                </label>
-            </div>
-
-            <!-- moderation_mode toggle (T-809) -->
-            <div class="form-check form-switch mb-0">
-                <input class="form-check-input" type="checkbox" role="switch"
-                       id="toggle-moderation"
-                       <?= (bool) $session['moderation_mode'] ? 'checked' : '' ?>>
-                <label class="form-check-label" for="toggle-moderation">
-                    Moderation
-                </label>
-            </div>
-
-            <!-- quiz mode toggle (T-1104) -->
-            <div class="form-check form-switch mb-0">
-                <input class="form-check-input" type="checkbox" role="switch"
-                       id="toggle-quiz"
-                       <?= (bool) $session['is_quiz'] ? 'checked' : '' ?>>
-                <label class="form-check-label" for="toggle-quiz">
-                    <?= htmlspecialchars(t('session.quiz_mode'), ENT_QUOTES, 'UTF-8') ?>
-                </label>
-            </div>
-        </div>
-
-        <div id="session-feedback" class="alert d-none" role="alert"></div>
-
-        <hr>
-
-        <!-- ── Question Manager (T-615) ──────────────────────────────────── -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="mb-0"><?= htmlspecialchars(t('question.new.title'), ENT_QUOTES, 'UTF-8') ?></h5>
-            <?php if (!$isClosed): ?>
-            <button class="btn btn-primary btn-sm"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#create-question-panel"
-                    aria-expanded="false">
-                + <?= htmlspecialchars(t('question.action.create'), ENT_QUOTES, 'UTF-8') ?>
-            </button>
-            <?php endif; ?>
-        </div>
-
-        <!-- Create question form (collapsed by default) -->
-        <?php if (!$isClosed): ?>
-        <div class="collapse mb-3" id="create-question-panel">
-            <div class="card card-body bg-light border">
-                <div id="create-error" class="alert alert-danger d-none" role="alert"></div>
-
-                <div class="mb-3">
-                    <label for="q-text" class="form-label fw-semibold">
-                        <?= htmlspecialchars(t('question.field.text'), ENT_QUOTES, 'UTF-8') ?>
-                    </label>
-                    <textarea id="q-text" class="form-control" rows="3" maxlength="500"></textarea>
-                </div>
-
-                <div class="mb-3">
-                    <label for="q-type" class="form-label fw-semibold">
-                        <?= htmlspecialchars(t('question.field.type'), ENT_QUOTES, 'UTF-8') ?>
-                    </label>
-                    <select id="q-type" class="form-select">
-                        <option value="multiple_choice"><?= htmlspecialchars(t('question.type.multiple_choice'), ENT_QUOTES, 'UTF-8') ?></option>
-                        <option value="open_text"><?= htmlspecialchars(t('question.type.open_text'), ENT_QUOTES, 'UTF-8') ?></option>
-                        <option value="yes_no"><?= htmlspecialchars(t('question.type.yes_no'), ENT_QUOTES, 'UTF-8') ?></option>
-                        <option value="likert_5"><?= htmlspecialchars(t('question.type.likert_5'), ENT_QUOTES, 'UTF-8') ?></option>
-                    </select>
-                </div>
-
-                <!-- Options (shown only for multiple_choice) -->
-                <div id="options-section" class="mb-3">
-                    <label class="form-label fw-semibold">
-                        <?= htmlspecialchars(t('question.field.options'), ENT_QUOTES, 'UTF-8') ?>
-                    </label>
-                    <div id="options-list"></div>
-                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="btn-add-option">
-                        + <?= htmlspecialchars(t('question.action.add_option'), ENT_QUOTES, 'UTF-8') ?>
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="eduqr-surface p-4 p-lg-5 mb-4">
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                <?php if (!$isClosed): ?>
+                    <?php if ($isActive): ?>
+                    <button id="btn-pause" class="btn btn-warning btn-sm">
+                        <?= htmlspecialchars(t('session.action.pause'), ENT_QUOTES, 'UTF-8') ?>
                     </button>
-                </div>
+                    <?php endif; ?>
+                    <?php if ($isPaused): ?>
+                    <button id="btn-resume" class="btn btn-success btn-sm">
+                        <?= htmlspecialchars(t('session.action.resume'), ENT_QUOTES, 'UTF-8') ?>
+                    </button>
+                    <?php endif; ?>
+                    <button id="btn-close" class="btn btn-outline-danger btn-sm">
+                        <?= htmlspecialchars(t('session.action.close'), ENT_QUOTES, 'UTF-8') ?>
+                    </button>
+                <?php endif; ?>
+                <a href="/admin/sessions/<?= $sessionId ?>/results" class="btn btn-outline-success btn-sm">
+                    <?= htmlspecialchars(t('session.action.view_live'), ENT_QUOTES, 'UTF-8') ?>
+                </a>
+            </div>
 
-                <div class="mb-3">
-                    <label for="q-image" class="form-label fw-semibold">
-                        <?= htmlspecialchars(t('question.field.image'), ENT_QUOTES, 'UTF-8') ?>
-                    </label>
-                    <input type="file" id="q-image" class="form-control form-control-sm"
-                           accept="image/jpeg,image/png">
-                    <div id="q-image-preview" class="mt-2 d-none">
-                        <img src="" alt="<?= htmlspecialchars(t('question.image.preview_alt'), ENT_QUOTES, 'UTF-8') ?>"
-                             class="img-thumbnail" style="max-height:120px">
+            <div class="eduqr-admin-grid mb-4">
+                <label class="eduqr-feature justify-content-start gap-3 mb-0">
+                    <input class="form-check-input m-0" type="checkbox" role="switch" id="toggle-show-results" <?= (bool) $session['show_results_to_students'] ? 'checked' : '' ?>>
+                    <span>
+                        <strong><?= htmlspecialchars(t('results.show_to_students'), ENT_QUOTES, 'UTF-8') ?></strong>
+                        <span><?= htmlspecialchars(t('results.show_to_students'), ENT_QUOTES, 'UTF-8') ?></span>
+                    </span>
+                </label>
+                <label class="eduqr-feature justify-content-start gap-3 mb-0">
+                    <input class="form-check-input m-0" type="checkbox" role="switch" id="toggle-moderation" <?= (bool) $session['moderation_mode'] ? 'checked' : '' ?>>
+                    <span>
+                        <strong><?= htmlspecialchars(t('session.moderation_mode'), ENT_QUOTES, 'UTF-8') ?></strong>
+                        <span><?= htmlspecialchars(t('session.moderation_mode'), ENT_QUOTES, 'UTF-8') ?></span>
+                    </span>
+                </label>
+                <label class="eduqr-feature justify-content-start gap-3 mb-0">
+                    <input class="form-check-input m-0" type="checkbox" role="switch" id="toggle-quiz" <?= (bool) $session['is_quiz'] ? 'checked' : '' ?>>
+                    <span>
+                        <strong><?= htmlspecialchars(t('session.quiz_mode'), ENT_QUOTES, 'UTF-8') ?></strong>
+                        <span><?= htmlspecialchars(t('session.quiz_mode'), ENT_QUOTES, 'UTF-8') ?></span>
+                    </span>
+                </label>
+            </div>
+
+            <div id="session-feedback" class="alert d-none" role="alert"></div>
+
+            <div class="eduqr-section-head">
+                <h2 class="h4 mb-0"><?= htmlspecialchars(t('question.new.title'), ENT_QUOTES, 'UTF-8') ?></h2>
+                <?php if (!$isClosed): ?>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#create-question-panel" aria-expanded="false">
+                    <?= eduqr_icon('spark') ?> <?= htmlspecialchars(t('question.action.create'), ENT_QUOTES, 'UTF-8') ?>
+                </button>
+                <?php endif; ?>
+            </div>
+
+            <?php if (!$isClosed): ?>
+            <div class="collapse mb-4" id="create-question-panel">
+                <div class="eduqr-surface p-4">
+                    <div id="create-error" class="alert alert-danger d-none" role="alert"></div>
+                    <div class="mb-3">
+                        <label for="q-text" class="form-label fw-semibold"><?= htmlspecialchars(t('question.field.text'), ENT_QUOTES, 'UTF-8') ?></label>
+                        <textarea id="q-text" class="form-control" rows="3" maxlength="500"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="q-type" class="form-label fw-semibold"><?= htmlspecialchars(t('question.field.type'), ENT_QUOTES, 'UTF-8') ?></label>
+                        <select id="q-type" class="form-select">
+                            <option value="multiple_choice"><?= htmlspecialchars(t('question.type.multiple_choice'), ENT_QUOTES, 'UTF-8') ?></option>
+                            <option value="open_text"><?= htmlspecialchars(t('question.type.open_text'), ENT_QUOTES, 'UTF-8') ?></option>
+                            <option value="yes_no"><?= htmlspecialchars(t('question.type.yes_no'), ENT_QUOTES, 'UTF-8') ?></option>
+                            <option value="likert_5"><?= htmlspecialchars(t('question.type.likert_5'), ENT_QUOTES, 'UTF-8') ?></option>
+                        </select>
+                    </div>
+                    <div id="options-section" class="mb-3">
+                        <label class="form-label fw-semibold"><?= htmlspecialchars(t('question.field.options'), ENT_QUOTES, 'UTF-8') ?></label>
+                        <div id="options-list"></div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="btn-add-option">
+                            <?= eduqr_icon('check') ?> <?= htmlspecialchars(t('question.action.add_option'), ENT_QUOTES, 'UTF-8') ?>
+                        </button>
+                    </div>
+                    <div class="mb-3">
+                        <label for="q-image" class="form-label fw-semibold"><?= htmlspecialchars(t('question.field.image'), ENT_QUOTES, 'UTF-8') ?></label>
+                        <input type="file" id="q-image" class="form-control form-control-sm" accept="image/jpeg,image/png">
+                        <div id="q-image-preview" class="mt-2 d-none">
+                            <div class="eduqr-image-frame d-inline-block">
+                                <img src="" alt="<?= htmlspecialchars(t('question.image.preview_alt'), ENT_QUOTES, 'UTF-8') ?>" class="img-thumbnail" style="max-height:120px">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="q-show-results">
+                        <label class="form-check-label" for="q-show-results"><?= htmlspecialchars(t('question.field.show_results'), ENT_QUOTES, 'UTF-8') ?></label>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" id="btn-create-question" class="btn btn-primary btn-sm"><?= htmlspecialchars(t('question.action.create'), ENT_QUOTES, 'UTF-8') ?></button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#create-question-panel"><?= htmlspecialchars(t('common.cancel'), ENT_QUOTES, 'UTF-8') ?></button>
                     </div>
                 </div>
-
-                <div class="form-check mb-3">
-                    <input class="form-check-input" type="checkbox" id="q-show-results">
-                    <label class="form-check-label" for="q-show-results">
-                        <?= htmlspecialchars(t('question.field.show_results'), ENT_QUOTES, 'UTF-8') ?>
-                    </label>
-                </div>
-
-                <div class="d-flex gap-2">
-                    <button type="button" id="btn-create-question" class="btn btn-primary btn-sm">
-                        <?= htmlspecialchars(t('question.action.create'), ENT_QUOTES, 'UTF-8') ?>
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm"
-                            data-bs-toggle="collapse" data-bs-target="#create-question-panel">
-                        <?= htmlspecialchars(t('common.cancel'), ENT_QUOTES, 'UTF-8') ?>
-                    </button>
-                </div>
             </div>
-        </div>
-        <?php endif; ?>
+            <?php endif; ?>
 
-        <!-- Question list (populated by JS) -->
-        <div id="question-list">
-            <p class="text-muted small" id="questions-empty">
-                <?= htmlspecialchars(t('question.no_active'), ENT_QUOTES, 'UTF-8') ?>
-            </p>
+            <div id="question-list">
+                <p class="text-muted small" id="questions-empty"><?= htmlspecialchars(t('question.no_active'), ENT_QUOTES, 'UTF-8') ?></p>
+            </div>
         </div>
     </div>
 
-    <!-- Right: QR code -->
     <?php if (!$isClosed): ?>
-    <div class="col-lg-5 text-center">
-        <p class="fw-semibold mb-2"><?= htmlspecialchars(t('session.qr.title'), ENT_QUOTES, 'UTF-8') ?></p>
-        <img src="/api/v1/sessions/<?= (int) $session['id'] ?>/qr.png?size=400"
-             alt="<?= htmlspecialchars(t('session.qr.title'), ENT_QUOTES, 'UTF-8') ?>"
-             class="img-fluid border rounded p-2"
-             style="max-width:320px">
+    <div class="col-lg-5">
+        <div class="eduqr-surface p-4 p-lg-5 text-center">
+            <p class="fw-semibold mb-2"><?= htmlspecialchars(t('session.qr.title'), ENT_QUOTES, 'UTF-8') ?></p>
+            <div class="eduqr-image-frame d-inline-block">
+                <img src="/api/v1/sessions/<?= (int) $session['id'] ?>/qr.png?size=400"
+                     alt="<?= htmlspecialchars(t('session.qr.title'), ENT_QUOTES, 'UTF-8') ?>"
+                     class="img-fluid"
+                     style="max-width:320px">
+            </div>
+        </div>
     </div>
     <?php endif; ?>
 </div>
@@ -258,6 +226,7 @@ const L = {
     imgUpload:   <?= json_encode(t('question.image.upload')) ?>,
     imgRemove:   <?= json_encode(t('question.image.remove')) ?>,
     imgAlt:      <?= json_encode(t('question.image.preview_alt')) ?>,
+    optionPlaceholder: <?= json_encode(t('question.option.placeholder')) ?>,
     types: {
         multiple_choice: <?= json_encode(t('question.type.multiple_choice')) ?>,
         open_text:       <?= json_encode(t('question.type.open_text')) ?>,
@@ -582,7 +551,7 @@ function addOptionInput() {
 
     row.innerHTML = `
         ${correctRadio}
-        <input type="text" class="form-control option-input" placeholder="Option ${index + 1}" maxlength="200">
+        <input type="text" class="form-control option-input" placeholder="${escHtml(optionPlaceholder(index + 1))}" maxlength="200">
         <button type="button" class="btn btn-outline-secondary" onclick="removeOptionInput(this)">×</button>`;
     list.appendChild(row);
 }
@@ -611,10 +580,14 @@ function removeOptionInput(btn) {
                 label.setAttribute('for', `correct_opt_${idx}`);
             }
             if (input) {
-                input.placeholder = `Option ${idx + 1}`;
+                input.placeholder = optionPlaceholder(idx + 1);
             }
         });
     }
+}
+
+function optionPlaceholder(number) {
+    return L.optionPlaceholder.replace('{number}', number);
 }
 
 document.getElementById('btn-add-option')?.addEventListener('click', () => {
@@ -667,13 +640,15 @@ document.getElementById('btn-create-question')?.addEventListener('click', async 
             if (newId && imageFile) {
                 const fd = new FormData();
                 fd.append('image', imageFile);
-                try {
-                    await fetch('/api/v1/questions/' + newId + '/image', {
-                        method: 'POST',
-                        headers: { 'X-CSRF-Token': CSRF_TOKEN },
-                        body: fd,
-                    });
-                } catch {}
+                const uploadRes = await fetch('/api/v1/questions/' + newId + '/image', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-Token': CSRF_TOKEN },
+                    body: fd,
+                });
+                const uploadData = await uploadRes.json();
+                if (!uploadData.success) {
+                    throw new Error(uploadData.error?.message || MSG_SERVER);
+                }
             }
             // Reset form and close panel
             document.getElementById('q-text').value = '';
@@ -691,8 +666,8 @@ document.getElementById('btn-create-question')?.addEventListener('click', async 
             errEl.textContent = data.error?.message || MSG_SERVER;
             errEl.classList.remove('d-none');
         }
-    } catch {
-        errEl.textContent = MSG_SERVER;
+    } catch (e) {
+        errEl.textContent = e.message || MSG_SERVER;
         errEl.classList.remove('d-none');
     } finally {
         btn.disabled = false;

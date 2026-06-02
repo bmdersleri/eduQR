@@ -1,12 +1,14 @@
 <?php
 
 use EduQR\Repositories\SessionRepository;
-use EduQR\Services\SessionService;
-use EduQR\Repositories\CourseRepository;
+use EduQR\Repositories\ParticipantRepository;
+use EduQR\Services\ParticipantService;
 
 $shortCode = $p['short_code'] ?? '';
 
 $sessionRepo = new SessionRepository();
+$participantRepo = new ParticipantRepository();
+$participantService = new ParticipantService($participantRepo, $sessionRepo);
 $session     = $sessionRepo->findByShortCode($shortCode);
 
 if ($session === null) {
@@ -23,9 +25,9 @@ if ($session['status'] === 'closed') {
     ?>
 <div class="row justify-content-center mt-5">
     <div class="col-12 col-sm-8 col-md-6 col-lg-4">
-        <div class="card border-secondary">
-            <div class="card-body text-center py-5">
-                <p class="fs-5 text-secondary mb-0"><?= htmlspecialchars($statusMessage, ENT_QUOTES, 'UTF-8') ?></p>
+        <div class="eduqr-surface eduqr-empty-state">
+            <span class="eduqr-icon-badge"><?= eduqr_icon('clock') ?></span>
+            <p class="fs-5 text-secondary mb-0"><?= htmlspecialchars($statusMessage, ENT_QUOTES, 'UTF-8') ?></p>
             </div>
         </div>
     </div>
@@ -43,9 +45,9 @@ if ($session['status'] === 'paused') {
     ?>
 <div class="row justify-content-center mt-5">
     <div class="col-12 col-sm-8 col-md-6 col-lg-4">
-        <div class="card border-warning">
-            <div class="card-body text-center py-5">
-                <p class="fs-5 text-warning-emphasis mb-0"><?= htmlspecialchars($statusMessage, ENT_QUOTES, 'UTF-8') ?></p>
+        <div class="eduqr-surface eduqr-empty-state">
+            <span class="eduqr-icon-badge"><?= eduqr_icon('clock') ?></span>
+            <p class="fs-5 text-warning-emphasis mb-0"><?= htmlspecialchars($statusMessage, ENT_QUOTES, 'UTF-8') ?></p>
             </div>
         </div>
     </div>
@@ -57,18 +59,77 @@ if ($session['status'] === 'paused') {
     exit;
 }
 
+$setParticipantCookie = static function (int $participantId): void {
+    setcookie('eduqr_participant', (string) $participantId, [
+        'expires' => 0,
+        'path' => '/',
+        'secure' => (bool) ($_SERVER['HTTPS'] ?? false),
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+};
+
+$participantId = (int) ($_COOKIE['eduqr_participant'] ?? 0);
+if ($participantId > 0) {
+    $participant = $participantRepo->findById($participantId);
+    if ($participant !== null && (int) $participant['session_id'] === (int) $session['id']) {
+        $setParticipantCookie($participantId);
+        http_response_code(302);
+        header('Location: /play/' . rawurlencode($shortCode));
+        exit;
+    }
+}
+
+$deviceCookieId = $_COOKIE['eduqr_device'] ?? '';
+$returningParticipant = $participantService->restore(
+    $shortCode,
+    is_string($deviceCookieId) && $deviceCookieId !== '' ? $deviceCookieId : null,
+    $_SERVER['HTTP_USER_AGENT'] ?? '',
+);
+
+if ($returningParticipant !== null) {
+    $setParticipantCookie((int) $returningParticipant['id']);
+    http_response_code(302);
+    header('Location: /play/' . rawurlencode($shortCode));
+    exit;
+}
+
 ob_start();
 ?>
-<div class="row justify-content-center mt-4 mt-md-5">
+<div class="row justify-content-center align-items-stretch g-4 py-4 py-lg-5">
+    <div class="col-12 col-lg-5 d-none d-lg-block">
+        <div class="eduqr-hero h-100">
+            <div class="eduqr-kicker">
+                <span class="eduqr-icon-badge"><?= eduqr_icon('qr') ?></span>
+                <span><?= htmlspecialchars(t('student.join.title'), ENT_QUOTES, 'UTF-8') ?></span>
+            </div>
+            <h1 class="display-5 fw-bold mb-3"><?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></h1>
+            <p class="lead text-muted mb-4">
+                <?= htmlspecialchars(t('student.waiting.message'), ENT_QUOTES, 'UTF-8') ?>
+            </p>
+            <div class="eduqr-panel-grid">
+                <div class="eduqr-statcard">
+                    <div class="d-flex align-items-center gap-2 mb-2"><?= eduqr_icon('user') ?><strong><?= htmlspecialchars(t('student.join.nickname_title'), ENT_QUOTES, 'UTF-8') ?></strong></div>
+                    <p class="text-muted mb-0"><?= htmlspecialchars(t('student.join.nickname.placeholder'), ENT_QUOTES, 'UTF-8') ?></p>
+                </div>
+                <div class="eduqr-statcard">
+                    <div class="d-flex align-items-center gap-2 mb-2"><?= eduqr_icon('clock') ?><strong><?= htmlspecialchars(t('student.join.once_only_title'), ENT_QUOTES, 'UTF-8') ?></strong></div>
+                    <p class="text-muted mb-0"><?= htmlspecialchars(t('student.join.return_desc'), ENT_QUOTES, 'UTF-8') ?></p>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="col-12 col-sm-8 col-md-6 col-lg-4">
-        <div class="card shadow-sm">
-            <div class="card-body p-4">
-                <h1 class="h4 text-center mb-1">
-                    <?= htmlspecialchars(t('student.join.title'), ENT_QUOTES, 'UTF-8') ?>
-                </h1>
-                <p class="text-muted text-center small mb-4">
-                    <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?>
-                </p>
+        <div class="eduqr-surface h-100">
+            <div class="p-4 p-lg-5">
+                <div class="text-center mb-4">
+                    <span class="eduqr-icon-badge mx-auto mb-3"><?= eduqr_icon('user') ?></span>
+                    <h2 class="h4 mb-1"><?= htmlspecialchars(t('student.join.title'), ENT_QUOTES, 'UTF-8') ?></h2>
+                    <p class="text-muted small mb-0">
+                        <code><?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?></code>
+                        &mdash; <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?>
+                    </p>
+                </div>
 
                 <div id="join-error" class="alert alert-danger d-none" role="alert"></div>
 

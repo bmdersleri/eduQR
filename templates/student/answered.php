@@ -20,44 +20,35 @@ if ($session === null) {
     exit;
 }
 
-$questionRepo    = new QuestionRepository();
-$activeQuestion  = $questionRepo->findActiveBySessionCode($shortCode);
-$activeQuestionId = $activeQuestion !== null ? (int) $activeQuestion['id'] : 0;
+$answeredQuestionId = (int) ($_GET['answered_q'] ?? 0);
 
 ob_start();
 ?>
 <div class="row justify-content-center mt-4 mt-md-5">
     <div class="col-12 col-sm-8 col-md-6 col-lg-4 text-center">
+        <div class="eduqr-surface eduqr-empty-state">
+            <span class="eduqr-icon-badge mb-3"><?= eduqr_icon('check') ?></span>
 
-        <!-- Success badge -->
-        <div class="mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor"
-                 class="bi bi-check-circle-fill text-success" viewBox="0 0 16 16" aria-hidden="true">
-                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477
-                    9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0
-                    1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-            </svg>
-        </div>
+            <h1 class="h4 mb-2">
+                <?= htmlspecialchars(t('student.answer.submitted'), ENT_QUOTES, 'UTF-8') ?>
+            </h1>
+            <p class="text-muted">
+                <?= htmlspecialchars(t('student.answer.waiting_next'), ENT_QUOTES, 'UTF-8') ?>
+            </p>
 
-        <h1 class="h4 mb-2">
-            <?= htmlspecialchars(t('student.answer.submitted'), ENT_QUOTES, 'UTF-8') ?>
-        </h1>
-        <p class="text-muted">
-            <?= htmlspecialchars(t('student.answer.waiting_next'), ENT_QUOTES, 'UTF-8') ?>
-        </p>
+            <p class="mt-3 text-muted small mb-0">
+                <code><?= htmlspecialchars($shortCode, ENT_QUOTES, 'UTF-8') ?></code>
+                &mdash;
+                <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?>
+            </p>
 
-        <p class="mt-3 text-muted small">
-            <code><?= htmlspecialchars($shortCode, ENT_QUOTES, 'UTF-8') ?></code>
-            &mdash;
-            <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?>
-        </p>
-
-        <!-- Spinner shown while polling -->
-        <div id="polling-indicator" class="mt-4">
-            <div class="spinner-border spinner-border-sm text-secondary" role="status">
-                <span class="visually-hidden">
-                    <?= htmlspecialchars(t('common.loading'), ENT_QUOTES, 'UTF-8') ?>
-                </span>
+            <!-- Spinner shown while polling -->
+            <div id="polling-indicator" class="mt-4">
+                <div class="spinner-border spinner-border-sm text-secondary" role="status">
+                    <span class="visually-hidden">
+                        <?= htmlspecialchars(t('common.loading'), ENT_QUOTES, 'UTF-8') ?>
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -66,7 +57,19 @@ ob_start();
 
 <script>
 const SHORT_CODE          = <?= json_encode($shortCode) ?>;
-const CURRENT_QUESTION_ID = <?= $activeQuestionId ?>;
+const ANSWERED_QUESTION_ID = <?= $answeredQuestionId ?>;
+
+function extractActiveQuestion(payload) {
+    if (!payload || !payload.success || !payload.data) {
+        return null;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(payload.data, 'question')) {
+        return payload.data.question;
+    }
+
+    return payload.data;
+}
 
 /**
  * Poll for a *new* active question.
@@ -77,11 +80,13 @@ async function pollForNextQuestion() {
     try {
         const res  = await fetch('/api/v1/sessions/' + SHORT_CODE + '/active-question');
         const data = await res.json();
+        const question = extractActiveQuestion(data);
 
-        if (data.success && data.data) {
-            const newId = data.data.id;
-            // Only navigate if a genuinely new question is active
-            if (newId && newId !== CURRENT_QUESTION_ID) {
+        if (question) {
+            const newId = question.id;
+            // If we know the answered question id, move only when a newer/different one is active.
+            // If param is missing (legacy link), any active question should move to play.
+            if (newId && (ANSWERED_QUESTION_ID === 0 || newId !== ANSWERED_QUESTION_ID)) {
                 window.location.href = '/play/' + SHORT_CODE;
             }
         }

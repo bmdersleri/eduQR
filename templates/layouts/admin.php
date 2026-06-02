@@ -11,13 +11,20 @@
 </head>
 <body class="eduqr-admin">
 
-<nav class="navbar navbar-expand navbar-dark bg-dark px-3">
-    <a class="navbar-brand fw-bold" href="/admin"><?= t('app.name') ?></a>
+<nav class="navbar navbar-expand-lg eduqr-topbar px-3 px-lg-4">
+    <a class="navbar-brand fw-bold" href="/admin">
+        <span class="eduqr-icon-badge"><?= eduqr_icon('spark') ?></span>
+        <span class="eduqr-brand-copy">
+            <span><?= htmlspecialchars(t('app.name'), ENT_QUOTES, 'UTF-8') ?></span>
+            <small><?= htmlspecialchars(t('app.subtitle'), ENT_QUOTES, 'UTF-8') ?></small>
+        </span>
+    </a>
     <div class="collapse navbar-collapse mx-3">
-        <ul class="navbar-nav me-auto">
+        <ul class="navbar-nav me-auto gap-1">
             <li class="nav-item">
                 <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/courses') ? 'active' : '' ?>"
                    href="/admin/courses">
+                    <span class="me-1"><?= eduqr_icon('qr') ?></span>
                     <?= htmlspecialchars(t('nav.courses'), ENT_QUOTES, 'UTF-8') ?>
                 </a>
             </li>
@@ -25,19 +32,24 @@
             <li class="nav-item">
                 <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/audit-logs') ? 'active' : '' ?>"
                    href="/admin/audit-logs">
+                    <span class="me-1"><?= eduqr_icon('chart') ?></span>
                     <?= htmlspecialchars(t('nav.audit_logs'), ENT_QUOTES, 'UTF-8') ?>
                 </a>
             </li>
             <?php endif; ?>
         </ul>
     </div>
-    <div class="d-flex align-items-center gap-3">
+    <div class="d-flex align-items-center gap-2 gap-lg-3 ms-auto flex-wrap justify-content-end">
+        <?php include __DIR__ . '/../partials/theme-toggle.php'; ?>
         <?php include __DIR__ . '/../partials/language-switcher.php'; ?>
         <?php if (isset($instructor)): ?>
-        <span class="text-white-50 small"><?= htmlspecialchars($instructor['display_name'] ?? '', ENT_QUOTES, 'UTF-8') ?></span>
+        <span class="eduqr-chip">
+            <?= eduqr_icon('user') ?>
+            <?= htmlspecialchars($instructor['display_name'] ?? '', ENT_QUOTES, 'UTF-8') ?>
+        </span>
         <form method="post" action="/api/v1/auth/logout" class="d-inline">
             <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken ?? '', ENT_QUOTES, 'UTF-8') ?>">
-            <button type="submit" class="btn btn-sm btn-outline-light">
+            <button type="submit" class="btn btn-sm btn-outline-secondary">
                 <?= htmlspecialchars(t('nav.logout'), ENT_QUOTES, 'UTF-8') ?>
             </button>
         </form>
@@ -45,7 +57,7 @@
     </div>
 </nav>
 
-<div class="container-lg py-4">
+<div class="container-lg py-4 py-lg-5 eduqr-shell">
     <?php if (!empty($flashMessage)): ?>
     <div class="alert alert-<?= htmlspecialchars($flashType ?? 'info', ENT_QUOTES, 'UTF-8') ?> alert-dismissible fade show">
         <?= htmlspecialchars($flashMessage, ENT_QUOTES, 'UTF-8') ?>

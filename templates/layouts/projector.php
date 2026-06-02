@@ -7,9 +7,10 @@
     <meta name="robots" content="noindex,nofollow">
     <title><?= htmlspecialchars($pageTitle ?? t('app.name'), ENT_QUOTES, 'UTF-8') ?></title>
     <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/assets/css/app.css">
     <link rel="stylesheet" href="/assets/css/projector.css">
 </head>
-<body class="eduqr-projector bg-dark text-white" style="font-size:clamp(1.4rem,3vw,2.5rem)">
+<body class="eduqr-projector" style="font-size:clamp(1.4rem,3vw,2.5rem)">
 
 <div class="container-fluid px-4 py-3">
     <?= $content ?? '' ?>
