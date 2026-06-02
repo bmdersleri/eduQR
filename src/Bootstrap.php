@@ -61,7 +61,7 @@ final class Bootstrap
 
         // Content-Security-Policy
         $csp = "default-src 'self'; ";
-        $csp .= "script-src 'self'; ";
+        $csp .= "script-src 'self' 'unsafe-inline'; ";
         $csp .= "style-src 'self' 'unsafe-inline'; ";
         $csp .= "img-src 'self' data:; ";
         $csp .= "font-src 'self'; ";
