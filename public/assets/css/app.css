@@ -961,3 +961,33 @@ body.eduqr-public .eduqr-answer-option.is-selected {
   border-radius: 1rem;
   font-weight: 700;
 }
+
+/* --- Reduced motion: kill decorative animation, KEEP press feedback --- */
+@media (prefers-reduced-motion: reduce) {
+  body.eduqr-public .eduqr-confetti { display: none !important; }
+  body.eduqr-public .eduqr-hourglass-sand,
+  body.eduqr-public .eduqr-hourglass-stream,
+  body.eduqr-public .eduqr-breathe,
+  body.eduqr-public .eduqr-opt-bounce,
+  body.eduqr-public .eduqr-ripple,
+  body.eduqr-public .eduqr-fade-scale,
+  body.eduqr-public .eduqr-stagger,
+  body.eduqr-public .eduqr-check-svg,
+  body.eduqr-public .eduqr-spinner {
+    animation: none !important;
+  }
+  /* :active scale geri bildirimi KORUNUR (durum, hareket degil) */
+}
+
+/* --- Dark mode parity for new premium surfaces --- */
+[data-theme="dark"] .eduqr-join-hero {
+  background: linear-gradient(150deg,
+    color-mix(in oklab, var(--brand) 26%, var(--surface-dark)),
+    color-mix(in oklab, var(--brand-3) 18%, var(--surface-dark)));
+}
+[data-theme="dark"] .eduqr-join-panel {
+  background: var(--surface-dark);
+}
+[data-theme="dark"] .eduqr-sticky-cta {
+  background: color-mix(in oklab, var(--surface-dark) 86%, transparent);
+}
