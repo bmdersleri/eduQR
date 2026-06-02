@@ -58,3 +58,5 @@ composer.phar
 
 # agykit local config
 .agykit.conf
+/.playwright-mcp/
+/join-*.png

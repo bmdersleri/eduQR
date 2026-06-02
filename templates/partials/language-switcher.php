@@ -13,19 +13,12 @@ $queryParams = $_GET;
 unset($queryParams['lang']);
 $baseQuery   = $queryParams ? '?' . http_build_query($queryParams) . '&' : '?';
 ?>
-<div class="dropdown d-inline-block">
-    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-            data-bs-toggle="dropdown" aria-expanded="false">
-        <?= htmlspecialchars($locales[$currentLocale] ?? strtoupper($currentLocale), ENT_QUOTES, 'UTF-8') ?>
-    </button>
-    <ul class="dropdown-menu dropdown-menu-end">
-        <?php foreach ($locales as $code => $label): ?>
-        <li>
-            <a class="dropdown-item <?= $code === $currentLocale ? 'active' : '' ?>"
-               href="<?= htmlspecialchars($currentUri . $baseQuery . 'lang=' . $code, ENT_QUOTES, 'UTF-8') ?>">
-                <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
-            </a>
-        </li>
-        <?php endforeach; ?>
-    </ul>
+<div class="eduqr-lang-switch" role="group" aria-label="Language">
+    <?php foreach ($locales as $code => $label): ?>
+        <a class="eduqr-lang-opt<?= $code === $currentLocale ? ' is-active' : '' ?>"
+           href="<?= htmlspecialchars($currentUri . $baseQuery . 'lang=' . $code, ENT_QUOTES, 'UTF-8') ?>"
+           <?= $code === $currentLocale ? 'aria-current="true"' : '' ?>>
+            <?= htmlspecialchars(strtoupper($code), ENT_QUOTES, 'UTF-8') ?>
+        </a>
+    <?php endforeach; ?>
 </div>

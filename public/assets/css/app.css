@@ -231,6 +231,38 @@ body::after{width:22rem;height:22rem;right:-9rem;bottom:6rem;background:color-mi
 }
 .theme-toggle .eduqr-icon-inline{margin-right:.35rem}
 
+/* Language switch — JS-free segmented pill */
+.eduqr-lang-switch{
+  display:inline-flex;
+  align-items:center;
+  gap:.15rem;
+  padding:.2rem;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:color-mix(in oklab, var(--surface-strong) 82%, transparent);
+  box-shadow:var(--shadow-soft);
+}
+.eduqr-lang-opt{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:2.4rem;
+  padding:.4rem .7rem;
+  border-radius:999px;
+  font-size:.82rem;
+  font-weight:700;
+  letter-spacing:.02em;
+  color:var(--text-soft);
+  text-decoration:none;
+  transition:color .18s ease, background .18s ease;
+}
+.eduqr-lang-opt:hover{color:var(--text);text-decoration:none}
+.eduqr-lang-opt.is-active{
+  color:#fff;
+  background:linear-gradient(135deg, #4f46e5, #5a31d6);
+  box-shadow:0 6px 14px color-mix(in oklab, var(--brand) 30%, transparent);
+}
+
 .btn{
   border-radius:999px;
   font-weight:700;
@@ -238,7 +270,7 @@ body::after{width:22rem;height:22rem;right:-9rem;bottom:6rem;background:color-mi
 }
 .btn-lg{padding:.92rem 1.3rem}
 .btn-primary{
-  background:linear-gradient(135deg,var(--brand),var(--brand-2));
+  background:linear-gradient(135deg, #4f46e5, #5a31d6);
   border:none;
   color:#fff;
   box-shadow:0 14px 24px color-mix(in oklab, var(--brand) 26%, transparent);
@@ -258,7 +290,7 @@ body::after{width:22rem;height:22rem;right:-9rem;bottom:6rem;background:color-mi
 .btn-outline-primary.active,
 .option-btn.btn-primary{
   color:#fff;
-  background:linear-gradient(135deg,var(--brand),var(--brand-2));
+  background:linear-gradient(135deg, #4f46e5, #5a31d6);
   border-color:transparent;
 }
 .btn-outline-secondary{
