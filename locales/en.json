@@ -55,6 +55,7 @@
     "instructor.dashboard.welcome": "Welcome back, {name}.",
     "instructor.dashboard.recent_sessions": "Recent Sessions",
     "instructor.dashboard.no_sessions": "You have no sessions yet.",
+    "instructor.dashboard.results_hint": "View live answers",
     "course.list.title": "Courses",
     "course.list.empty": "You have not created any courses yet.",
     "course.new.title": "Create Course",

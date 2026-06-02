@@ -55,6 +55,7 @@
     "instructor.dashboard.welcome": "Tekrar hoş geldiniz, {name}.",
     "instructor.dashboard.recent_sessions": "Son Oturumlar",
     "instructor.dashboard.no_sessions": "Henüz oturumunuz bulunmuyor.",
+    "instructor.dashboard.results_hint": "Canlı cevapları görüntüleyin",
     "course.list.title": "Dersler",
     "course.list.empty": "Henüz bir ders oluşturmadınız.",
     "course.new.title": "Ders Oluştur",

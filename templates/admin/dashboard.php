@@ -41,7 +41,7 @@ ob_start();
     <div class="eduqr-data-card">
         <div class="label"><?= htmlspecialchars(t('results.title'), ENT_QUOTES, 'UTF-8') ?></div>
         <div class="value">Live</div>
-        <div class="hint"><?= htmlspecialchars(t('results.answer_count'), ENT_QUOTES, 'UTF-8') ?></div>
+        <div class="hint"><?= htmlspecialchars(t('instructor.dashboard.results_hint'), ENT_QUOTES, 'UTF-8') ?></div>
     </div>
 </div>
 
