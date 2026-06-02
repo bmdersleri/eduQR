@@ -40,7 +40,8 @@ foreach ($all as $q) {
 ob_start();
 $totalQ = count($questions);
 ?>
-<div class="row justify-content-center py-4 py-lg-5">
+<div class="eduqr-student-screen">
+<div class="row justify-content-center w-100 g-0">
   <div class="col-12 col-xl-9 col-lg-10">
     <div class="eduqr-student-shell eduqr-stagger">
     <div class="eduqr-student-hero mb-0">
@@ -93,14 +94,15 @@ $totalQ = count($questions);
           <?php endforeach; ?>
         </div>
 
-        <div class="d-flex gap-2">
-          <button type="submit" id="batch-submit" class="btn btn-primary flex-fill btn-lg eduqr-ripple"><?= htmlspecialchars(t('student.batch.submit_all'), ENT_QUOTES, 'UTF-8') ?></button>
+        <div class="eduqr-sticky-cta">
+          <button type="submit" id="batch-submit" class="btn btn-primary w-100 btn-lg eduqr-ripple"><?= htmlspecialchars(t('student.batch.submit_all'), ENT_QUOTES, 'UTF-8') ?></button>
         </div>
       </form>
       <?php endif; ?>
     </div>
     </div>
   </div>
+</div>
 </div>
 
 <script>
