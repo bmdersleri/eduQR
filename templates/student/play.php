@@ -153,7 +153,8 @@ $optionCount = count($options);
 
 ob_start();
 ?>
-<div class="row justify-content-center py-4 py-lg-5">
+<div class="eduqr-student-screen">
+<div class="row justify-content-center w-100 g-0">
     <div class="col-12 col-xl-8 col-lg-9">
         <div class="eduqr-student-shell">
             <div class="eduqr-student-hero">
@@ -254,24 +255,27 @@ ob_start();
                     </noscript>
                 <?php endif; ?>
 
+                    <div class="eduqr-sticky-cta">
                     <button
                         type="submit"
                         id="submit-btn"
-                        class="btn btn-primary btn-lg w-100 mt-4 eduqr-ripple"
+                        class="btn btn-primary btn-lg w-100 eduqr-ripple"
                         <?= $qType !== 'open_text' ? 'disabled' : '' ?>
                     >
                         <?= htmlspecialchars(t('student.answer.submit'), ENT_QUOTES, 'UTF-8') ?>
                     </button>
 
                     <a href="/play/<?= rawurlencode($shortCode) ?>/batch"
-                       class="btn btn-outline-secondary w-100 mt-2">
+                       class="btn btn-outline-secondary w-100">
                         <?= htmlspecialchars(t('student.batch.open'), ENT_QUOTES, 'UTF-8') ?>
                     </a>
+                    </div>
                 </form>
 
             </div>
         </div>
     </div>
+</div>
 </div>
 
 <script>

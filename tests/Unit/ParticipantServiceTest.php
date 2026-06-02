@@ -232,6 +232,10 @@ class ParticipantServiceTest extends TestCase
             {
                 return null;
             }
+            public function findBySessionAndDeviceHash(int $sessionId, string $deviceHash): ?array
+            {
+                return null;
+            }
         };
 
         // Point profanity filter at the real config dir
