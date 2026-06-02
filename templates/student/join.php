@@ -17,14 +17,13 @@ if ($session === null) {
     exit;
 }
 
-// If session is closed or paused, show a status page instead of the form
 if ($session['status'] === 'closed') {
     http_response_code(410);
     ob_start(); ?>
 <div class="row justify-content-center" style="margin-top:clamp(2rem,8vh,4rem)">
     <div class="col-12 col-sm-8 col-md-6 col-lg-4 text-center">
         <div class="eduqr-surface" style="padding:clamp(2rem,4vw,3rem)">
-            <span class="eduqr-icon-badge mx-auto mb-3"><?= eduqr_icon('clock') ?></span>
+            <div class="eduqr-icon-badge mx-auto mb-3" style="width:3.2rem;height:3.2rem;border-radius:1.2rem"><?= eduqr_icon('clock') ?></div>
             <p class="fs-5 mb-0"><?= htmlspecialchars(t('error.session_closed'), ENT_QUOTES, 'UTF-8') ?></p>
         </div>
     </div>
@@ -41,7 +40,7 @@ if ($session['status'] === 'paused') {
 <div class="row justify-content-center" style="margin-top:clamp(2rem,8vh,4rem)">
     <div class="col-12 col-sm-8 col-md-6 col-lg-4 text-center">
         <div class="eduqr-surface" style="padding:clamp(2rem,4vw,3rem)">
-            <span class="eduqr-icon-badge mx-auto mb-3"><?= eduqr_icon('clock') ?></span>
+            <div class="eduqr-icon-badge mx-auto mb-3" style="width:3.2rem;height:3.2rem;border-radius:1.2rem"><?= eduqr_icon('clock') ?></div>
             <p class="fs-5 mb-0"><?= htmlspecialchars(t('session.paused_message'), ENT_QUOTES, 'UTF-8') ?></p>
         </div>
     </div>
@@ -90,17 +89,24 @@ if ($returningParticipant !== null) {
 
 ob_start();
 ?>
-<div class="row justify-content-center" style="margin-top:clamp(1.5rem,5vh,3.5rem)">
+<div class="row justify-content-center" style="margin-top:clamp(1.5rem,6vh,3rem)">
     <div class="col-12 col-sm-10 col-md-7 col-lg-5 col-xl-4">
+
         <div class="text-center mb-4">
-            <span class="eduqr-icon-badge mx-auto mb-3" style="width:3.2rem;height:3.2rem;border-radius:1.2rem"><?= eduqr_icon('qr') ?></span>
-            <h1 class="h3 fw-bold mb-1"><?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></h1>
-            <p class="text-muted small mb-0">
+            <div class="d-inline-flex align-items-center justify-content-center mb-3"
+                 style="width:4.5rem;height:4.5rem;border-radius:1.5rem;
+                        background:linear-gradient(135deg,var(--brand),var(--brand-2));
+                        color:#fff;font-size:2rem;font-weight:700;
+                        box-shadow:0 16px 36px color-mix(in oklab,var(--brand),24%,transparent)">
+                <?= htmlspecialchars($session['short_code'][0] ?? '?', ENT_QUOTES, 'UTF-8') ?>
+            </div>
+            <h1 class="h3 fw-bold mb-1" style="letter-spacing:-.03em"><?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></h1>
+            <div class="text-muted small">
                 <code><?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?></code>
-            </p>
+            </div>
         </div>
 
-        <div class="eduqr-surface" style="padding:clamp(1.5rem,3vw,2rem)">
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:1.5rem;box-shadow:var(--shadow);padding:clamp(1.5rem,3vw,2rem)">
             <div id="join-error" class="alert alert-danger d-none" role="alert"></div>
 
             <form id="join-form" novalidate>
@@ -135,7 +141,9 @@ ob_start();
                     <?= htmlspecialchars(t('student.join.return_desc'), ENT_QUOTES, 'UTF-8') ?>
                 </small>
             </div>
+        </div>
 
+        <div class="mt-3 text-center">
             <?php include __DIR__ . '/../partials/privacy-notice.php'; ?>
         </div>
     </div>
@@ -164,12 +172,10 @@ function clearErrors() {
     nickFeedback.textContent = '';
 }
 
-// ── Character counter ─────────────────────────────────────────────
 nickField.addEventListener('input', function () {
     nickChar.textContent = this.value.length + ' / 24';
 });
 
-// ── Enter key triggers submit ─────────────────────────────────────
 nickField.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') form.dispatchEvent(new Event('submit'));
 });
