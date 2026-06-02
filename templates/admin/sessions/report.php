@@ -40,16 +40,23 @@ $summary = $report['summary'];
 
 ob_start();
 ?>
-<!-- Header row -->
-<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-    <a href="/admin/sessions/<?= $sessionId ?>" class="btn btn-outline-secondary btn-sm">
-        &larr; <?= htmlspecialchars(t('common.back'), ENT_QUOTES, 'UTF-8') ?>
-    </a>
-    <h2 class="mb-0 h4">
-        <?= htmlspecialchars(t('report.title'), ENT_QUOTES, 'UTF-8') ?>
-        &mdash; <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?>
-    </h2>
-    <div class="d-flex gap-2 flex-wrap">
+<div class="eduqr-admin-hero mb-4">
+    <div>
+        <div class="eduqr-kicker mb-3">
+            <span class="eduqr-icon-badge"><?= eduqr_icon('chart') ?></span>
+            <span><?= htmlspecialchars(t('report.title'), ENT_QUOTES, 'UTF-8') ?></span>
+        </div>
+        <h1 class="h2 mb-2"><?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></h1>
+        <p><?= htmlspecialchars($session['course_title'], ENT_QUOTES, 'UTF-8') ?></p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap align-items-start justify-content-end">
+        <a href="/admin/sessions/<?= $sessionId ?>" class="btn btn-outline-secondary btn-sm">
+            <?= eduqr_icon('user') ?> <?= htmlspecialchars(t('common.back'), ENT_QUOTES, 'UTF-8') ?>
+        </a>
+        <a href="/api/v1/sessions/<?= $sessionId ?>/report.pdf" target="_blank"
+           class="btn btn-outline-primary btn-sm">
+            <?= htmlspecialchars(t('report.export_pdf'), ENT_QUOTES, 'UTF-8') ?>
+        </a>
         <a href="/api/v1/sessions/<?= $sessionId ?>/report.csv"
            class="btn btn-outline-success btn-sm">
             <?= htmlspecialchars(t('report.export_csv'), ENT_QUOTES, 'UTF-8') ?>
@@ -104,11 +111,11 @@ ob_start();
 <div class="card mb-4">
     <div class="card-header bg-light">
         <h5 class="mb-0 text-primary fw-bold">
-            🏆 <?= htmlspecialchars(t('report.quiz_scores'), ENT_QUOTES, 'UTF-8') ?>
+            <?= eduqr_icon('spark') ?> <?= htmlspecialchars(t('report.quiz_scores'), ENT_QUOTES, 'UTF-8') ?>
         </h5>
     </div>
     <div class="card-body p-0">
-        <div class="table-responsive">
+        <div class="eduqr-table-wrap table-responsive">
             <table class="table table-hover table-striped mb-0">
                 <thead>
                     <tr>
@@ -197,10 +204,10 @@ ob_start();
 
 <!-- Session management actions (anonymize + delete) -->
 <div class="card mt-4 border-danger">
-    <div class="card-header text-danger fw-semibold">
-        <?= htmlspecialchars(t('common.actions'), ENT_QUOTES, 'UTF-8') ?>
-    </div>
-    <div class="card-body d-flex gap-3 flex-wrap">
+    <div class="card-body eduqr-danger-surface d-flex gap-3 flex-wrap">
+        <div class="w-100 d-flex align-items-center justify-content-between gap-3 flex-wrap mb-1">
+            <strong class="text-danger"><?= htmlspecialchars(t('common.actions'), ENT_QUOTES, 'UTF-8') ?></strong>
+        </div>
 
         <?php if (!$session['anonymized']): ?>
         <!-- Anonymize -->

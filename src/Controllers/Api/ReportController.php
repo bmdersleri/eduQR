@@ -53,6 +53,43 @@ final class ReportController
         exit;
     }
 
+    // ── GET /api/v1/courses/{id}/analytics ───────────────────────────────────
+
+    public function courseAnalytics(int $courseId): void
+    {
+        $user = AuthMiddleware::require();
+
+        try {
+            $data = $this->report->buildCourseAnalytics($courseId, (int) $user['id']);
+        } catch (\RuntimeException $e) {
+            $this->handleError($e);
+        }
+
+        http_response_code(200);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(
+            ['success' => true, 'data' => $data],
+            JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR
+        );
+        exit;
+    }
+
+    // ── GET /api/v1/sessions/{id}/report.pdf ─────────────────────────────────
+
+    public function pdf(int $sessionId): void
+    {
+        $anonymize = filter_var($_GET['anonymize'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $location = '/api/v1/sessions/' . $sessionId . '/report.html';
+
+        if ($anonymize) {
+            $location .= '?anonymize=true';
+        }
+
+        http_response_code(302);
+        header('Location: ' . $location);
+        exit;
+    }
+
     // ── GET /api/v1/sessions/{id}/report.csv ─────────────────────────────────
 
     public function csv(int $sessionId): void
@@ -235,6 +272,7 @@ final class ReportController
     {
         $map = [
             'session_not_found' => [404, t('error.session_not_found')],
+            'course_not_found' => [404, t('error.course_not_found')],
             'forbidden' => [403, t('error.forbidden')],
         ];
         [$status, $msg] = $map[$e->getMessage()] ?? [500, t('error.server_error')];

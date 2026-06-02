@@ -39,9 +39,10 @@ foreach ($all as $q) {
 
 ob_start();
 ?>
-<div class="row justify-content-center mt-4">
-  <div class="col-12 col-md-10 col-lg-9">
-    <div class="eduqr-admin-hero mb-4">
+<div class="row justify-content-center py-4 py-lg-5">
+  <div class="col-12 col-xl-9 col-lg-10">
+    <div class="eduqr-student-shell">
+    <div class="eduqr-student-hero mb-0">
       <div>
         <div class="eduqr-kicker mb-3">
           <span class="eduqr-icon-badge"><?= eduqr_icon('check') ?></span>
@@ -50,10 +51,10 @@ ob_start();
         <h1 class="h3 mb-2"><?= htmlspecialchars(t('student.batch.title'), ENT_QUOTES, 'UTF-8') ?></h1>
         <p class="text-muted mb-0"><code><?= htmlspecialchars($shortCode, ENT_QUOTES, 'UTF-8') ?></code> — <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></p>
       </div>
-      <span class="eduqr-chip"><?= eduqr_icon('clock') ?> <?= count($questions) ?> questions</span>
+      <span class="eduqr-chip"><?= eduqr_icon('clock') ?> <?= htmlspecialchars(t('student.batch.question_count', ['count' => (string) count($questions)]), ENT_QUOTES, 'UTF-8') ?></span>
     </div>
 
-    <div class="eduqr-surface p-4 p-lg-5">
+    <div class="eduqr-student-stage p-4 p-lg-5">
       <div id="batch-error" class="alert alert-danger d-none" role="alert"></div>
 
       <?php if (count($questions) === 0): ?>
@@ -65,7 +66,7 @@ ob_start();
       <form id="batch-form" novalidate>
         <div class="eduqr-card-list mb-4">
           <?php foreach ($questions as $index => $q): ?>
-            <div class="eduqr-card-row align-items-start">
+            <div class="eduqr-batch-card align-items-start">
               <div class="flex-grow-1">
                 <div class="d-flex align-items-center gap-2 mb-2">
                   <span class="eduqr-chip"><?= (int) ($index + 1) ?></span>
@@ -76,7 +77,7 @@ ob_start();
                 <?php else: ?>
                   <div class="d-grid gap-2">
                     <?php foreach ($q['options'] as $opt): ?>
-                      <label class="btn btn-outline-secondary text-start option-btn">
+                      <label class="eduqr-answer-option option-btn">
                         <input type="radio" name="q_<?= (int) $q['id'] ?>" value="<?= (int) $opt['id'] ?>" class="me-2"> <?= htmlspecialchars($opt['option_text'], ENT_QUOTES, 'UTF-8') ?>
                       </label>
                     <?php endforeach; ?>
@@ -90,6 +91,7 @@ ob_start();
         <button type="submit" class="btn btn-primary w-100 btn-lg"><?= htmlspecialchars(t('student.batch.submit_all'), ENT_QUOTES, 'UTF-8') ?></button>
       </form>
       <?php endif; ?>
+    </div>
     </div>
   </div>
 </div>

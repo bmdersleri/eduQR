@@ -68,6 +68,7 @@ class ReportServiceTest extends TestCase
         ?array $questionRow = null,
         ?array $sessionRow = null,
         ?array $courseRow = null,
+        ?array $sessionList = null,
     ): ReportService {
         $q = $questionRow ?? [
             'id' => 1,
@@ -85,6 +86,7 @@ class ReportServiceTest extends TestCase
         $sessions = $this->createMock(SessionRepositoryInterface::class);
         $sessions->method('findById')->willReturn($sessionRow ?? ['id' => 10, 'status' => 'active', 'course_id' => 5, 'show_results_to_students' => 1]);
         $sessions->method('findByShortCode')->willReturn($sessionRow ?? ['id' => 10, 'status' => 'active', 'course_id' => 5, 'show_results_to_students' => 1]);
+        $sessions->method('listByCourse')->willReturn($sessionList ?? [$sessionRow ?? ['id' => 10, 'status' => 'active', 'course_id' => 5, 'show_results_to_students' => 1]]);
 
         $courses = $this->createMock(CourseRepositoryInterface::class);
         $courses->method('findById')->willReturn($courseRow ?? ['id' => 5, 'instructor_id' => 99]);
@@ -445,5 +447,67 @@ class ReportServiceTest extends TestCase
 
         $service = new \EduQR\Services\ReportService($sessions, $questions, $options, $courses, $this->pdo);
         $service->buildReport(99, 1);
+    }
+
+    public function testBuildCourseAnalyticsReturnsSummaryAndSessionRows_FR64(): void
+    {
+        $this->seedOptions(1, ['A', 'B']);
+        $this->seedAnswer(1, 1, 1);
+        $this->seedAnswer(2, 1, 2);
+
+        $service = $this->makeService(
+            sessionRow: [
+                'id' => 10,
+                'status' => 'closed',
+                'course_id' => 5,
+                'show_results_to_students' => 1,
+                'title' => 'Week 1',
+                'short_code' => 'ABCD23',
+                'language' => 'en',
+                'started_at' => '2026-05-15 10:00:00',
+                'closed_at' => '2026-05-15 11:00:00',
+                'created_at' => '2026-05-15 09:55:00',
+                'anonymized' => 0,
+                'is_quiz' => 0,
+            ],
+            sessionList: [[
+                'id' => 10,
+                'status' => 'closed',
+                'course_id' => 5,
+                'show_results_to_students' => 1,
+                'title' => 'Week 1',
+                'short_code' => 'ABCD23',
+                'language' => 'en',
+                'started_at' => '2026-05-15 10:00:00',
+                'closed_at' => '2026-05-15 11:00:00',
+                'created_at' => '2026-05-15 09:55:00',
+                'anonymized' => 0,
+                'is_quiz' => 0,
+            ]],
+            courseRow: ['id' => 5, 'instructor_id' => 99, 'title' => 'CS', 'status' => 'active', 'code' => 'CSE203', 'semester' => '2026-Spring'],
+        );
+
+        $analytics = $service->buildCourseAnalytics(5, 99);
+
+        $this->assertSame('CS', $analytics['course']['title']);
+        $this->assertSame(1, $analytics['summary']['session_count']);
+        $this->assertSame(1, $analytics['summary']['closed_session_count']);
+        $this->assertSame(2, $analytics['summary']['participant_count']);
+        $this->assertSame(1, $analytics['summary']['question_count']);
+        $this->assertSame(2, $analytics['summary']['answer_count']);
+        $this->assertSame('2026-05-15 10:00:00', $analytics['summary']['last_session_at']);
+        $this->assertSame('multiple_choice', $analytics['question_type_breakdown'][0]['type']);
+        $this->assertSame(1, $analytics['question_type_breakdown'][0]['count']);
+        $this->assertSame('Week 1', $analytics['sessions'][0]['title']);
+        $this->assertSame('ABCD23', $analytics['sessions'][0]['short_code']);
+    }
+
+    public function testBuildCourseAnalyticsRejectsWrongInstructor_FR64(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('forbidden');
+
+        $service = $this->makeService(courseRow: ['id' => 5, 'instructor_id' => 999]);
+        $service->buildCourseAnalytics(5, 1);
     }
 }

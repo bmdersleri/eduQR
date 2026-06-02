@@ -85,7 +85,8 @@ ob_start();
 <div class="row g-4">
     <div class="col-lg-7">
         <div class="eduqr-surface p-4 p-lg-5 mb-4">
-            <div class="d-flex flex-wrap gap-2 mb-4">
+            <div class="eduqr-question-board">
+            <div class="eduqr-question-toolbar mb-1">
                 <?php if (!$isClosed): ?>
                     <?php if ($isActive): ?>
                     <button id="btn-pause" class="btn btn-warning btn-sm">
@@ -106,7 +107,7 @@ ob_start();
                 </a>
             </div>
 
-            <div class="eduqr-admin-grid mb-4">
+            <div class="eduqr-switch-grid mb-1">
                 <label class="eduqr-feature justify-content-start gap-3 mb-0">
                     <input class="form-check-input m-0" type="checkbox" role="switch" id="toggle-show-results" <?= (bool) $session['show_results_to_students'] ? 'checked' : '' ?>>
                     <span>
@@ -143,14 +144,15 @@ ob_start();
 
             <?php if (!$isClosed): ?>
             <div class="collapse mb-4" id="create-question-panel">
-                <div class="eduqr-surface p-4">
+                <div class="eduqr-question-panel">
                     <div id="create-error" class="alert alert-danger d-none" role="alert"></div>
-                    <div class="mb-3">
-                        <label for="q-text" class="form-label fw-semibold"><?= htmlspecialchars(t('question.field.text'), ENT_QUOTES, 'UTF-8') ?></label>
+                    <div class="eduqr-form-grid">
+                    <div class="eduqr-form-field">
+                        <label for="q-text"><?= htmlspecialchars(t('question.field.text'), ENT_QUOTES, 'UTF-8') ?></label>
                         <textarea id="q-text" class="form-control" rows="3" maxlength="500"></textarea>
                     </div>
-                    <div class="mb-3">
-                        <label for="q-type" class="form-label fw-semibold"><?= htmlspecialchars(t('question.field.type'), ENT_QUOTES, 'UTF-8') ?></label>
+                    <div class="eduqr-form-field">
+                        <label for="q-type"><?= htmlspecialchars(t('question.field.type'), ENT_QUOTES, 'UTF-8') ?></label>
                         <select id="q-type" class="form-select">
                             <option value="multiple_choice"><?= htmlspecialchars(t('question.type.multiple_choice'), ENT_QUOTES, 'UTF-8') ?></option>
                             <option value="open_text"><?= htmlspecialchars(t('question.type.open_text'), ENT_QUOTES, 'UTF-8') ?></option>
@@ -158,15 +160,15 @@ ob_start();
                             <option value="likert_5"><?= htmlspecialchars(t('question.type.likert_5'), ENT_QUOTES, 'UTF-8') ?></option>
                         </select>
                     </div>
-                    <div id="options-section" class="mb-3">
-                        <label class="form-label fw-semibold"><?= htmlspecialchars(t('question.field.options'), ENT_QUOTES, 'UTF-8') ?></label>
-                        <div id="options-list"></div>
+                    <div id="options-section" class="eduqr-form-field">
+                        <label><?= htmlspecialchars(t('question.field.options'), ENT_QUOTES, 'UTF-8') ?></label>
+                        <div id="options-list" class="eduqr-option-stack"></div>
                         <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="btn-add-option">
                             <?= eduqr_icon('check') ?> <?= htmlspecialchars(t('question.action.add_option'), ENT_QUOTES, 'UTF-8') ?>
                         </button>
                     </div>
-                    <div class="mb-3">
-                        <label for="q-image" class="form-label fw-semibold"><?= htmlspecialchars(t('question.field.image'), ENT_QUOTES, 'UTF-8') ?></label>
+                    <div class="eduqr-form-field">
+                        <label for="q-image"><?= htmlspecialchars(t('question.field.image'), ENT_QUOTES, 'UTF-8') ?></label>
                         <input type="file" id="q-image" class="form-control form-control-sm" accept="image/jpeg,image/png">
                         <div id="q-image-preview" class="mt-2 d-none">
                             <div class="eduqr-image-frame d-inline-block">
@@ -174,20 +176,22 @@ ob_start();
                             </div>
                         </div>
                     </div>
-                    <div class="form-check mb-3">
+                    <div class="form-check mb-1">
                         <input class="form-check-input" type="checkbox" id="q-show-results">
                         <label class="form-check-label" for="q-show-results"><?= htmlspecialchars(t('question.field.show_results'), ENT_QUOTES, 'UTF-8') ?></label>
                     </div>
-                    <div class="d-flex gap-2">
+                    <div class="d-flex gap-2 flex-wrap">
                         <button type="button" id="btn-create-question" class="btn btn-primary btn-sm"><?= htmlspecialchars(t('question.action.create'), ENT_QUOTES, 'UTF-8') ?></button>
                         <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#create-question-panel"><?= htmlspecialchars(t('common.cancel'), ENT_QUOTES, 'UTF-8') ?></button>
+                    </div>
                     </div>
                 </div>
             </div>
             <?php endif; ?>
 
-            <div id="question-list">
+            <div id="question-list" class="eduqr-question-list">
                 <p class="text-muted small" id="questions-empty"><?= htmlspecialchars(t('question.no_active'), ENT_QUOTES, 'UTF-8') ?></p>
+            </div>
             </div>
         </div>
     </div>
@@ -242,6 +246,7 @@ const feedbackEl = document.getElementById('session-feedback');
 function showFeedback(msg, type) {
     feedbackEl.textContent = msg;
     feedbackEl.className   = 'alert alert-' + type;
+    feedbackEl.classList.remove('d-none');
 }
 
 async function sendSessionAction(action) {
@@ -364,7 +369,7 @@ function buildQuestionRow(q) {
     const label = L[q.status] || q.status;
 
     const div = document.createElement('div');
-    div.className = 'q-row card mb-2';
+    div.className = 'q-row eduqr-question-row';
     div.dataset.id = q.id;
     div.draggable  = !IS_CLOSED;
 
@@ -389,18 +394,24 @@ function buildQuestionRow(q) {
         : '';
 
     div.innerHTML = `
-        <div class="card-body py-2 px-3 d-flex align-items-start gap-3">
-            <span class="grip-handle text-muted" style="cursor:grab;user-select:none;font-size:1.1rem;padding-top:2px">&#8801;</span>
-            ${thumbHtml}
-            <div class="flex-grow-1">
-                <div class="d-flex align-items-center gap-2 mb-1">
+        <span class="eduqr-question-grip">&#8801;</span>
+        ${thumbHtml}
+        <div class="flex-grow-1">
+            <div class="eduqr-question-meta">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
                     <span class="badge text-bg-${color}">${label}</span>
                     <span class="badge text-bg-light border text-dark">${escHtml(typeLabel)}</span>
                 </div>
-                <p class="mb-0 small">${escHtml(textShort)}</p>
             </div>
-            <div class="d-flex gap-1 flex-shrink-0">${actions}</div>
+            <p class="mb-0 small">${escHtml(textShort)}</p>
         </div>`;
+
+    if (actions) {
+        const actionsWrap = document.createElement('div');
+        actionsWrap.className = 'eduqr-question-actions flex-shrink-0';
+        actionsWrap.innerHTML = actions;
+        div.appendChild(actionsWrap);
+    }
 
     // Drag-and-drop (reorder) — only when session is active/paused
     if (!IS_CLOSED) {
@@ -422,24 +433,24 @@ function escHtml(s) {
 
 function onDragStart(e) {
     dragSrcId = +e.currentTarget.dataset.id;
-    e.currentTarget.classList.add('opacity-50');
+    e.currentTarget.classList.add('is-dragging');
     e.dataTransfer.effectAllowed = 'move';
 }
 
 function onDragOver(e) {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    e.currentTarget.classList.add('border-primary');
+    e.currentTarget.classList.add('is-drop-target');
 }
 
 function onDragLeave(e) {
-    e.currentTarget.classList.remove('border-primary');
+    e.currentTarget.classList.remove('is-drop-target');
 }
 
 async function onDrop(e) {
     e.preventDefault();
     const targetId = +e.currentTarget.dataset.id;
-    e.currentTarget.classList.remove('border-primary');
+    e.currentTarget.classList.remove('is-drop-target');
 
     if (dragSrcId === null || dragSrcId === targetId) return;
 
@@ -463,7 +474,7 @@ async function onDrop(e) {
 }
 
 function onDragEnd(e) {
-    e.currentTarget.classList.remove('opacity-50');
+    e.currentTarget.classList.remove('is-dragging');
     dragSrcId = null;
 }
 
@@ -534,7 +545,7 @@ function addOptionInput() {
     const list  = document.getElementById('options-list');
     const index = list.children.length;
     const row   = document.createElement('div');
-    row.className = 'input-group input-group-sm mb-1 option-row';
+    row.className = 'eduqr-option-row option-row' + (IS_QUIZ ? ' is-quiz' : '');
     
     let correctRadio = '';
     if (IS_QUIZ) {
@@ -552,7 +563,7 @@ function addOptionInput() {
     row.innerHTML = `
         ${correctRadio}
         <input type="text" class="form-control option-input" placeholder="${escHtml(optionPlaceholder(index + 1))}" maxlength="200">
-        <button type="button" class="btn btn-outline-secondary" onclick="removeOptionInput(this)">×</button>`;
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="removeOptionInput(this)">×</button>`;
     list.appendChild(row);
 }
 

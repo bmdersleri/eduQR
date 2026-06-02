@@ -15,27 +15,37 @@ if ($session === null || $session['status'] === 'closed') {
 
 ob_start();
 ?>
-<div class="row justify-content-center mt-4 mt-md-5">
-    <div class="col-12 col-sm-8 col-md-6 col-lg-5 text-center">
-        <div class="eduqr-surface eduqr-empty-state">
-            <span class="eduqr-icon-badge"><?= eduqr_icon('clock') ?></span>
-
-            <div class="spinner-border text-primary mb-4" role="status" style="width: 3rem; height: 3rem;">
-                <span class="visually-hidden"><?= htmlspecialchars(t('common.loading'), ENT_QUOTES, 'UTF-8') ?></span>
+<div class="row justify-content-center py-4 py-lg-5">
+    <div class="col-12 col-lg-8 col-xl-7">
+        <div class="eduqr-student-shell">
+            <div class="eduqr-student-hero">
+                <div class="eduqr-kicker mb-3">
+                    <span class="eduqr-icon-badge"><?= eduqr_icon('clock') ?></span>
+                    <span><code><?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?></code></span>
+                </div>
+                <h1 class="display-6 fw-bold mb-2"><?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></h1>
+                <p class="text-muted mb-0"><?= htmlspecialchars(t('student.waiting.message'), ENT_QUOTES, 'UTF-8') ?></p>
             </div>
 
-            <h1 class="h4 mb-2">
-                <?= htmlspecialchars(t('student.waiting.title'), ENT_QUOTES, 'UTF-8') ?>
-            </h1>
-            <p class="text-muted">
-                <?= htmlspecialchars(t('student.waiting.message'), ENT_QUOTES, 'UTF-8') ?>
-            </p>
+            <div class="eduqr-student-stage eduqr-student-stage--center eduqr-student-stage--quiet">
+                <div class="eduqr-hourglass" aria-hidden="true">
+                    <div class="eduqr-hourglass-frame"></div>
+                    <div class="eduqr-hourglass-sand top"></div>
+                    <div class="eduqr-hourglass-stream"></div>
+                    <div class="eduqr-hourglass-sand bottom"></div>
+                </div>
 
-            <p class="mt-3 text-muted small mb-0">
-                <code><?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?></code>
-                &mdash;
-                <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?>
-            </p>
+                <div class="eduqr-kicker justify-content-center mb-3">
+                    <span><?= htmlspecialchars(t('common.loading'), ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+                <h2 class="h3 mb-2"><?= htmlspecialchars(t('student.waiting.title'), ENT_QUOTES, 'UTF-8') ?></h2>
+                <p class="text-muted mb-4"><?= htmlspecialchars(t('student.waiting.message'), ENT_QUOTES, 'UTF-8') ?></p>
+
+                <div class="d-flex justify-content-center flex-wrap gap-2">
+                    <span class="eduqr-chip"><?= eduqr_icon('spark') ?> <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></span>
+                    <span class="eduqr-chip"><?= eduqr_icon('qr') ?> <code><?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?></code></span>
+                </div>
+            </div>
         </div>
     </div>
 </div>

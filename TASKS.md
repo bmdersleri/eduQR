@@ -301,7 +301,7 @@ Not part of the MVP. Each item must be escalated to the human owner before work 
 [ ] T-1100  AI-assisted open-text theme extraction                                         [FR-65]
 [ ] T-1101  Word cloud generation from open-text answers                                    [—]
 [x] T-1102  PDF report export (locale-aware fonts)                                          [FR-63]
-[ ] T-1103  Cross-session course-level analytics                                            [FR-64]
+[x] T-1103  Cross-session course-level analytics                                            [FR-64]
 [x] T-1104  Quiz mode with scoring (uses options.is_correct)                                [FR-92]
 [ ] T-1105  Light gamification (badges, streaks)                                            [FR-48]
 [x] T-1106  Question image attachments                                                      [FR-39]

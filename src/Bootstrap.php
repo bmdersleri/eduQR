@@ -174,6 +174,11 @@ final class Bootstrap
             include __DIR__ . '/../templates/admin/courses/detail.php';
         });
 
+        $router->get('/admin/courses/{id}/analytics', function (array $p): void {
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/../templates/admin/courses/analytics.php';
+        });
+
         $router->get('/admin/courses/{id}/edit', function (array $p): void {
             header('Content-Type: text/html; charset=utf-8');
             include __DIR__ . '/../templates/admin/courses/edit.php';
@@ -247,6 +252,10 @@ final class Bootstrap
 
         $router->get('/api/v1/courses/{id}', function (array $p): void {
             (new Controllers\Api\CourseController())->show((int) $p['id']);
+        });
+
+        $router->get('/api/v1/courses/{id}/analytics', function (array $p): void {
+            (new Controllers\Api\ReportController())->courseAnalytics((int) $p['id']);
         });
 
         $router->patch('/api/v1/courses/{id}', function (array $p): void {
@@ -361,7 +370,11 @@ final class Bootstrap
         });
 
         // ── API: Reports (T-901, T-902, T-904) ────────────────────────────────
-        // .csv and .html must come before the plain /report route
+        // .pdf, .csv and .html must come before the plain /report route
+        $router->get('/api/v1/sessions/{id}/report.pdf', function (array $p): void {
+            (new Controllers\Api\ReportController())->pdf((int) $p['id']);
+        });
+
         $router->get('/api/v1/sessions/{id}/report.csv', function (array $p): void {
             (new Controllers\Api\ReportController())->csv((int) $p['id']);
         });

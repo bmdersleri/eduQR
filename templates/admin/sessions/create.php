@@ -22,48 +22,56 @@ try {
 
 ob_start();
 ?>
-<div class="mb-4">
+<div class="eduqr-admin-hero mb-4">
+    <div>
+        <div class="eduqr-kicker mb-3">
+            <span class="eduqr-icon-badge"><?= eduqr_icon('qr') ?></span>
+            <span><?= htmlspecialchars(t('session.new.title'), ENT_QUOTES, 'UTF-8') ?></span>
+        </div>
+        <h1 class="h2 mb-2"><?= htmlspecialchars($course['title'], ENT_QUOTES, 'UTF-8') ?></h1>
+        <p><?= htmlspecialchars(t('session.new.title'), ENT_QUOTES, 'UTF-8') ?></p>
+    </div>
     <a href="/admin/courses/<?= (int) $course['id'] ?>" class="btn btn-outline-secondary btn-sm">
-        &larr; <?= htmlspecialchars($course['title'], ENT_QUOTES, 'UTF-8') ?>
+        <?= eduqr_icon('user') ?> <?= htmlspecialchars(t('common.back'), ENT_QUOTES, 'UTF-8') ?>
     </a>
 </div>
 
 <div class="row justify-content-center">
-<div class="col-md-8 col-lg-6">
-    <h2 class="mb-4"><?= htmlspecialchars(t('session.new.title'), ENT_QUOTES, 'UTF-8') ?></h2>
+<div class="col-xl-7 col-lg-8">
+    <div class="eduqr-form-shell">
+        <div id="session-error" class="alert alert-danger d-none mb-4" role="alert"></div>
 
-    <div id="session-error" class="alert alert-danger d-none" role="alert"></div>
+        <form id="session-form" novalidate class="eduqr-form-grid">
+            <div class="eduqr-form-field">
+                <label for="title">
+                    <?= htmlspecialchars(t('session.new.field.title'), ENT_QUOTES, 'UTF-8') ?>
+                    <span class="text-danger" aria-hidden="true">*</span>
+                </label>
+                <input type="text" id="title" name="title" class="form-control"
+                       required maxlength="200"
+                       placeholder="<?= htmlspecialchars($course['title'], ENT_QUOTES, 'UTF-8') ?>">
+            </div>
 
-    <form id="session-form" novalidate>
-        <div class="mb-3">
-            <label for="title" class="form-label">
-                <?= htmlspecialchars(t('session.new.field.title'), ENT_QUOTES, 'UTF-8') ?>
-                <span class="text-danger" aria-hidden="true">*</span>
-            </label>
-            <input type="text" id="title" name="title" class="form-control"
-                   required maxlength="200"
-                   placeholder="<?= htmlspecialchars($course['title'], ENT_QUOTES, 'UTF-8') ?>">
-        </div>
+            <div class="eduqr-form-field">
+                <label for="language">
+                    <?= htmlspecialchars(t('session.new.field.language'), ENT_QUOTES, 'UTF-8') ?>
+                </label>
+                <select id="language" name="language" class="form-select">
+                    <option value="en" <?= $course['default_language'] === 'en' ? 'selected' : '' ?>>English</option>
+                    <option value="tr" <?= $course['default_language'] === 'tr' ? 'selected' : '' ?>>Türkçe</option>
+                </select>
+            </div>
 
-        <div class="mb-4">
-            <label for="language" class="form-label">
-                <?= htmlspecialchars(t('session.new.field.language'), ENT_QUOTES, 'UTF-8') ?>
-            </label>
-            <select id="language" name="language" class="form-select">
-                <option value="en" <?= $course['default_language'] === 'en' ? 'selected' : '' ?>>English</option>
-                <option value="tr" <?= $course['default_language'] === 'tr' ? 'selected' : '' ?>>Türkçe</option>
-            </select>
-        </div>
-
-        <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary">
-                <?= htmlspecialchars(t('session.new.submit'), ENT_QUOTES, 'UTF-8') ?>
-            </button>
-            <a href="/admin/courses/<?= (int) $course['id'] ?>" class="btn btn-outline-secondary">
-                <?= htmlspecialchars(t('common.cancel'), ENT_QUOTES, 'UTF-8') ?>
-            </a>
-        </div>
-    </form>
+            <div class="d-flex gap-2 flex-wrap pt-2">
+                <button type="submit" class="btn btn-primary">
+                    <?= htmlspecialchars(t('session.new.submit'), ENT_QUOTES, 'UTF-8') ?>
+                </button>
+                <a href="/admin/courses/<?= (int) $course['id'] ?>" class="btn btn-outline-secondary">
+                    <?= htmlspecialchars(t('common.cancel'), ENT_QUOTES, 'UTF-8') ?>
+                </a>
+            </div>
+        </form>
+    </div>
 </div>
 </div>
 

@@ -34,34 +34,37 @@ ob_start();
         <img src="<?= htmlspecialchars($qrUrl, ENT_QUOTES, 'UTF-8') ?>"
              alt="QR Code"
              class="img-fluid"
-             style="max-width:500px;background:#fff;padding:1rem;border-radius:1rem">
+             style="max-width:500px;background:#fff;padding:1rem;border-radius:1.5rem;box-shadow:0 24px 60px rgba(0,0,0,.24)">
         <?php endif; ?>
     </div>
 
     <div class="col-md-6 ps-md-5">
-        <p class="text-white-50 mb-1" style="font-size:clamp(1rem,2vw,1.4rem)">
-            <?= htmlspecialchars($sessionData['course_title'], ENT_QUOTES, 'UTF-8') ?>
-        </p>
-        <h1 class="display-4 fw-bold mb-4" style="font-size:clamp(1.8rem,4vw,3.5rem)">
-            <?= htmlspecialchars($sessionData['title'], ENT_QUOTES, 'UTF-8') ?>
-        </h1>
+        <div class="eduqr-projector-surface p-4 p-lg-5">
+            <div class="eduqr-kicker mb-3">
+                <span class="eduqr-icon-badge"><?= eduqr_icon('qr') ?></span>
+                <span><?= htmlspecialchars($sessionData['course_title'], ENT_QUOTES, 'UTF-8') ?></span>
+            </div>
+            <h1 class="display-4 fw-bold mb-4" style="font-size:clamp(1.8rem,4vw,3.5rem)">
+                <?= htmlspecialchars($sessionData['title'], ENT_QUOTES, 'UTF-8') ?>
+            </h1>
 
-        <div class="mb-4">
-            <p class="text-white-50 mb-1" style="font-size:clamp(0.9rem,1.5vw,1.1rem)">
-                <?= htmlspecialchars(t('session.short_code.label'), ENT_QUOTES, 'UTF-8') ?>
-            </p>
-            <p class="fw-bold text-warning mb-0" style="font-size:clamp(3rem,8vw,6rem);letter-spacing:0.3em;font-family:monospace">
-                <?= htmlspecialchars($sessionData['short_code'], ENT_QUOTES, 'UTF-8') ?>
-            </p>
-        </div>
+            <div class="mb-4">
+                <p class="text-white-50 mb-1" style="font-size:clamp(0.9rem,1.5vw,1.1rem)">
+                    <?= htmlspecialchars(t('session.short_code.label'), ENT_QUOTES, 'UTF-8') ?>
+                </p>
+                <p class="fw-bold text-warning mb-0" style="font-size:clamp(3rem,8vw,6rem);letter-spacing:0.3em;font-family:monospace">
+                    <?= htmlspecialchars($sessionData['short_code'], ENT_QUOTES, 'UTF-8') ?>
+                </p>
+            </div>
 
-        <div>
-            <p class="text-white-50 mb-1" style="font-size:clamp(0.9rem,1.5vw,1.1rem)">
-                <?= htmlspecialchars(t('session.join_url.label'), ENT_QUOTES, 'UTF-8') ?>
-            </p>
-            <p class="fw-semibold" style="font-size:clamp(1rem,2vw,1.4rem);word-break:break-all">
-                <?= htmlspecialchars($joinUrl, ENT_QUOTES, 'UTF-8') ?>
-            </p>
+            <div>
+                <p class="text-white-50 mb-1" style="font-size:clamp(0.9rem,1.5vw,1.1rem)">
+                    <?= htmlspecialchars(t('session.join_url.label'), ENT_QUOTES, 'UTF-8') ?>
+                </p>
+                <p class="fw-semibold mb-0" style="font-size:clamp(1rem,2vw,1.4rem);word-break:break-all">
+                    <?= htmlspecialchars($joinUrl, ENT_QUOTES, 'UTF-8') ?>
+                </p>
+            </div>
         </div>
 
         <?php if ($sessionData['status'] === 'paused'): ?>

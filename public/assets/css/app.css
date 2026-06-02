@@ -326,6 +326,215 @@ textarea.form-control:focus{
 
 .eduqr-panel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
 
+.eduqr-form-shell{
+  padding:clamp(1.2rem,2.4vw,1.8rem);
+  border-radius:1.4rem;
+  background:color-mix(in oklab, var(--surface-strong) 84%, transparent);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow-soft);
+}
+.eduqr-form-grid{display:grid;gap:1rem}
+.eduqr-form-grid.two-col{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.eduqr-form-field{display:grid;gap:.45rem}
+.eduqr-form-field label{font-weight:700;color:var(--text)}
+.eduqr-form-field small{color:var(--text-soft)}
+
+.eduqr-table-wrap{
+  border-radius:1.25rem;
+  background:color-mix(in oklab, var(--surface-strong) 84%, transparent);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow-soft);
+  overflow:hidden;
+}
+.eduqr-table-wrap table{margin:0}
+.eduqr-table-wrap thead th{
+  background:color-mix(in oklab, var(--surface-strong) 72%, transparent);
+  color:var(--text-soft);
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  font-size:.76rem;
+  border-bottom:1px solid var(--line);
+}
+.eduqr-table-wrap td,
+.eduqr-table-wrap th{border-color:var(--line)}
+
+.eduqr-danger-surface{
+  padding:1.1rem 1.2rem;
+  border-radius:1.25rem;
+  border:1px solid color-mix(in oklab, #ef4444 26%, var(--line));
+  background:color-mix(in oklab, #ef4444 6%, var(--surface-strong));
+  box-shadow:var(--shadow-soft);
+}
+
+.eduqr-question-board{display:grid;gap:1rem}
+.eduqr-question-toolbar{display:flex;flex-wrap:wrap;gap:.75rem}
+.eduqr-question-panel{
+  padding:1.15rem 1.2rem;
+  border-radius:1.25rem;
+  background:color-mix(in oklab, var(--surface-strong) 84%, transparent);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow-soft);
+}
+.eduqr-option-stack{display:grid;gap:.75rem}
+.eduqr-option-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:.6rem;
+  align-items:center;
+}
+.eduqr-option-row.is-quiz{grid-template-columns:auto minmax(0,1fr) auto}
+.eduqr-question-list{display:grid;gap:.85rem}
+.eduqr-question-row{
+  display:flex;
+  align-items:flex-start;
+  gap:1rem;
+  padding:1rem 1.05rem;
+  border-radius:1.1rem;
+  background:color-mix(in oklab, var(--surface-strong) 86%, transparent);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow-soft);
+}
+.eduqr-question-row:hover{transform:translateY(-1px)}
+.eduqr-question-row.is-dragging{opacity:.55}
+.eduqr-question-row.is-drop-target{border-color:color-mix(in oklab, var(--brand) 48%, var(--line));box-shadow:0 0 0 .2rem color-mix(in oklab, var(--brand) 14%, transparent)}
+.eduqr-question-grip{cursor:grab;user-select:none;color:var(--text-soft);padding-top:.2rem;font-size:1.15rem}
+.eduqr-question-meta{display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:.5rem}
+.eduqr-question-actions{display:flex;flex-wrap:wrap;gap:.45rem;justify-content:flex-end}
+.eduqr-switch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}
+
+.eduqr-student-shell{display:grid;gap:1.2rem}
+.eduqr-student-hero{
+  padding:clamp(1.35rem,2.7vw,2rem);
+  border-radius:1.6rem;
+  background:linear-gradient(145deg,color-mix(in oklab, var(--brand) 10%, var(--surface-strong)), color-mix(in oklab, var(--brand-3) 8%, var(--surface-strong)));
+  border:1px solid var(--line);
+  box-shadow:var(--shadow-soft);
+}
+.eduqr-student-hero h1,
+.eduqr-student-hero h2,
+.eduqr-student-hero h3{letter-spacing:-.04em}
+.eduqr-student-stage{
+  padding:clamp(1.5rem,2.8vw,2.35rem);
+  border-radius:1.6rem;
+  background:color-mix(in oklab, var(--surface-strong) 86%, transparent);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+}
+.eduqr-student-stage .eduqr-chip{background:color-mix(in oklab, var(--surface-strong) 92%, transparent)}
+.eduqr-student-stage--center{text-align:center}
+.eduqr-student-stage--quiet{position:relative;overflow:hidden}
+.eduqr-student-stage--quiet::after{
+  content:"";
+  position:absolute;
+  inset:auto -10% -20% auto;
+  width:14rem;
+  height:14rem;
+  background:radial-gradient(circle, color-mix(in oklab, var(--brand-2) 24%, transparent), transparent 62%);
+  filter:blur(6px);
+  opacity:.55;
+  pointer-events:none;
+}
+
+.eduqr-hourglass{
+  position:relative;
+  width:5.25rem;
+  height:6.75rem;
+  margin:0 auto 1.4rem;
+  filter:drop-shadow(0 18px 30px color-mix(in oklab, var(--brand) 20%, transparent));
+}
+.eduqr-hourglass::before,
+.eduqr-hourglass::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+  width:.5rem;
+  background:linear-gradient(180deg,var(--brand),var(--brand-2));
+  border-radius:999px;
+}
+.eduqr-hourglass::before{top:.4rem;height:1rem}
+.eduqr-hourglass::after{bottom:.4rem;height:1rem}
+.eduqr-hourglass-frame{
+  position:absolute;
+  inset:0;
+  border:3px solid color-mix(in oklab, var(--brand) 28%, white);
+  border-radius:1.7rem;
+  background:linear-gradient(180deg, color-mix(in oklab, var(--surface-strong) 86%, white), color-mix(in oklab, var(--surface) 76%, transparent));
+}
+.eduqr-hourglass-sand{
+  position:absolute;
+  left:50%;
+  width:2.1rem;
+  transform:translateX(-50%);
+  background:linear-gradient(180deg,var(--brand-4), color-mix(in oklab, var(--brand-3) 48%, var(--brand-4)));
+  clip-path:polygon(50% 0, 100% 100%, 0 100%);
+}
+.eduqr-hourglass-sand.top{
+  top:1.1rem;
+  height:1.8rem;
+  animation:hourglass-top 2.8s ease-in-out infinite;
+  transform-origin:center top;
+}
+.eduqr-hourglass-sand.bottom{
+  bottom:1.05rem;
+  height:1.75rem;
+  clip-path:polygon(0 0, 100% 0, 50% 100%);
+  animation:hourglass-bottom 2.8s ease-in-out infinite;
+  transform-origin:center bottom;
+}
+.eduqr-hourglass-stream{
+  position:absolute;
+  top:2.75rem;
+  left:50%;
+  width:.22rem;
+  height:1.35rem;
+  transform:translateX(-50%);
+  border-radius:999px;
+  background:linear-gradient(180deg,var(--brand-4),var(--brand-3));
+  animation:hourglass-stream 2.8s linear infinite;
+}
+
+.eduqr-answer-grid{display:grid;gap:.9rem}
+.eduqr-answer-option{
+  display:flex;
+  align-items:center;
+  gap:.9rem;
+  width:100%;
+  padding:1rem 1.05rem;
+  border-radius:1.2rem;
+  border:1px solid var(--line);
+  background:color-mix(in oklab, var(--surface-strong) 88%, transparent);
+  box-shadow:var(--shadow-soft);
+  text-align:left;
+  font-weight:700;
+  color:var(--text);
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+}
+.eduqr-answer-option:hover{transform:translateY(-1px);border-color:color-mix(in oklab, var(--brand) 42%, var(--line))}
+.eduqr-answer-option.is-selected,
+.eduqr-answer-option.btn-primary{
+  color:#fff;
+  border-color:transparent;
+  background:linear-gradient(135deg,var(--brand),var(--brand-2));
+  box-shadow:0 18px 28px color-mix(in oklab, var(--brand) 24%, transparent);
+}
+.eduqr-answer-option .eduqr-icon-badge{width:2.1rem;height:2.1rem;border-radius:.8rem}
+
+.eduqr-batch-card{padding:1.1rem 1.15rem;border-radius:1.25rem;background:color-mix(in oklab, var(--surface-strong) 84%, transparent);border:1px solid var(--line);box-shadow:var(--shadow-soft)}
+
+.eduqr-error-page{
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  padding:2rem 1rem;
+}
+.eduqr-error-card{
+  width:min(100%, 34rem);
+  padding:clamp(1.6rem,3vw,2.4rem);
+  text-align:center;
+}
+.eduqr-error-card p{color:var(--text-soft)}
+
 .eduqr-statcard{
   padding:1rem 1.1rem;
   border-radius:1rem;
@@ -359,6 +568,22 @@ footer{color:var(--text-soft)}
 .eduqr-projector .progress{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.08)}
 
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+@keyframes hourglass-top{
+  0%,10%{transform:translateX(-50%) scaleY(1);opacity:1}
+  55%{transform:translateX(-50%) scaleY(.35);opacity:.8}
+  100%{transform:translateX(-50%) scaleY(.1);opacity:.45}
+}
+@keyframes hourglass-bottom{
+  0%,10%{transform:translateX(-50%) scaleY(.15);opacity:.45}
+  55%{transform:translateX(-50%) scaleY(.72);opacity:.85}
+  100%{transform:translateX(-50%) scaleY(1);opacity:1}
+}
+@keyframes hourglass-stream{
+  0%,8%{opacity:0}
+  12%,88%{opacity:1}
+  100%{opacity:0}
+}
 
 @media (max-width: 768px){
   .eduqr-hero{padding:1.2rem}

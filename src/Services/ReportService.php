@@ -356,6 +356,100 @@ final class ReportService
         return $report;
     }
 
+    /**
+     * Builds a course-level analytics view across every session in the course.
+     *
+     * @throws \RuntimeException course_not_found | forbidden
+     */
+    public function buildCourseAnalytics(int $courseId, int $userId): array
+    {
+        $course = $this->requireCourse($courseId, $userId);
+        $sessions = $this->sessions->listByCourse($courseId);
+
+        $sessionAnalytics = [];
+        $questionTypeCounts = [
+            'multiple_choice' => 0,
+            'open_text' => 0,
+            'yes_no' => 0,
+            'likert_5' => 0,
+        ];
+
+        $closedSessionCount = 0;
+        $participantCount = 0;
+        $questionCount = 0;
+        $answerCount = 0;
+        $participationTotal = 0.0;
+        $lastSessionAt = null;
+
+        foreach ($sessions as $session) {
+            $report = $this->buildReport((int) $session['id'], $userId, false);
+            $summary = $report['summary'];
+
+            if (($session['status'] ?? '') === 'closed') {
+                $closedSessionCount++;
+            }
+
+            $participantCount += (int) $summary['participant_count'];
+            $questionCount += (int) $summary['question_count'];
+            $answerCount += (int) $summary['answer_count'];
+            $participationTotal += (float) $summary['participation_rate'];
+
+            foreach ($report['questions'] as $question) {
+                $type = $question['type'];
+                if (array_key_exists($type, $questionTypeCounts)) {
+                    $questionTypeCounts[$type]++;
+                }
+            }
+
+            $candidateLastSessionAt = $session['started_at'] ?: $session['created_at'];
+            if ($candidateLastSessionAt !== null && ($lastSessionAt === null || strcmp((string) $candidateLastSessionAt, (string) $lastSessionAt) > 0)) {
+                $lastSessionAt = $candidateLastSessionAt;
+            }
+
+            $sessionAnalytics[] = [
+                'session_id' => (int) $session['id'],
+                'title' => $session['title'],
+                'short_code' => $session['short_code'],
+                'status' => $session['status'],
+                'started_at' => $session['started_at'],
+                'closed_at' => $session['closed_at'],
+                'participant_count' => (int) $summary['participant_count'],
+                'question_count' => (int) $summary['question_count'],
+                'answer_count' => (int) $summary['answer_count'],
+                'participation_rate' => (float) $summary['participation_rate'],
+                'anonymized' => (bool) $session['anonymized'],
+                'is_quiz' => (bool) ($session['is_quiz'] ?? false),
+            ];
+        }
+
+        $sessionCount = count($sessionAnalytics);
+
+        return [
+            'course' => [
+                'id' => (int) $course['id'],
+                'title' => $course['title'],
+                'code' => $course['code'],
+                'semester' => $course['semester'],
+                'status' => $course['status'],
+            ],
+            'summary' => [
+                'session_count' => $sessionCount,
+                'closed_session_count' => $closedSessionCount,
+                'participant_count' => $participantCount,
+                'question_count' => $questionCount,
+                'answer_count' => $answerCount,
+                'average_participation_rate' => $sessionCount > 0 ? round($participationTotal / $sessionCount, 4) : 0.0,
+                'last_session_at' => $lastSessionAt,
+            ],
+            'question_type_breakdown' => array_map(
+                static fn (string $type, int $count): array => ['type' => $type, 'count' => $count],
+                array_keys($questionTypeCounts),
+                array_values($questionTypeCounts)
+            ),
+            'sessions' => $sessionAnalytics,
+        ];
+    }
+
     private function computeScores(int $sessionId, PDO $pdo): array
     {
         $stmt = $pdo->prepare(
@@ -397,11 +491,21 @@ final class ReportService
         if ($session === null) {
             throw new \RuntimeException('session_not_found');
         }
-        $course = $this->courses->findById((int) $session['course_id']);
-        if ($course === null || (int) $course['instructor_id'] !== $userId) {
+        $this->requireCourse((int) $session['course_id'], $userId);
+
+        return $session;
+    }
+
+    private function requireCourse(int $courseId, int $userId): array
+    {
+        $course = $this->courses->findById($courseId);
+        if ($course === null) {
+            throw new \RuntimeException('course_not_found');
+        }
+        if ((int) $course['instructor_id'] !== $userId) {
             throw new \RuntimeException('forbidden');
         }
 
-        return $session;
+        return $course;
     }
 }

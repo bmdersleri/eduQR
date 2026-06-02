@@ -309,6 +309,7 @@ Require an `eduqr_session` cookie tied to a `users` row with `role IN ('instruct
 | GET | `/api/v1/courses` | List my courses (paginated) |
 | POST | `/api/v1/courses` | Create |
 | GET | `/api/v1/courses/{id}` | Read |
+| GET | `/api/v1/courses/{id}/analytics` | Cross-session analytics for one course |
 | PATCH | `/api/v1/courses/{id}` | Update |
 | DELETE | `/api/v1/courses/{id}` | Archive |
 
@@ -335,6 +336,56 @@ Create response:
 ```
 
 Ownership: an instructor only sees and modifies their own courses (`FR-14`). Accessing another instructor's course returns 403 `forbidden`.
+
+Course analytics response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "course": {
+      "id": 12,
+      "title": "Data Structures",
+      "code": "CSE203",
+      "semester": "2026-Spring",
+      "status": "active"
+    },
+    "summary": {
+      "session_count": 4,
+      "closed_session_count": 3,
+      "participant_count": 118,
+      "question_count": 21,
+      "answer_count": 403,
+      "average_participation_rate": 0.7935,
+      "last_session_at": "2026-05-13 19:00:00"
+    },
+    "question_type_breakdown": [
+      { "type": "multiple_choice", "count": 9 },
+      { "type": "open_text", "count": 4 },
+      { "type": "yes_no", "count": 3 },
+      { "type": "likert_5", "count": 5 }
+    ],
+    "sessions": [
+      {
+        "session_id": 42,
+        "title": "Week 5 - Linked Lists",
+        "short_code": "ABCD23",
+        "status": "closed",
+        "started_at": "2026-05-13 19:00:00",
+        "closed_at": "2026-05-13 19:55:00",
+        "participant_count": 31,
+        "question_count": 6,
+        "answer_count": 177,
+        "participation_rate": 0.9516,
+        "anonymized": false,
+        "is_quiz": false
+      }
+    ]
+  }
+}
+```
+
+Errors: 404 `course_not_found`, 403 `forbidden`.
 
 ### 5.2 Sessions
 

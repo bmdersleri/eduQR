@@ -13,16 +13,22 @@ $filterActor = in_array($_GET['actor_type'] ?? '', ['instructor', 'admin', 'syst
 
 ob_start();
 ?>
-<div class="row mb-3">
-    <div class="col">
-        <h2 class="mb-1"><?= htmlspecialchars(t('audit.title'), ENT_QUOTES, 'UTF-8') ?></h2>
-        <p class="text-muted"><?= htmlspecialchars(t('audit.description'), ENT_QUOTES, 'UTF-8') ?></p>
+<div class="eduqr-admin-hero mb-4">
+    <div>
+        <div class="eduqr-kicker mb-3">
+            <span class="eduqr-icon-badge"><?= eduqr_icon('chart') ?></span>
+            <span><?= htmlspecialchars(t('audit.title'), ENT_QUOTES, 'UTF-8') ?></span>
+        </div>
+        <h1 class="h2 mb-2"><?= htmlspecialchars(t('audit.title'), ENT_QUOTES, 'UTF-8') ?></h1>
+        <p><?= htmlspecialchars(t('audit.description'), ENT_QUOTES, 'UTF-8') ?></p>
     </div>
 </div>
 
-<form method="get" action="/admin/audit-logs" class="row g-2 mb-3">
-    <div class="col-auto">
-        <select name="actor_type" class="form-select form-select-sm">
+<div class="eduqr-form-shell mb-4">
+<form method="get" action="/admin/audit-logs" class="d-flex gap-2 align-items-end flex-wrap">
+    <div class="eduqr-form-field" style="min-width: 240px;">
+        <label for="actor_type"><?= htmlspecialchars(t('audit.filter.all'), ENT_QUOTES, 'UTF-8') ?></label>
+        <select id="actor_type" name="actor_type" class="form-select form-select-sm">
             <option value="" <?= $filterActor === '' ? 'selected' : '' ?>>
                 <?= htmlspecialchars(t('audit.filter.all'), ENT_QUOTES, 'UTF-8') ?>
             </option>
@@ -37,16 +43,17 @@ ob_start();
             </option>
         </select>
     </div>
-    <div class="col-auto">
+    <div>
         <button type="submit" class="btn btn-sm btn-secondary">
             <?= htmlspecialchars(t('audit.filter.apply'), ENT_QUOTES, 'UTF-8') ?>
         </button>
     </div>
 </form>
+</div>
 
-<div class="table-responsive">
+<div class="eduqr-table-wrap table-responsive">
     <table class="table table-sm table-hover">
-        <thead class="table-light">
+        <thead>
             <tr>
                 <th><?= htmlspecialchars(t('audit.col.time'),     ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(t('audit.col.actor'),    ENT_QUOTES, 'UTF-8') ?></th>

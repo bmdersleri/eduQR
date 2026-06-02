@@ -24,34 +24,28 @@ $answeredQuestionId = (int) ($_GET['answered_q'] ?? 0);
 
 ob_start();
 ?>
-<div class="row justify-content-center mt-4 mt-md-5">
-    <div class="col-12 col-sm-8 col-md-6 col-lg-4 text-center">
-        <div class="eduqr-surface eduqr-empty-state">
-            <span class="eduqr-icon-badge mb-3"><?= eduqr_icon('check') ?></span>
+<div class="row justify-content-center py-4 py-lg-5">
+    <div class="col-12 col-lg-7 col-xl-6 text-center">
+        <div class="eduqr-student-shell">
+            <div class="eduqr-student-stage eduqr-student-stage--center">
+                <span class="eduqr-icon-badge mx-auto mb-3"><?= eduqr_icon('check') ?></span>
+                <div class="eduqr-kicker justify-content-center mb-3">
+                    <span><?= htmlspecialchars(t('student.answer.submitted'), ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+                <h1 class="h3 mb-2"><?= htmlspecialchars(t('student.answer.submitted'), ENT_QUOTES, 'UTF-8') ?></h1>
+                <p class="text-muted mb-4"><?= htmlspecialchars(t('student.answer.waiting_next'), ENT_QUOTES, 'UTF-8') ?></p>
 
-            <h1 class="h4 mb-2">
-                <?= htmlspecialchars(t('student.answer.submitted'), ENT_QUOTES, 'UTF-8') ?>
-            </h1>
-            <p class="text-muted">
-                <?= htmlspecialchars(t('student.answer.waiting_next'), ENT_QUOTES, 'UTF-8') ?>
-            </p>
+                <div class="d-flex justify-content-center flex-wrap gap-2 mb-4">
+                    <span class="eduqr-chip"><?= eduqr_icon('qr') ?> <code><?= htmlspecialchars($shortCode, ENT_QUOTES, 'UTF-8') ?></code></span>
+                    <span class="eduqr-chip"><?= eduqr_icon('spark') ?> <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
 
-            <p class="mt-3 text-muted small mb-0">
-                <code><?= htmlspecialchars($shortCode, ENT_QUOTES, 'UTF-8') ?></code>
-                &mdash;
-                <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?>
-            </p>
-
-            <!-- Spinner shown while polling -->
-            <div id="polling-indicator" class="mt-4">
-                <div class="spinner-border spinner-border-sm text-secondary" role="status">
-                    <span class="visually-hidden">
-                        <?= htmlspecialchars(t('common.loading'), ENT_QUOTES, 'UTF-8') ?>
-                    </span>
+                <div id="polling-indicator" class="d-inline-flex align-items-center gap-2 text-muted small">
+                    <span class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true"></span>
+                    <span><?= htmlspecialchars(t('common.loading'), ENT_QUOTES, 'UTF-8') ?></span>
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 

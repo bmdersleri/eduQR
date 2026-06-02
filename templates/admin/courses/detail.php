@@ -46,6 +46,9 @@ ob_start();
         <a href="/admin/courses" class="btn btn-outline-secondary btn-sm">
             <?= eduqr_icon('user') ?> <?= htmlspecialchars(t('common.back'), ENT_QUOTES, 'UTF-8') ?>
         </a>
+        <a href="/admin/courses/<?= (int) $course['id'] ?>/analytics" class="btn btn-outline-secondary btn-sm">
+            <?= eduqr_icon('chart') ?> <?= htmlspecialchars(t('course.analytics.view'), ENT_QUOTES, 'UTF-8') ?>
+        </a>
         <a href="/admin/courses/<?= (int) $course['id'] ?>/edit" class="btn btn-primary btn-sm">
             <?= eduqr_icon('spark') ?> <?= htmlspecialchars(t('common.edit'), ENT_QUOTES, 'UTF-8') ?>
         </a>

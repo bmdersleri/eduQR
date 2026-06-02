@@ -28,13 +28,12 @@ if ($session === null) {
 // ── 2. Gate: closed / paused sessions ────────────────────────────────────────
 if ($session['status'] === 'closed') {
     ob_start(); ?>
-<div class="row justify-content-center mt-5">
-    <div class="col-12 col-sm-8 col-md-6 col-lg-4">
-        <div class="card border-secondary">
-            <div class="card-body text-center py-5">
-                <p class="fs-5 text-secondary mb-0">
-                    <?= htmlspecialchars(t('error.session_closed'), ENT_QUOTES, 'UTF-8') ?>
-                </p>
+<div class="row justify-content-center py-4 py-lg-5">
+    <div class="col-12 col-lg-6 col-xl-5">
+        <div class="eduqr-student-stage eduqr-student-stage--center">
+            <span class="eduqr-icon-badge mx-auto mb-3"><?= eduqr_icon('clock') ?></span>
+            <h1 class="h4 mb-2"><?= htmlspecialchars(t('error.session_closed'), ENT_QUOTES, 'UTF-8') ?></h1>
+            <p class="text-muted mb-0"><?= htmlspecialchars(t('error.session_closed'), ENT_QUOTES, 'UTF-8') ?></p>
             </div>
         </div>
     </div>
@@ -48,13 +47,17 @@ if ($session['status'] === 'closed') {
 
 if ($session['status'] === 'paused') {
     ob_start(); ?>
-<div class="row justify-content-center mt-5">
-    <div class="col-12 col-sm-8 col-md-6 col-lg-4">
-        <div class="card border-warning">
-            <div class="card-body text-center py-5">
-                <p class="fs-5 text-warning-emphasis mb-0">
-                    <?= htmlspecialchars(t('session.paused_message'), ENT_QUOTES, 'UTF-8') ?>
-                </p>
+<div class="row justify-content-center py-4 py-lg-5">
+    <div class="col-12 col-lg-6 col-xl-5">
+        <div class="eduqr-student-stage eduqr-student-stage--center eduqr-student-stage--quiet">
+            <div class="eduqr-hourglass" aria-hidden="true">
+                <div class="eduqr-hourglass-frame"></div>
+                <div class="eduqr-hourglass-sand top"></div>
+                <div class="eduqr-hourglass-stream"></div>
+                <div class="eduqr-hourglass-sand bottom"></div>
+            </div>
+            <h1 class="h4 mb-2"><?= htmlspecialchars(t('session.paused_message'), ENT_QUOTES, 'UTF-8') ?></h1>
+            <p class="text-muted mb-0"><?= htmlspecialchars(t('session.paused_message'), ENT_QUOTES, 'UTF-8') ?></p>
             </div>
         </div>
     </div>
@@ -149,12 +152,22 @@ $qText = htmlspecialchars($question['question_text'], ENT_QUOTES, 'UTF-8');
 
 ob_start();
 ?>
-<div class="row justify-content-center mt-4 mt-md-5">
-    <div class="col-12 col-sm-10 col-md-8 col-lg-7">
-        <div class="eduqr-surface eduqr-question-card">
-            <div class="eduqr-question-meta mb-3">
+<div class="row justify-content-center py-4 py-lg-5">
+    <div class="col-12 col-xl-8 col-lg-9">
+        <div class="eduqr-student-shell">
+            <div class="eduqr-student-hero">
+                <div class="eduqr-question-meta mb-3">
+                    <span class="eduqr-chip"><?= eduqr_icon('qr') ?> <code><?= htmlspecialchars($shortCode, ENT_QUOTES, 'UTF-8') ?></code></span>
+                    <span class="eduqr-chip"><?= eduqr_icon('spark') ?> <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></span>
+                    <span class="eduqr-chip"><?= eduqr_icon('clock') ?> <?= htmlspecialchars(t('question.type.' . $qType), ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+                <h1 class="display-6 fw-bold mb-2"><?= $qText ?></h1>
+                <p class="text-muted mb-0"><?= htmlspecialchars(t('student.answer.submit'), ENT_QUOTES, 'UTF-8') ?></p>
+            </div>
+
+            <div class="eduqr-student-stage">
+            <div class="mb-3">
                 <span class="eduqr-chip"><?= eduqr_icon('qr') ?> <code><?= htmlspecialchars($shortCode, ENT_QUOTES, 'UTF-8') ?></code></span>
-                <span class="eduqr-chip"><?= eduqr_icon('spark') ?> <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></span>
                 <span class="eduqr-chip"><?= eduqr_icon('clock') ?> <?= htmlspecialchars(t('question.type.' . $qType), ENT_QUOTES, 'UTF-8') ?></span>
             </div>
 
@@ -209,11 +222,11 @@ ob_start();
                     <?php foreach ($options as $opt): ?>
                         <button
                             type="button"
-                            class="btn btn-outline-primary text-start option-btn"
+                            class="eduqr-answer-option option-btn"
                             data-option-id="<?= (int) $opt['id'] ?>"
                         >
-                            <span class="me-2"><?= eduqr_icon('check') ?></span>
-                            <?= htmlspecialchars($opt['option_text'], ENT_QUOTES, 'UTF-8') ?>
+                            <span class="eduqr-icon-badge"><?= eduqr_icon('check') ?></span>
+                            <span><?= htmlspecialchars($opt['option_text'], ENT_QUOTES, 'UTF-8') ?></span>
                         </button>
                     <?php endforeach; ?>
                     </div>
@@ -257,6 +270,7 @@ ob_start();
 
             </div>
         </div>
+        </div>
     </div>
 </div>
 
@@ -289,10 +303,9 @@ if (QUESTION_TYPE !== 'open_text') {
         btn.addEventListener('click', function () {
             // Deselect all, select this one
             buttons.forEach(b => {
-                b.classList.remove('btn-primary');
-                b.classList.add('btn-outline-primary');
+                b.classList.remove('btn-primary', 'is-selected');
             });
-            btn.classList.remove('btn-outline-primary');
+            btn.classList.add('is-selected');
             btn.classList.add('btn-primary');
 
             hiddenInput.value = btn.dataset.optionId;

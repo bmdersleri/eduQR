@@ -22,81 +22,88 @@ try {
 
 ob_start();
 ?>
-<div class="mb-4">
+<div class="eduqr-admin-hero mb-4">
+    <div>
+        <div class="eduqr-kicker mb-3">
+            <span class="eduqr-icon-badge"><?= eduqr_icon('spark') ?></span>
+            <span><?= htmlspecialchars(t('course.edit.title'), ENT_QUOTES, 'UTF-8') ?></span>
+        </div>
+        <h1 class="h2 mb-2"><?= htmlspecialchars($course['title'], ENT_QUOTES, 'UTF-8') ?></h1>
+        <p><?= htmlspecialchars($course['description'] ?: t('course.list.empty'), ENT_QUOTES, 'UTF-8') ?></p>
+    </div>
     <a href="/admin/courses/<?= (int) $course['id'] ?>" class="btn btn-outline-secondary btn-sm">
-        &larr; <?= htmlspecialchars(t('common.back'), ENT_QUOTES, 'UTF-8') ?>
+        <?= eduqr_icon('user') ?> <?= htmlspecialchars(t('common.back'), ENT_QUOTES, 'UTF-8') ?>
     </a>
 </div>
 
-<div class="row justify-content-center">
-<div class="col-md-8 col-lg-6">
-    <h2 class="mb-4"><?= htmlspecialchars(t('course.edit.title'), ENT_QUOTES, 'UTF-8') ?></h2>
+<div class="row g-4 justify-content-center">
+<div class="col-xl-8 col-lg-9">
+    <div class="eduqr-form-shell">
+        <div id="course-error" class="alert alert-danger d-none mb-4" role="alert"></div>
+        <div id="course-success" class="alert alert-success d-none mb-4" role="status"></div>
 
-    <div id="course-error"   class="alert alert-danger  d-none" role="alert"></div>
-    <div id="course-success" class="alert alert-success d-none" role="status"></div>
+        <form id="course-form" novalidate class="eduqr-form-grid">
+            <div class="eduqr-form-grid two-col">
+                <div class="eduqr-form-field">
+                    <label for="title">
+                        <?= htmlspecialchars(t('course.field.title'), ENT_QUOTES, 'UTF-8') ?>
+                        <span class="text-danger" aria-hidden="true">*</span>
+                    </label>
+                    <input type="text" id="title" name="title" class="form-control"
+                           required maxlength="200"
+                           value="<?= htmlspecialchars($course['title'], ENT_QUOTES, 'UTF-8') ?>">
+                </div>
 
-    <form id="course-form" novalidate>
-        <div class="mb-3">
-            <label for="title" class="form-label">
-                <?= htmlspecialchars(t('course.field.title'), ENT_QUOTES, 'UTF-8') ?>
-                <span class="text-danger" aria-hidden="true">*</span>
-            </label>
-            <input type="text" id="title" name="title" class="form-control"
-                   required maxlength="200"
-                   value="<?= htmlspecialchars($course['title'], ENT_QUOTES, 'UTF-8') ?>">
-        </div>
+                <div class="eduqr-form-field">
+                    <label for="default_language">
+                        <?= htmlspecialchars(t('course.field.default_language'), ENT_QUOTES, 'UTF-8') ?>
+                    </label>
+                    <select id="default_language" name="default_language" class="form-select">
+                        <option value="en" <?= $course['default_language'] === 'en' ? 'selected' : '' ?>>English</option>
+                        <option value="tr" <?= $course['default_language'] === 'tr' ? 'selected' : '' ?>>Türkçe</option>
+                    </select>
+                </div>
 
-        <div class="mb-3">
-            <label for="code" class="form-label">
-                <?= htmlspecialchars(t('course.field.code'), ENT_QUOTES, 'UTF-8') ?>
-            </label>
-            <input type="text" id="code" name="code" class="form-control" maxlength="40"
-                   value="<?= htmlspecialchars($course['code'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
-        </div>
+                <div class="eduqr-form-field">
+                    <label for="code"><?= htmlspecialchars(t('course.field.code'), ENT_QUOTES, 'UTF-8') ?></label>
+                    <input type="text" id="code" name="code" class="form-control" maxlength="40"
+                           value="<?= htmlspecialchars($course['code'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                </div>
 
-        <div class="mb-3">
-            <label for="semester" class="form-label">
-                <?= htmlspecialchars(t('course.field.semester'), ENT_QUOTES, 'UTF-8') ?>
-            </label>
-            <input type="text" id="semester" name="semester" class="form-control" maxlength="40"
-                   value="<?= htmlspecialchars($course['semester'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
-        </div>
+                <div class="eduqr-form-field">
+                    <label for="semester"><?= htmlspecialchars(t('course.field.semester'), ENT_QUOTES, 'UTF-8') ?></label>
+                    <input type="text" id="semester" name="semester" class="form-control" maxlength="40"
+                           value="<?= htmlspecialchars($course['semester'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                </div>
+            </div>
 
-        <div class="mb-3">
-            <label for="description" class="form-label">
-                <?= htmlspecialchars(t('course.field.description'), ENT_QUOTES, 'UTF-8') ?>
-            </label>
-            <textarea id="description" name="description" class="form-control" rows="3"><?= htmlspecialchars($course['description'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
-        </div>
+            <div class="eduqr-form-field">
+                <label for="description"><?= htmlspecialchars(t('course.field.description'), ENT_QUOTES, 'UTF-8') ?></label>
+                <textarea id="description" name="description" class="form-control" rows="4"><?= htmlspecialchars($course['description'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
+            </div>
 
-        <div class="mb-4">
-            <label for="default_language" class="form-label">
-                <?= htmlspecialchars(t('course.field.default_language'), ENT_QUOTES, 'UTF-8') ?>
-            </label>
-            <select id="default_language" name="default_language" class="form-select">
-                <option value="en" <?= $course['default_language'] === 'en' ? 'selected' : '' ?>>English</option>
-                <option value="tr" <?= $course['default_language'] === 'tr' ? 'selected' : '' ?>>Türkçe</option>
-            </select>
-        </div>
-
-        <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary">
-                <?= htmlspecialchars(t('common.save'), ENT_QUOTES, 'UTF-8') ?>
-            </button>
-            <a href="/admin/courses/<?= (int) $course['id'] ?>" class="btn btn-outline-secondary">
-                <?= htmlspecialchars(t('common.cancel'), ENT_QUOTES, 'UTF-8') ?>
-            </a>
-        </div>
-    </form>
+            <div class="d-flex gap-2 flex-wrap pt-2">
+                <button type="submit" class="btn btn-primary">
+                    <?= htmlspecialchars(t('common.save'), ENT_QUOTES, 'UTF-8') ?>
+                </button>
+                <a href="/admin/courses/<?= (int) $course['id'] ?>" class="btn btn-outline-secondary">
+                    <?= htmlspecialchars(t('common.cancel'), ENT_QUOTES, 'UTF-8') ?>
+                </a>
+            </div>
+        </form>
+    </div>
 
     <?php if ($course['status'] === 'active'): ?>
-    <hr class="my-4">
-    <div class="border border-danger rounded p-3">
-        <h6 class="text-danger"><?= htmlspecialchars(t('course.action.archive'), ENT_QUOTES, 'UTF-8') ?></h6>
-        <p class="text-muted small mb-2"><?= htmlspecialchars(t('common.confirm'), ENT_QUOTES, 'UTF-8') ?></p>
-        <button id="archive-btn" class="btn btn-outline-danger btn-sm">
-            <?= htmlspecialchars(t('course.action.archive'), ENT_QUOTES, 'UTF-8') ?>
-        </button>
+    <div class="eduqr-danger-surface mt-4">
+        <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+            <div>
+                <h2 class="h5 text-danger mb-1"><?= htmlspecialchars(t('course.action.archive'), ENT_QUOTES, 'UTF-8') ?></h2>
+                <p class="text-muted mb-0"><?= htmlspecialchars(t('common.confirm'), ENT_QUOTES, 'UTF-8') ?></p>
+            </div>
+            <button id="archive-btn" class="btn btn-outline-danger btn-sm">
+                <?= htmlspecialchars(t('course.action.archive'), ENT_QUOTES, 'UTF-8') ?>
+            </button>
+        </div>
     </div>
     <?php endif; ?>
 </div>
