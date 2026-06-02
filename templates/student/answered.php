@@ -29,7 +29,8 @@ ob_start();
     <span></span><span></span><span></span><span></span>
 </div>
 
-<div class="row justify-content-center py-4 py-lg-5">
+<div class="eduqr-student-screen">
+<div class="row justify-content-center w-100 g-0">
     <div class="col-12 col-lg-7 col-xl-6 text-center">
         <div class="eduqr-student-shell eduqr-stagger">
             <div class="eduqr-student-stage eduqr-student-stage--center">
@@ -56,6 +57,7 @@ ob_start();
             </div>
         </div>
     </div>
+</div>
 </div>
 
 <script>

@@ -15,7 +15,8 @@ if ($session === null || $session['status'] === 'closed') {
 
 ob_start();
 ?>
-<div class="row justify-content-center py-4 py-lg-5">
+<div class="eduqr-student-screen">
+<div class="row justify-content-center w-100 g-0">
     <div class="col-12 col-lg-8 col-xl-7">
         <div class="eduqr-student-shell eduqr-stagger">
             <div class="eduqr-student-hero">
@@ -56,6 +57,7 @@ ob_start();
             </div>
         </div>
     </div>
+</div>
 </div>
 
 <script>
