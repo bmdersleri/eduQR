@@ -69,6 +69,26 @@ final class ParticipantService
         ];
     }
 
+    /**
+     * Try to restore a returning participant by device hash.
+     * Returns the participant array or null if not found.
+     */
+    public function restore(string $shortCode, ?string $deviceCookieId, string $userAgent): ?array
+    {
+        if ($deviceCookieId === null || $deviceCookieId === '') {
+            return null;
+        }
+
+        $session = $this->sessions->findByShortCode($shortCode);
+        if ($session === null) {
+            return null;
+        }
+
+        $deviceHash = \EduQR\Support\DeviceHash::compute($deviceCookieId, $userAgent);
+
+        return $this->participants->findBySessionAndDeviceHash((int) $session['id'], $deviceHash);
+    }
+
     /** Normalize a nickname: lowercase + trim + collapse internal whitespace. */
     public static function normalize(string $nickname): string
     {

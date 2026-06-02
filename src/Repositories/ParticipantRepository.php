@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace EduQR\Repositories;
 
 use EduQR\Contracts\ParticipantRepositoryInterface;
-use EduQR\Database;
+use EduQR\Support\Database;
 
 final class ParticipantRepository implements ParticipantRepositoryInterface
 {
@@ -70,6 +70,17 @@ final class ParticipantRepository implements ParticipantRepositoryInterface
     {
         $stmt = $this->pdo->prepare('SELECT * FROM participants WHERE id = :id');
         $stmt->execute([':id' => $id]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        return $row ?: null;
+    }
+
+    public function findBySessionAndDeviceHash(int $sessionId, string $deviceHash): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT * FROM participants WHERE session_id = :sid AND device_hash = :dh LIMIT 1'
+        );
+        $stmt->execute([':sid' => $sessionId, ':dh' => $deviceHash]);
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         return $row ?: null;

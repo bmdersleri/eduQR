@@ -225,6 +225,12 @@ final class Bootstrap
             include __DIR__ . '/../templates/student/play.php';
         });
 
+        // ── Student batch answer page ─────────────────────────────────────────
+        $router->get('/play/{short_code}/batch', function (array $p): void {
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/../templates/student/batch.php';
+        });
+
         // No-JS fallback: form POST to /play/{short_code} (T-710)
         $router->post('/play/{short_code}', function (array $p): void {
             include __DIR__ . '/../templates/student/play.php';

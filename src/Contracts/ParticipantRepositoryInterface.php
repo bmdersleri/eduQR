@@ -20,4 +20,6 @@ interface ParticipantRepositoryInterface
     public function findBySession(int $sessionId): array;
 
     public function findById(int $id): ?array;
+
+    public function findBySessionAndDeviceHash(int $sessionId, string $deviceHash): ?array;
 }
