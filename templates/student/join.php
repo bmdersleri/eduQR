@@ -20,19 +20,16 @@ if ($session === null) {
 // If session is closed or paused, show a status page instead of the form
 if ($session['status'] === 'closed') {
     http_response_code(410);
-    $statusMessage = t('error.session_closed');
-    ob_start();
-    ?>
-<div class="row justify-content-center mt-5">
-    <div class="col-12 col-sm-8 col-md-6 col-lg-4">
-        <div class="eduqr-surface eduqr-empty-state">
-            <span class="eduqr-icon-badge"><?= eduqr_icon('clock') ?></span>
-            <p class="fs-5 text-secondary mb-0"><?= htmlspecialchars($statusMessage, ENT_QUOTES, 'UTF-8') ?></p>
-            </div>
+    ob_start(); ?>
+<div class="row justify-content-center" style="margin-top:clamp(2rem,8vh,4rem)">
+    <div class="col-12 col-sm-8 col-md-6 col-lg-4 text-center">
+        <div class="eduqr-surface" style="padding:clamp(2rem,4vw,3rem)">
+            <span class="eduqr-icon-badge mx-auto mb-3"><?= eduqr_icon('clock') ?></span>
+            <p class="fs-5 mb-0"><?= htmlspecialchars(t('error.session_closed'), ENT_QUOTES, 'UTF-8') ?></p>
         </div>
     </div>
 </div>
-    <?php
+<?php
     $content   = ob_get_clean();
     $pageTitle = t('app.name');
     include __DIR__ . '/../layouts/public.php';
@@ -40,19 +37,16 @@ if ($session['status'] === 'closed') {
 }
 
 if ($session['status'] === 'paused') {
-    $statusMessage = t('session.paused_message');
-    ob_start();
-    ?>
-<div class="row justify-content-center mt-5">
-    <div class="col-12 col-sm-8 col-md-6 col-lg-4">
-        <div class="eduqr-surface eduqr-empty-state">
-            <span class="eduqr-icon-badge"><?= eduqr_icon('clock') ?></span>
-            <p class="fs-5 text-warning-emphasis mb-0"><?= htmlspecialchars($statusMessage, ENT_QUOTES, 'UTF-8') ?></p>
-            </div>
+    ob_start(); ?>
+<div class="row justify-content-center" style="margin-top:clamp(2rem,8vh,4rem)">
+    <div class="col-12 col-sm-8 col-md-6 col-lg-4 text-center">
+        <div class="eduqr-surface" style="padding:clamp(2rem,4vw,3rem)">
+            <span class="eduqr-icon-badge mx-auto mb-3"><?= eduqr_icon('clock') ?></span>
+            <p class="fs-5 mb-0"><?= htmlspecialchars(t('session.paused_message'), ENT_QUOTES, 'UTF-8') ?></p>
         </div>
     </div>
 </div>
-    <?php
+<?php
     $content   = ob_get_clean();
     $pageTitle = t('app.name');
     include __DIR__ . '/../layouts/public.php';
@@ -96,72 +90,53 @@ if ($returningParticipant !== null) {
 
 ob_start();
 ?>
-<div class="row justify-content-center align-items-stretch g-4 py-4 py-lg-5 eduqr-stagger">
-    <div class="col-12 col-lg-5 d-none d-lg-block">
-        <div class="eduqr-hero h-100" style="animation:float 8s ease-in-out infinite">
-            <div class="eduqr-kicker">
-                <span class="eduqr-icon-badge"><?= eduqr_icon('qr') ?></span>
-                <span><?= htmlspecialchars(t('student.join.title'), ENT_QUOTES, 'UTF-8') ?></span>
-            </div>
-            <h1 class="display-5 fw-bold mb-3"><?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></h1>
-            <p class="lead text-muted mb-4">
-                <?= htmlspecialchars(t('student.waiting.message'), ENT_QUOTES, 'UTF-8') ?>
+<div class="row justify-content-center" style="margin-top:clamp(1.5rem,5vh,3.5rem)">
+    <div class="col-12 col-sm-10 col-md-7 col-lg-5 col-xl-4">
+        <div class="text-center mb-4">
+            <span class="eduqr-icon-badge mx-auto mb-3" style="width:3.2rem;height:3.2rem;border-radius:1.2rem"><?= eduqr_icon('qr') ?></span>
+            <h1 class="h3 fw-bold mb-1"><?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></h1>
+            <p class="text-muted small mb-0">
+                <code><?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?></code>
             </p>
-            <div class="eduqr-panel-grid">
-                <div class="eduqr-statcard">
-                    <div class="d-flex align-items-center gap-2 mb-2"><?= eduqr_icon('user') ?><strong><?= htmlspecialchars(t('student.join.nickname_title'), ENT_QUOTES, 'UTF-8') ?></strong></div>
-                    <p class="text-muted mb-0"><?= htmlspecialchars(t('student.join.nickname.placeholder'), ENT_QUOTES, 'UTF-8') ?></p>
-                </div>
-                <div class="eduqr-statcard">
-                    <div class="d-flex align-items-center gap-2 mb-2"><?= eduqr_icon('clock') ?><strong><?= htmlspecialchars(t('student.join.once_only_title'), ENT_QUOTES, 'UTF-8') ?></strong></div>
-                    <p class="text-muted mb-0"><?= htmlspecialchars(t('student.join.return_desc'), ENT_QUOTES, 'UTF-8') ?></p>
-                </div>
-            </div>
         </div>
-    </div>
-    <div class="col-12 col-sm-8 col-md-6 col-lg-4">
-        <div class="eduqr-surface h-100">
-            <div class="p-4 p-lg-5">
-                <div class="text-center mb-4">
-                    <span class="eduqr-icon-badge mx-auto mb-3 eduqr-breathe"><?= eduqr_icon('user') ?></span>
-                    <h2 class="h4 mb-1"><?= htmlspecialchars(t('student.join.title'), ENT_QUOTES, 'UTF-8') ?></h2>
-                    <p class="text-muted small mb-0">
-                        <code><?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?></code>
-                        &mdash; <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?>
-                    </p>
+
+        <div class="eduqr-surface" style="padding:clamp(1.5rem,3vw,2rem)">
+            <div id="join-error" class="alert alert-danger d-none" role="alert"></div>
+
+            <form id="join-form" novalidate>
+                <div class="mb-3">
+                    <label for="nickname" class="form-label fw-semibold">
+                        <?= htmlspecialchars(t('student.join.nickname.label'), ENT_QUOTES, 'UTF-8') ?>
+                    </label>
+                    <input
+                        type="text"
+                        id="nickname"
+                        name="nickname"
+                        class="form-control form-control-lg"
+                        placeholder="<?= htmlspecialchars(t('student.join.nickname.placeholder'), ENT_QUOTES, 'UTF-8') ?>"
+                        maxlength="24"
+                        autocomplete="nickname"
+                        required
+                        autofocus
+                    >
+                    <div class="d-flex justify-content-between mt-1">
+                        <div class="invalid-feedback d-block" id="nickname-feedback" style="display:none"></div>
+                        <div class="form-text text-end ms-auto" id="nick-char">0 / 24</div>
+                    </div>
                 </div>
 
-                <div id="join-error" class="alert alert-danger d-none" role="alert"></div>
+                <button type="submit" id="join-btn" class="btn btn-primary btn-lg w-100">
+                    <?= htmlspecialchars(t('student.join.submit'), ENT_QUOTES, 'UTF-8') ?>
+                </button>
+            </form>
 
-                <form id="join-form" novalidate>
-                    <div class="mb-3">
-                        <label for="nickname" class="form-label fw-semibold">
-                            <?= htmlspecialchars(t('student.join.nickname.label'), ENT_QUOTES, 'UTF-8') ?>
-                        </label>
-                        <div class="position-relative">
-                            <input
-                                type="text"
-                                id="nickname"
-                                name="nickname"
-                                class="form-control form-control-lg eduqr-glow-focus"
-                                placeholder="<?= htmlspecialchars(t('student.join.nickname.placeholder'), ENT_QUOTES, 'UTF-8') ?>"
-                                maxlength="24"
-                                autocomplete="nickname"
-                                required
-                                autofocus
-                            >
-                            <div class="form-text text-end" id="nick-char" style="margin-top:.25rem">0 / 24</div>
-                        </div>
-                        <div class="invalid-feedback" id="nickname-feedback"></div>
-                    </div>
-
-                    <button type="submit" id="join-btn" class="btn btn-primary btn-lg w-100 eduqr-ripple">
-                        <?= htmlspecialchars(t('student.join.submit'), ENT_QUOTES, 'UTF-8') ?>
-                    </button>
-                </form>
-
-                <?php include __DIR__ . '/../partials/privacy-notice.php'; ?>
+            <div class="mt-3 text-center">
+                <small class="text-muted">
+                    <?= htmlspecialchars(t('student.join.return_desc'), ENT_QUOTES, 'UTF-8') ?>
+                </small>
             </div>
+
+            <?php include __DIR__ . '/../partials/privacy-notice.php'; ?>
         </div>
     </div>
 </div>
