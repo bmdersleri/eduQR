@@ -158,8 +158,12 @@ ob_start();
     <div class="col-12 col-xl-8 col-lg-9">
         <div class="eduqr-student-shell">
             <div class="eduqr-student-hero">
+                <?php $courseTitle = trim((string) ($session['course_title'] ?? '')); ?>
                 <div class="eduqr-question-meta mb-3">
                     <span class="eduqr-chip"><span class="eduqr-badge-dot"></span><?= htmlspecialchars(t('student.answer.live_question'), ENT_QUOTES, 'UTF-8') ?></span>
+                    <?php if ($courseTitle !== ''): ?>
+                        <span class="eduqr-chip"><?= eduqr_icon('chart') ?> <?= htmlspecialchars($courseTitle, ENT_QUOTES, 'UTF-8') ?></span>
+                    <?php endif; ?>
                     <span class="eduqr-chip"><?= eduqr_icon('spark') ?> <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></span>
                     <span class="eduqr-chip"><?= eduqr_icon('qr') ?> <code><?= htmlspecialchars($shortCode, ENT_QUOTES, 'UTF-8') ?></code></span>
                 </div>

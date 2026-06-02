@@ -24,7 +24,11 @@ ob_start();
                     <span class="eduqr-icon-badge eduqr-breathe"><?= eduqr_icon('clock') ?></span>
                     <span><code><?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?></code></span>
                 </div>
-                <h1 class="display-6 fw-bold mb-2"><?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></h1>
+                <?php $courseTitle = trim((string) ($session['course_title'] ?? '')); ?>
+                <h1 class="display-6 fw-bold mb-2"><?= htmlspecialchars($courseTitle !== '' ? $courseTitle : $session['title'], ENT_QUOTES, 'UTF-8') ?></h1>
+                <?php if ($courseTitle !== ''): ?>
+                    <p class="text-muted mb-1 fw-semibold"><?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></p>
+                <?php endif; ?>
                 <p class="text-muted mb-0"><?= htmlspecialchars(t('student.waiting.message'), ENT_QUOTES, 'UTF-8') ?></p>
             </div>
 

@@ -203,6 +203,7 @@ body::after{width:22rem;height:22rem;right:-9rem;bottom:6rem;background:color-mi
   gap:.65rem;
   text-decoration:none;
   letter-spacing:-.03em;
+  color:var(--text)!important;
 }
 .navbar-brand{font-size:1.05rem}
 .navbar-brand:hover{text-decoration:none}
@@ -322,6 +323,7 @@ textarea.form-control:focus{
 
 .eduqr-topbar{padding-block:.85rem}
 .eduqr-brand-copy{display:flex;flex-direction:column;line-height:1.1}
+.eduqr-brand-copy > span:first-child{color:var(--text)}
 .eduqr-brand-copy small{color:var(--text-soft);font-weight:600}
 
 .eduqr-panel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}

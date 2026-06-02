@@ -93,11 +93,15 @@ ob_start();
   <div class="row justify-content-center w-100 g-0">
     <div class="col-12 col-sm-10 col-md-7 col-lg-5 col-xl-4">
 
+      <?php $courseTitle = trim((string) ($session['course_title'] ?? '')); ?>
       <div class="eduqr-join-hero mb-0">
         <div class="eduqr-join-avatar mx-auto mb-3">
           <?= htmlspecialchars($session['short_code'][0] ?? '?', ENT_QUOTES, 'UTF-8') ?>
         </div>
-        <h1 class="h3 fw-bold mb-1"><?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></h1>
+        <h1 class="h3 fw-bold mb-1"><?= htmlspecialchars($courseTitle !== '' ? $courseTitle : $session['title'], ENT_QUOTES, 'UTF-8') ?></h1>
+        <?php if ($courseTitle !== ''): ?>
+          <p class="text-muted mb-2"><?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></p>
+        <?php endif; ?>
         <div class="d-flex justify-content-center">
           <span class="eduqr-chip"><?= eduqr_icon('qr') ?> <code><?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?></code></span>
         </div>

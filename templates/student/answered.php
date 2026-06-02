@@ -45,8 +45,12 @@ ob_start();
                 <h1 class="h3 mb-2"><?= htmlspecialchars(t('student.answer.submitted'), ENT_QUOTES, 'UTF-8') ?></h1>
                 <p class="text-muted mb-4"><?= htmlspecialchars(t('student.answer.waiting_next'), ENT_QUOTES, 'UTF-8') ?></p>
 
+                <?php $courseTitle = trim((string) ($session['course_title'] ?? '')); ?>
                 <div class="d-flex justify-content-center flex-wrap gap-2 mb-4">
                     <span class="eduqr-chip"><?= eduqr_icon('qr') ?> <code><?= htmlspecialchars($shortCode, ENT_QUOTES, 'UTF-8') ?></code></span>
+                    <?php if ($courseTitle !== ''): ?>
+                        <span class="eduqr-chip"><?= eduqr_icon('chart') ?> <?= htmlspecialchars($courseTitle, ENT_QUOTES, 'UTF-8') ?></span>
+                    <?php endif; ?>
                     <span class="eduqr-chip"><?= eduqr_icon('spark') ?> <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></span>
                 </div>
 

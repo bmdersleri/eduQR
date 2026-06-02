@@ -51,7 +51,8 @@ $totalQ = count($questions);
           <span><?= htmlspecialchars(t('student.batch.title'), ENT_QUOTES, 'UTF-8') ?></span>
         </div>
         <h1 class="h3 mb-2"><?= htmlspecialchars(t('student.batch.title'), ENT_QUOTES, 'UTF-8') ?></h1>
-        <p class="text-muted mb-0"><code><?= htmlspecialchars($shortCode, ENT_QUOTES, 'UTF-8') ?></code> — <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></p>
+        <?php $courseTitle = trim((string) ($session['course_title'] ?? '')); ?>
+        <p class="text-muted mb-0"><code><?= htmlspecialchars($shortCode, ENT_QUOTES, 'UTF-8') ?></code><?php if ($courseTitle !== ''): ?> — <?= htmlspecialchars($courseTitle, ENT_QUOTES, 'UTF-8') ?><?php endif; ?> — <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></p>
       </div>
       <span class="eduqr-chip"><?= eduqr_icon('clock') ?> <?= htmlspecialchars(t('student.batch.question_count', ['count' => (string) $totalQ]), ENT_QUOTES, 'UTF-8') ?></span>
     </div>

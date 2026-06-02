@@ -19,7 +19,12 @@ final class SessionRepository implements SessionRepositoryInterface
 
     public function findById(int $id): ?array
     {
-        $stmt = $this->pdo->prepare('SELECT * FROM sessions WHERE id = ? LIMIT 1');
+        $stmt = $this->pdo->prepare(
+            'SELECT s.*, c.title AS course_title
+             FROM sessions s
+             LEFT JOIN courses c ON c.id = s.course_id
+             WHERE s.id = ? LIMIT 1'
+        );
         $stmt->execute([$id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -28,7 +33,12 @@ final class SessionRepository implements SessionRepositoryInterface
 
     public function findByShortCode(string $code): ?array
     {
-        $stmt = $this->pdo->prepare('SELECT * FROM sessions WHERE short_code = ? LIMIT 1');
+        $stmt = $this->pdo->prepare(
+            'SELECT s.*, c.title AS course_title
+             FROM sessions s
+             LEFT JOIN courses c ON c.id = s.course_id
+             WHERE s.short_code = ? LIMIT 1'
+        );
         $stmt->execute([$code]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
