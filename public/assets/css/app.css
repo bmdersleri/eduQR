@@ -856,3 +856,36 @@ footer{color:var(--text-soft)}
   --radius-screen: 1.6rem;
   --sticky-blur: saturate(180%) blur(14px);
 }
+
+/* --- Base app feel --- */
+body.eduqr-public {
+  font-family: var(--font-ui);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body.eduqr-public h1,
+body.eduqr-public h2,
+body.eduqr-public h3,
+body.eduqr-public .display-6,
+body.eduqr-public .eduqr-student-hero h1,
+body.eduqr-public .eduqr-join-hero h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -.03em;
+}
+
+/* Full-height app screen: vertically centered, safe-area padded */
+.eduqr-student-screen {
+  min-height: 100vh;            /* fallback */
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: max(1rem, env(safe-area-inset-top));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
