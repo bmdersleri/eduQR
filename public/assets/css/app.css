@@ -829,3 +829,30 @@ footer{color:var(--text-soft)}
   .eduqr-toasts{left:1rem;right:1rem;max-width:none}
   .eduqr-check-svg{width:3.2rem;height:3.2rem}
 }
+
+/* ============================================================
+   MOBILE PREMIUM LAYER  (student flow — visual/interaction only)
+   Spec: docs/superpowers/specs/2026-06-02-student-mobile-premium-design.md
+   ============================================================ */
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/assets/fonts/plus-jakarta-sans-700.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("/assets/fonts/plus-jakarta-sans-800.woff2") format("woff2");
+}
+
+:root {
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Plus Jakarta Sans", var(--font-ui);
+  --radius-screen: 1.6rem;
+  --sticky-blur: saturate(180%) blur(14px);
+}
