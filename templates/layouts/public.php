@@ -9,6 +9,18 @@
     <link rel="preload" href="/assets/fonts/plus-jakarta-sans-800.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="/assets/css/app.css">
+    <script>
+    // No-flash theme init: set data-theme before first paint.
+    (function () {
+        try {
+            var t = localStorage.getItem('eduqr-theme');
+            if (t !== 'dark' && t !== 'light') {
+                t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            if (t === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); }
+        } catch (e) {}
+    })();
+    </script>
 </head>
 <body class="eduqr-public">
 
