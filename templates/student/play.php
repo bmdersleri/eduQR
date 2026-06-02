@@ -149,6 +149,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // ── 8. Render question form ────────────────────────────────────────────────────
 $qType = $question['question_type'];
 $qText = htmlspecialchars($question['question_text'], ENT_QUOTES, 'UTF-8');
+$optionCount = count($options);
 
 ob_start();
 ?>
@@ -157,30 +158,30 @@ ob_start();
         <div class="eduqr-student-shell">
             <div class="eduqr-student-hero">
                 <div class="eduqr-question-meta mb-3">
-                    <span class="eduqr-chip"><?= eduqr_icon('qr') ?> <code><?= htmlspecialchars($shortCode, ENT_QUOTES, 'UTF-8') ?></code></span>
+                    <span class="eduqr-chip"><span class="eduqr-badge-dot"></span><?= htmlspecialchars(t('student.answer.live_question'), ENT_QUOTES, 'UTF-8') ?></span>
                     <span class="eduqr-chip"><?= eduqr_icon('spark') ?> <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></span>
-                    <span class="eduqr-chip"><?= eduqr_icon('clock') ?> <?= htmlspecialchars(t('question.type.' . $qType), ENT_QUOTES, 'UTF-8') ?></span>
+                    <span class="eduqr-chip"><?= eduqr_icon('qr') ?> <code><?= htmlspecialchars($shortCode, ENT_QUOTES, 'UTF-8') ?></code></span>
                 </div>
                 <h1 class="display-6 fw-bold mb-2"><?= $qText ?></h1>
-                <p class="text-muted mb-0"><?= htmlspecialchars(t('student.answer.submit'), ENT_QUOTES, 'UTF-8') ?></p>
+                <p class="text-muted mb-0">
+                    <?= htmlspecialchars(t('question.type.' . $qType), ENT_QUOTES, 'UTF-8') ?>
+                    <?php if ($optionCount > 0): ?>
+                        &middot; <?= htmlspecialchars(tn('student.answer.option_count', $optionCount, ['count' => (string) $optionCount]), ENT_QUOTES, 'UTF-8') ?>
+                    <?php endif; ?>
+                </p>
             </div>
 
-            <div class="eduqr-student-stage">
-            <div class="mb-3">
-                <span class="eduqr-chip"><?= eduqr_icon('qr') ?> <code><?= htmlspecialchars($shortCode, ENT_QUOTES, 'UTF-8') ?></code></span>
-                <span class="eduqr-chip"><?= eduqr_icon('clock') ?> <?= htmlspecialchars(t('question.type.' . $qType), ENT_QUOTES, 'UTF-8') ?></span>
-            </div>
-
-            <div class="mb-3">
+            <div class="eduqr-student-stage eduqr-fade-scale">
                 <?php if (! empty($question['image_path'])): ?>
-                <div class="text-center mb-3">
-                    <img src="/<?= htmlspecialchars($question['image_path'], ENT_QUOTES, 'UTF-8') ?>"
-                         alt="<?= htmlspecialchars(t('question.image.preview_alt'), ENT_QUOTES, 'UTF-8') ?>"
-                         class="img-fluid rounded"
-                         style="max-height:300px">
+                <div class="text-center mb-4">
+                    <div class="eduqr-image-frame d-inline-block" style="max-width:100%">
+                        <img src="/<?= htmlspecialchars($question['image_path'], ENT_QUOTES, 'UTF-8') ?>"
+                             alt="<?= htmlspecialchars(t('question.image.preview_alt'), ENT_QUOTES, 'UTF-8') ?>"
+                             class="img-fluid rounded"
+                             style="max-height:320px;object-fit:contain">
+                    </div>
                 </div>
                 <?php endif; ?>
-                <h2 class="eduqr-question-title mb-4"><?= $qText ?></h2>
 
                 <?php if ($noJsError !== ''): ?>
                 <div class="alert alert-danger" role="alert">
@@ -203,7 +204,7 @@ ob_start();
                         <textarea
                         id="answer_text"
                         name="answer_text"
-                        class="form-control"
+                        class="form-control eduqr-glow-focus"
                         rows="5"
                         maxlength="2000"
                         placeholder="<?= htmlspecialchars(t('student.answer.text_placeholder'), ENT_QUOTES, 'UTF-8') ?>"
@@ -222,7 +223,7 @@ ob_start();
                     <?php foreach ($options as $opt): ?>
                         <button
                             type="button"
-                            class="eduqr-answer-option option-btn"
+                            class="eduqr-answer-option eduqr-opt-in"
                             data-option-id="<?= (int) $opt['id'] ?>"
                         >
                             <span class="eduqr-icon-badge"><?= eduqr_icon('check') ?></span>
@@ -256,7 +257,7 @@ ob_start();
                     <button
                         type="submit"
                         id="submit-btn"
-                        class="btn btn-primary btn-lg w-100 mt-4"
+                        class="btn btn-primary btn-lg w-100 mt-4 eduqr-ripple"
                         <?= $qType !== 'open_text' ? 'disabled' : '' ?>
                     >
                         <?= htmlspecialchars(t('student.answer.submit'), ENT_QUOTES, 'UTF-8') ?>
@@ -269,7 +270,6 @@ ob_start();
                 </form>
 
             </div>
-        </div>
         </div>
     </div>
 </div>
@@ -288,6 +288,7 @@ const submitBtn = document.getElementById('submit-btn');
 function showError(msg) {
     errorBox.textContent = msg;
     errorBox.classList.remove('d-none');
+    errorBox.style.animation = 'slide-down .35s ease-out';
 }
 
 function clearError() {
@@ -297,19 +298,17 @@ function clearError() {
 // ── Option-button selection ──────────────────────────────────────────────────
 if (QUESTION_TYPE !== 'open_text') {
     const hiddenInput = document.getElementById('selected_option_id');
-    const buttons     = document.querySelectorAll('.option-btn');
+    const buttons     = document.querySelectorAll('.eduqr-answer-option');
 
     buttons.forEach(btn => {
         btn.addEventListener('click', function () {
-            // Deselect all, select this one
             buttons.forEach(b => {
-                b.classList.remove('btn-primary', 'is-selected');
+                b.classList.remove('is-selected', 'eduqr-opt-bounce');
             });
-            btn.classList.add('is-selected');
-            btn.classList.add('btn-primary');
-
-            hiddenInput.value = btn.dataset.optionId;
+            this.classList.add('is-selected', 'eduqr-opt-bounce');
+            hiddenInput.value = this.dataset.optionId;
             submitBtn.disabled = false;
+            submitBtn.classList.add('eduqr-btn-glow');
         });
     });
 }
@@ -320,6 +319,11 @@ if (QUESTION_TYPE === 'open_text') {
     const counter   = document.getElementById('char-count');
     textarea.addEventListener('input', function () {
         counter.textContent = textarea.value.length;
+    });
+    textarea.addEventListener('input', function enableBtn() {
+        submitBtn.disabled = !this.value.trim();
+        if (!submitBtn.disabled) submitBtn.classList.add('eduqr-btn-glow');
+        else submitBtn.classList.remove('eduqr-btn-glow');
     });
 }
 
@@ -347,6 +351,7 @@ form.addEventListener('submit', async function (e) {
     }
 
     submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="eduqr-spinner me-2"></span>' + <?= json_encode(t('common.loading')) ?>;
 
     try {
         const res  = await fetch('/api/v1/answers', {
@@ -357,15 +362,20 @@ form.addEventListener('submit', async function (e) {
         const data = await res.json();
 
         if (data.success || res.status === 409) {
-            // 409 = duplicate: treat as success (already answered)
+            submitBtn.innerHTML = '✓ ' + <?= json_encode(t('student.answer.submitted')) ?>;
+            await new Promise(r => setTimeout(r, 350));
             window.location.href = '/play/' + SHORT_CODE + '/answered?answered_q=' + QUESTION_ID;
         } else {
             showError((data.error && data.error.message) ? data.error.message : MSG_SERVER);
             submitBtn.disabled = false;
+            submitBtn.innerHTML = <?= json_encode(t('student.answer.submit')) ?>;
+            submitBtn.classList.remove('eduqr-btn-glow');
         }
     } catch {
         showError(MSG_SERVER);
         submitBtn.disabled = false;
+        submitBtn.innerHTML = <?= json_encode(t('student.answer.submit')) ?>;
+        submitBtn.classList.remove('eduqr-btn-glow');
     }
 });
 </script>

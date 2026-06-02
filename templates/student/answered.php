@@ -24,11 +24,20 @@ $answeredQuestionId = (int) ($_GET['answered_q'] ?? 0);
 
 ob_start();
 ?>
+<div class="eduqr-confetti" aria-hidden="true" id="confetti">
+    <span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span>
+</div>
+
 <div class="row justify-content-center py-4 py-lg-5">
     <div class="col-12 col-lg-7 col-xl-6 text-center">
-        <div class="eduqr-student-shell">
+        <div class="eduqr-student-shell eduqr-stagger">
             <div class="eduqr-student-stage eduqr-student-stage--center">
-                <span class="eduqr-icon-badge mx-auto mb-3"><?= eduqr_icon('check') ?></span>
+                <svg class="eduqr-check-svg" viewBox="0 0 52 52" aria-hidden="true">
+                    <circle cx="26" cy="26" r="24"/>
+                    <path fill="none" d="M16 26l7 7 13-13"/>
+                </svg>
+
                 <div class="eduqr-kicker justify-content-center mb-3">
                     <span><?= htmlspecialchars(t('student.answer.submitted'), ENT_QUOTES, 'UTF-8') ?></span>
                 </div>
@@ -40,8 +49,8 @@ ob_start();
                     <span class="eduqr-chip"><?= eduqr_icon('spark') ?> <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></span>
                 </div>
 
-                <div id="polling-indicator" class="d-inline-flex align-items-center gap-2 text-muted small">
-                    <span class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true"></span>
+                <div id="polling-indicator" class="d-inline-flex align-items-center gap-2 text-muted small eduqr-breathe">
+                    <span class="eduqr-spinner" role="status" aria-hidden="true"></span>
                     <span><?= htmlspecialchars(t('common.loading'), ENT_QUOTES, 'UTF-8') ?></span>
                 </div>
             </div>
@@ -57,35 +66,32 @@ function extractActiveQuestion(payload) {
     if (!payload || !payload.success || !payload.data) {
         return null;
     }
-
     if (Object.prototype.hasOwnProperty.call(payload.data, 'question')) {
         return payload.data.question;
     }
-
     return payload.data;
 }
 
-/**
- * Poll for a *new* active question.
- * If a new question appears (different ID from the one just answered),
- * navigate to /play/{short_code} so the student can answer it.
- */
+// ── Confetti clean-up ────────────────────────────────────────────
+setTimeout(() => {
+    const c = document.getElementById('confetti');
+    if (c) c.style.display = 'none';
+}, 3500);
+
+// ── Poll for next question ───────────────────────────────────────
 async function pollForNextQuestion() {
     try {
         const res  = await fetch('/api/v1/sessions/' + SHORT_CODE + '/active-question');
         const data = await res.json();
         const question = extractActiveQuestion(data);
-
         if (question) {
             const newId = question.id;
-            // If we know the answered question id, move only when a newer/different one is active.
-            // If param is missing (legacy link), any active question should move to play.
             if (newId && (ANSWERED_QUESTION_ID === 0 || newId !== ANSWERED_QUESTION_ID)) {
                 window.location.href = '/play/' + SHORT_CODE;
             }
         }
     } catch {
-        // Network error — keep polling silently
+        // keep polling
     }
 }
 

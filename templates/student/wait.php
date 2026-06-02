@@ -17,10 +17,10 @@ ob_start();
 ?>
 <div class="row justify-content-center py-4 py-lg-5">
     <div class="col-12 col-lg-8 col-xl-7">
-        <div class="eduqr-student-shell">
+        <div class="eduqr-student-shell eduqr-stagger">
             <div class="eduqr-student-hero">
                 <div class="eduqr-kicker mb-3">
-                    <span class="eduqr-icon-badge"><?= eduqr_icon('clock') ?></span>
+                    <span class="eduqr-icon-badge eduqr-breathe"><?= eduqr_icon('clock') ?></span>
                     <span><code><?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?></code></span>
                 </div>
                 <h1 class="display-6 fw-bold mb-2"><?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></h1>
@@ -39,12 +39,20 @@ ob_start();
                     <span><?= htmlspecialchars(t('common.loading'), ENT_QUOTES, 'UTF-8') ?></span>
                 </div>
                 <h2 class="h3 mb-2"><?= htmlspecialchars(t('student.waiting.title'), ENT_QUOTES, 'UTF-8') ?></h2>
-                <p class="text-muted mb-4"><?= htmlspecialchars(t('student.waiting.message'), ENT_QUOTES, 'UTF-8') ?></p>
+                <p class="text-muted mb-4 eduqr-breathe"><?= htmlspecialchars(t('student.waiting.message'), ENT_QUOTES, 'UTF-8') ?></p>
 
                 <div class="d-flex justify-content-center flex-wrap gap-2">
                     <span class="eduqr-chip"><?= eduqr_icon('spark') ?> <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?></span>
                     <span class="eduqr-chip"><?= eduqr_icon('qr') ?> <code><?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?></code></span>
                 </div>
+
+                <div class="mt-4 d-flex justify-content-center gap-2 eduqr-steps">
+                    <i class="done"></i>
+                    <i class="on"></i>
+                    <i></i>
+                    <i></i>
+                </div>
+                <p class="text-muted small mt-2"><?= htmlspecialchars(t('student.waiting.step_explain'), ENT_QUOTES, 'UTF-8') ?></p>
             </div>
         </div>
     </div>
@@ -57,26 +65,22 @@ function extractActiveQuestion(payload) {
     if (!payload || !payload.success || !payload.data) {
         return null;
     }
-
     if (Object.prototype.hasOwnProperty.call(payload.data, 'question')) {
         return payload.data.question;
     }
-
     return payload.data;
 }
 
-// FR-45: poll for an active question every 3 seconds
 async function pollActiveQuestion() {
     try {
         const res  = await fetch('/api/v1/sessions/' + SHORT_CODE + '/active-question');
         const data = await res.json();
         const question = extractActiveQuestion(data);
         if (question) {
-            // A question is now active — navigate to the play screen (Phase 6+)
             window.location.href = '/play/' + SHORT_CODE;
         }
     } catch {
-        // Network error — keep polling silently
+        // keep polling
     }
 }
 

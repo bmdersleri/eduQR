@@ -96,9 +96,9 @@ if ($returningParticipant !== null) {
 
 ob_start();
 ?>
-<div class="row justify-content-center align-items-stretch g-4 py-4 py-lg-5">
+<div class="row justify-content-center align-items-stretch g-4 py-4 py-lg-5 eduqr-stagger">
     <div class="col-12 col-lg-5 d-none d-lg-block">
-        <div class="eduqr-hero h-100">
+        <div class="eduqr-hero h-100" style="animation:float 8s ease-in-out infinite">
             <div class="eduqr-kicker">
                 <span class="eduqr-icon-badge"><?= eduqr_icon('qr') ?></span>
                 <span><?= htmlspecialchars(t('student.join.title'), ENT_QUOTES, 'UTF-8') ?></span>
@@ -123,7 +123,7 @@ ob_start();
         <div class="eduqr-surface h-100">
             <div class="p-4 p-lg-5">
                 <div class="text-center mb-4">
-                    <span class="eduqr-icon-badge mx-auto mb-3"><?= eduqr_icon('user') ?></span>
+                    <span class="eduqr-icon-badge mx-auto mb-3 eduqr-breathe"><?= eduqr_icon('user') ?></span>
                     <h2 class="h4 mb-1"><?= htmlspecialchars(t('student.join.title'), ENT_QUOTES, 'UTF-8') ?></h2>
                     <p class="text-muted small mb-0">
                         <code><?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?></code>
@@ -138,21 +138,24 @@ ob_start();
                         <label for="nickname" class="form-label fw-semibold">
                             <?= htmlspecialchars(t('student.join.nickname.label'), ENT_QUOTES, 'UTF-8') ?>
                         </label>
-                        <input
-                            type="text"
-                            id="nickname"
-                            name="nickname"
-                            class="form-control form-control-lg"
-                            placeholder="<?= htmlspecialchars(t('student.join.nickname.placeholder'), ENT_QUOTES, 'UTF-8') ?>"
-                            maxlength="24"
-                            autocomplete="nickname"
-                            required
-                            autofocus
-                        >
+                        <div class="position-relative">
+                            <input
+                                type="text"
+                                id="nickname"
+                                name="nickname"
+                                class="form-control form-control-lg eduqr-glow-focus"
+                                placeholder="<?= htmlspecialchars(t('student.join.nickname.placeholder'), ENT_QUOTES, 'UTF-8') ?>"
+                                maxlength="24"
+                                autocomplete="nickname"
+                                required
+                                autofocus
+                            >
+                            <div class="form-text text-end" id="nick-char" style="margin-top:.25rem">0 / 24</div>
+                        </div>
                         <div class="invalid-feedback" id="nickname-feedback"></div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                    <button type="submit" id="join-btn" class="btn btn-primary btn-lg w-100 eduqr-ripple">
                         <?= htmlspecialchars(t('student.join.submit'), ENT_QUOTES, 'UTF-8') ?>
                     </button>
                 </form>
@@ -171,10 +174,13 @@ const form        = document.getElementById('join-form');
 const errorBox    = document.getElementById('join-error');
 const nickField   = document.getElementById('nickname');
 const nickFeedback = document.getElementById('nickname-feedback');
+const joinBtn     = document.getElementById('join-btn');
+const nickChar    = document.getElementById('nick-char');
 
 function showError(msg) {
     errorBox.textContent = msg;
     errorBox.classList.remove('d-none');
+    errorBox.style.animation = 'slide-down .35s ease-out';
 }
 
 function clearErrors() {
@@ -182,6 +188,16 @@ function clearErrors() {
     nickField.classList.remove('is-invalid');
     nickFeedback.textContent = '';
 }
+
+// ── Character counter ─────────────────────────────────────────────
+nickField.addEventListener('input', function () {
+    nickChar.textContent = this.value.length + ' / 24';
+});
+
+// ── Enter key triggers submit ─────────────────────────────────────
+nickField.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') form.dispatchEvent(new Event('submit'));
+});
 
 form.addEventListener('submit', async function (e) {
     e.preventDefault();
@@ -195,8 +211,8 @@ form.addEventListener('submit', async function (e) {
         return;
     }
 
-    const btn = form.querySelector('button[type=submit]');
-    btn.disabled = true;
+    joinBtn.disabled = true;
+    joinBtn.innerHTML = '<span class="eduqr-spinner me-2"></span>' + <?= json_encode(t('common.loading')) ?>;
 
     try {
         const res  = await fetch('/api/v1/sessions/' + SHORT_CODE + '/join', {
@@ -207,6 +223,8 @@ form.addEventListener('submit', async function (e) {
         const data = await res.json();
 
         if (data.success) {
+            joinBtn.innerHTML = <?= json_encode(t('student.join.joining')) ?>;
+            await new Promise(r => setTimeout(r, 400));
             window.location.href = '/join/' + SHORT_CODE + '/wait';
         } else {
             const err = data.error ?? {};
@@ -216,11 +234,13 @@ form.addEventListener('submit', async function (e) {
             } else {
                 showError(err.message || MSG_SERVER);
             }
-            btn.disabled = false;
+            joinBtn.disabled = false;
+            joinBtn.innerHTML = <?= json_encode(t('student.join.submit')) ?>;
         }
     } catch {
         showError(MSG_SERVER);
-        btn.disabled = false;
+        joinBtn.disabled = false;
+        joinBtn.innerHTML = <?= json_encode(t('student.join.submit')) ?>;
     }
 });
 </script>

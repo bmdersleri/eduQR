@@ -9,7 +9,13 @@
     <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="/assets/css/app.css">
 </head>
-<body class="eduqr-public bg-light">
+<body class="eduqr-public">
+
+<div class="eduqr-orbs" aria-hidden="true">
+    <span class="o1"></span>
+    <span class="o2"></span>
+    <span class="o3"></span>
+</div>
 
 <nav class="navbar navbar-expand-lg eduqr-topbar px-3 px-lg-4">
     <a class="navbar-brand fw-bold" href="/">
@@ -33,7 +39,20 @@
     <?php include __DIR__ . '/../partials/privacy-notice.php'; ?>
 </footer>
 
+<div id="eduqr-toasts" class="eduqr-toasts" aria-live="polite" aria-atomic="true"></div>
+
 <script src="/assets/js/bootstrap.bundle.min.js"></script>
 <script type="module" src="/assets/js/app.js"></script>
+<script>
+// Global toast helper
+function eduqrToast(message, type) {
+    const container = document.getElementById('eduqr-toasts');
+    const el = document.createElement('div');
+    el.className = 'eduqr-toast eduqr-toast--' + (type || 'ok');
+    el.textContent = message;
+    container.appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'scale(.9)'; el.style.transition = '.25s ease'; setTimeout(() => el.remove(), 300); }, 3500);
+}
+</script>
 </body>
 </html>
