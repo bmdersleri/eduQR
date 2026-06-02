@@ -126,10 +126,7 @@ ob_start();
               required
               autofocus
             >
-            <div class="d-flex justify-content-between mt-1">
-              <div class="invalid-feedback d-block" id="nickname-feedback" style="display:none"></div>
-              <div class="form-text text-end ms-auto" id="nick-char">0 / 24</div>
-            </div>
+            <div class="invalid-feedback d-block mt-1" id="nickname-feedback" style="display:none"></div>
           </div>
 
           <button type="submit" id="join-btn" class="btn btn-primary btn-lg w-100">
@@ -160,7 +157,6 @@ const errorBox    = document.getElementById('join-error');
 const nickField   = document.getElementById('nickname');
 const nickFeedback = document.getElementById('nickname-feedback');
 const joinBtn     = document.getElementById('join-btn');
-const nickChar    = document.getElementById('nick-char');
 
 function showError(msg) {
     errorBox.textContent = msg;
@@ -173,10 +169,6 @@ function clearErrors() {
     nickField.classList.remove('is-invalid');
     nickFeedback.textContent = '';
 }
-
-nickField.addEventListener('input', function () {
-    nickChar.textContent = this.value.length + ' / 24';
-});
 
 nickField.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') form.dispatchEvent(new Event('submit'));
