@@ -6,8 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex,nofollow">
     <title><?= htmlspecialchars($pageTitle ?? t('app.name'), ENT_QUOTES, 'UTF-8') ?></title>
-    <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/assets/css/app.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars(eduqr_path('/assets/css/bootstrap.min.css'), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(eduqr_path('/assets/css/app.css'), ENT_QUOTES, 'UTF-8') ?>">
+    <script>
+    window.EDUQR_BASE_PATH = <?= json_encode(eduqr_base_path(), JSON_UNESCAPED_SLASHES) ?>;
+    window.eduqrPath = function (path) {
+        var basePath = window.EDUQR_BASE_PATH || '';
+        var value = String(path || '');
+        if (value === '') {
+            return basePath || '/';
+        }
+        if (value.indexOf('http://') === 0 || value.indexOf('https://') === 0) {
+            return value;
+        }
+        if (value.charAt(0) !== '/') {
+            value = '/' + value;
+        }
+        return (basePath || '') + value;
+    };
+    </script>
     <script>
     // No-flash theme init: set data-theme before first paint.
     (function () {
@@ -24,7 +41,7 @@
 <body class="eduqr-admin">
 
 <nav class="navbar navbar-expand-lg eduqr-topbar px-3 px-lg-4">
-    <a class="navbar-brand fw-bold" href="/admin">
+    <a class="navbar-brand fw-bold" href="<?= htmlspecialchars(eduqr_path('/admin'), ENT_QUOTES, 'UTF-8') ?>">
         <span class="eduqr-icon-badge"><?= eduqr_icon('spark') ?></span>
         <span class="eduqr-brand-copy">
             <span><?= htmlspecialchars(t('app.name'), ENT_QUOTES, 'UTF-8') ?></span>
@@ -35,7 +52,7 @@
         <ul class="navbar-nav me-auto gap-1">
             <li class="nav-item">
                 <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/courses') ? 'active' : '' ?>"
-                   href="/admin/courses">
+                   href="<?= htmlspecialchars(eduqr_path('/admin/courses'), ENT_QUOTES, 'UTF-8') ?>">
                     <span class="me-1"><?= eduqr_icon('qr') ?></span>
                     <?= htmlspecialchars(t('nav.courses'), ENT_QUOTES, 'UTF-8') ?>
                 </a>
@@ -43,7 +60,7 @@
             <?php if (($instructor['role'] ?? '') === 'admin'): ?>
             <li class="nav-item">
                 <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'] ?? '', '/admin/audit-logs') ? 'active' : '' ?>"
-                   href="/admin/audit-logs">
+                   href="<?= htmlspecialchars(eduqr_path('/admin/audit-logs'), ENT_QUOTES, 'UTF-8') ?>">
                     <span class="me-1"><?= eduqr_icon('chart') ?></span>
                     <?= htmlspecialchars(t('nav.audit_logs'), ENT_QUOTES, 'UTF-8') ?>
                 </a>
@@ -59,7 +76,7 @@
             <?= eduqr_icon('user') ?>
             <?= htmlspecialchars($instructor['display_name'] ?? '', ENT_QUOTES, 'UTF-8') ?>
         </span>
-        <form method="post" action="/api/v1/auth/logout" class="d-inline">
+        <form method="post" action="<?= htmlspecialchars(eduqr_path('/api/v1/auth/logout'), ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
             <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken ?? '', ENT_QUOTES, 'UTF-8') ?>">
             <button type="submit" class="btn btn-sm btn-outline-secondary">
                 <?= htmlspecialchars(t('nav.logout'), ENT_QUOTES, 'UTF-8') ?>
@@ -80,7 +97,7 @@
     <?= $content ?? '' ?>
 </div>
 
-<script src="/assets/js/bootstrap.bundle.min.js"></script>
-<script type="module" src="/assets/js/app.js"></script>
+<script src="<?= htmlspecialchars(eduqr_path('/assets/js/bootstrap.bundle.min.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script type="module" src="<?= htmlspecialchars(eduqr_path('/assets/js/app.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 </body>
 </html>

@@ -31,7 +31,7 @@ ob_start();
         <h1 class="h2 mb-2"><?= htmlspecialchars($course['title'], ENT_QUOTES, 'UTF-8') ?></h1>
         <p><?= htmlspecialchars($course['description'] ?: t('course.list.empty'), ENT_QUOTES, 'UTF-8') ?></p>
     </div>
-    <a href="/admin/courses/<?= (int) $course['id'] ?>" class="btn btn-outline-secondary btn-sm">
+    <a href="<?= htmlspecialchars(eduqr_path('/admin/courses/' . (int) $course['id']), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary btn-sm">
         <?= eduqr_icon('user') ?> <?= htmlspecialchars(t('common.back'), ENT_QUOTES, 'UTF-8') ?>
     </a>
 </div>
@@ -86,7 +86,7 @@ ob_start();
                 <button type="submit" class="btn btn-primary">
                     <?= htmlspecialchars(t('common.save'), ENT_QUOTES, 'UTF-8') ?>
                 </button>
-                <a href="/admin/courses/<?= (int) $course['id'] ?>" class="btn btn-outline-secondary">
+                <a href="<?= htmlspecialchars(eduqr_path('/admin/courses/' . (int) $course['id']), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary">
                     <?= htmlspecialchars(t('common.cancel'), ENT_QUOTES, 'UTF-8') ?>
                 </a>
             </div>
@@ -136,7 +136,7 @@ document.getElementById('course-form').addEventListener('submit', async function
     };
 
     try {
-        const res  = await fetch('/api/v1/courses/' + COURSE_ID, {
+        const res  = await fetch(eduqrPath('/api/v1/courses/' + COURSE_ID), {
             method:  'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -170,14 +170,14 @@ document.getElementById('archive-btn').addEventListener('click', async function 
     this.disabled = true;
 
     try {
-        const res  = await fetch('/api/v1/courses/' + COURSE_ID, {
+        const res  = await fetch(eduqrPath('/api/v1/courses/' + COURSE_ID), {
             method:  'DELETE',
             headers: { 'X-CSRF-Token': CSRF_TOKEN },
         });
         const data = await res.json();
 
         if (data.success) {
-            window.location.href = '/admin/courses';
+            window.location.href = eduqrPath('/admin/courses');
         } else {
             errorEl.textContent = data.error?.message || MSG_ERROR;
             errorEl.classList.remove('d-none');

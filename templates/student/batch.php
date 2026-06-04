@@ -18,7 +18,7 @@ if ($session === null || $session['status'] === 'closed') {
 
 $participantId = (int) ($_COOKIE['eduqr_participant'] ?? 0);
 if ($participantId <= 0) {
-    header('Location: /join/' . rawurlencode($shortCode));
+    header('Location: ' . eduqr_path('/join/' . rawurlencode($shortCode)));
     exit;
 }
 
@@ -164,7 +164,7 @@ if (form) {
     btn.innerHTML = '<span class="eduqr-spinner me-2"></span>' + <?= json_encode(t('common.loading')) ?>;
 
     try {
-      const res = await fetch('/api/v1/sessions/' + SHORT_CODE + '/answers/bulk', {
+      const res = await fetch(eduqrPath('/api/v1/sessions/' + SHORT_CODE + '/answers/bulk'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ answers }),
@@ -173,7 +173,7 @@ if (form) {
       if (res.ok && data.success) {
         btn.innerHTML = '✓ ' + <?= json_encode(t('student.answer.submitted')) ?>;
         await new Promise(r => setTimeout(r, 350));
-        window.location.href = '/play/' + SHORT_CODE + '/answered';
+        window.location.href = eduqrPath('/play/' + SHORT_CODE + '/answered');
       } else {
         errorBox.textContent = data.error?.message || MSG_SERVER;
         errorBox.classList.remove('d-none');

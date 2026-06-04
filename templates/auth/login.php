@@ -92,7 +92,7 @@ $csrfToken = CsrfMiddleware::getToken();
         const csrf = form.querySelector('[name="_csrf"]').value;
 
         try {
-            const res = await fetch('/api/v1/auth/login', {
+            const res = await fetch(eduqrPath('/api/v1/auth/login'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ $csrfToken = CsrfMiddleware::getToken();
             const data = await res.json();
 
             if (res.ok && data.success) {
-                window.location.href = '/admin/dashboard';
+                window.location.href = eduqrPath('/admin/dashboard');
             } else {
                 error.textContent = data.error?.message ?? <?= json_encode(t('common.error')) ?>;
                 error.classList.remove('d-none');

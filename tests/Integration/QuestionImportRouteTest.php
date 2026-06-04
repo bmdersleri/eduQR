@@ -10,13 +10,13 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
 /**
- * Integration test — FR-64
+ * Integration test — FR-30
  *
- * Verifies Bootstrap registered the /api/v1/courses/{id}/analytics route pattern.
+ * Verifies Bootstrap registered the /api/v1/sessions/{id}/questions/import route pattern.
  */
-class CourseAnalyticsRouteTest extends TestCase
+class QuestionImportRouteTest extends TestCase
 {
-    public function testBootstrapRegistersCourseAnalyticsRoute_FR64(): void
+    public function testBootstrapRegistersQuestionImportRoute_FR30(): void
     {
         $router = new Router();
         $projectRoot = dirname(__DIR__, 2);
@@ -31,13 +31,13 @@ class CourseAnalyticsRouteTest extends TestCase
 
         $found = false;
         foreach ($routes as $route) {
-            if ($route['method'] === 'GET' && $route['pattern'] === '/api/v1/courses/{id}/analytics') {
+            if ($route['method'] === 'POST' && $route['pattern'] === '/api/v1/sessions/{id}/questions/import') {
                 $found = true;
 
                 break;
             }
         }
 
-        $this->assertTrue($found, 'The /api/v1/courses/{id}/analytics route must be registered.');
+        $this->assertTrue($found, 'The /api/v1/sessions/{id}/questions/import route must be registered.');
     }
 }

@@ -10,14 +10,22 @@ use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Controllers\Api\QuestionController;
+use EduQR\I18n\I18nService;
 use EduQR\Services\QuestionService;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
 final class QuestionControllerTest extends TestCase
 {
-    private function callNormalizeImportPayload(array $body): array
+    protected function tearDown(): void
     {
+        I18nService::init(dirname(__DIR__, 2) . '/locales', 'en');
+    }
+
+    private function callNormalizeImportPayload(array $body, string $locale = 'en'): array
+    {
+        I18nService::init(dirname(__DIR__, 2) . '/locales', $locale);
+
         $questions = $this->createMock(QuestionRepositoryInterface::class);
         $options = $this->createMock(OptionRepositoryInterface::class);
         $sessions = $this->createMock(SessionRepositoryInterface::class);
@@ -27,7 +35,6 @@ final class QuestionControllerTest extends TestCase
         $auditLog = $this->createMock(AuditLogRepositoryInterface::class);
         $controller = new QuestionController($service, $auditLog);
         $method = new ReflectionMethod($controller, 'normalizeImportPayload');
-        $method->setAccessible(true);
 
         return $method->invoke($controller, $body);
     }
@@ -95,13 +102,47 @@ final class QuestionControllerTest extends TestCase
         $this->assertCount(3, $normalized);
 
         $this->assertSame('opening', $normalized[0]['stage']);
-        $this->assertSame('[CS101 | Loops | Acilis] Opening Q', $normalized[0]['question_text']);
+        $this->assertSame('[CS101 | Loops | Opening] Opening Q', $normalized[0]['question_text']);
 
         $this->assertSame('middle', $normalized[1]['stage']);
-        $this->assertSame('[CS101 | Loops | Orta] Middle Q', $normalized[1]['question_text']);
+        $this->assertSame('[CS101 | Loops | Middle] Middle Q', $normalized[1]['question_text']);
 
         $this->assertSame('closing', $normalized[2]['stage']);
-        $this->assertSame('[CS101 | Loops | Kapanis] Closing Q', $normalized[2]['question_text']);
+        $this->assertSame('[CS101 | Loops | Closing] Closing Q', $normalized[2]['question_text']);
+    }
+
+    public function testNewSectionsFormatUsesTurkishStageLabels(): void
+    {
+        $body = [
+            'course_name' => 'CS101',
+            'topic_name' => 'Loops',
+            'sections' => [
+                'opening' => [
+                    [
+                        'question_text' => 'Opening Q',
+                        'question_type' => 'open_text',
+                    ],
+                ],
+                'middle' => [
+                    [
+                        'question_text' => 'Middle Q',
+                        'question_type' => 'open_text',
+                    ],
+                ],
+                'closing' => [
+                    [
+                        'question_text' => 'Closing Q',
+                        'question_type' => 'open_text',
+                    ],
+                ],
+            ],
+        ];
+
+        $normalized = $this->callNormalizeImportPayload($body, 'tr');
+
+        $this->assertSame('[CS101 | Loops | Açılış] Opening Q', $normalized[0]['question_text']);
+        $this->assertSame('[CS101 | Loops | Orta] Middle Q', $normalized[1]['question_text']);
+        $this->assertSame('[CS101 | Loops | Kapanış] Closing Q', $normalized[2]['question_text']);
     }
 
     public function testInvalidPayloadStructureThrows(): void
@@ -199,19 +240,19 @@ final class QuestionControllerTest extends TestCase
         $this->assertCount(5, $normalized);
 
         $this->assertSame('opening', $normalized[0]['stage']);
-        $this->assertSame('[CS101 | Loops | Acilis] Opening Q', $normalized[0]['question_text']);
+        $this->assertSame('[CS101 | Loops | Opening] Opening Q', $normalized[0]['question_text']);
 
         $this->assertSame('middle', $normalized[1]['stage']);
         $this->assertSame('Legacy Middle', $normalized[1]['question_text']);
 
         $this->assertSame('middle', $normalized[2]['stage']);
-        $this->assertSame('[CS101 | Loops | Orta] Middle Q', $normalized[2]['question_text']);
+        $this->assertSame('[CS101 | Loops | Middle] Middle Q', $normalized[2]['question_text']);
 
         $this->assertSame('closing', $normalized[3]['stage']);
         $this->assertSame('Legacy Closing', $normalized[3]['question_text']);
 
         $this->assertSame('closing', $normalized[4]['stage']);
-        $this->assertSame('[CS101 | Loops | Kapanis] Closing Q', $normalized[4]['question_text']);
+        $this->assertSame('[CS101 | Loops | Closing] Closing Q', $normalized[4]['question_text']);
     }
 
     public function testInvalidSectionKeysThrows(): void

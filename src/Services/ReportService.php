@@ -327,7 +327,7 @@ final class ReportService
                 'started_at' => $session['started_at'],
                 'closed_at' => $session['closed_at'],
                 'anonymized' => (bool) $session['anonymized'],
-                'is_quiz' => (bool) $session['is_quiz'],
+                'is_quiz' => (bool) ($session['is_quiz'] ?? 0),
             ],
             'summary' => [
                 'participant_count' => $participantCount,
@@ -338,7 +338,7 @@ final class ReportService
             'questions' => $questionResults,
         ];
 
-        if ((bool)$session['is_quiz']) {
+        if ((bool) ($session['is_quiz'] ?? 0)) {
             $scores = $this->computeScores($sessionId, $pdo);
             if ($anonymize) {
                 foreach ($scores as &$scoreRow) {

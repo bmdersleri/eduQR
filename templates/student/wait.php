@@ -79,11 +79,11 @@ function extractActiveQuestion(payload) {
 
 async function pollActiveQuestion() {
     try {
-        const res  = await fetch('/api/v1/sessions/' + SHORT_CODE + '/active-question');
+        const res  = await fetch(eduqrPath('/api/v1/sessions/' + SHORT_CODE + '/active-question'));
         const data = await res.json();
         const question = extractActiveQuestion(data);
         if (question) {
-            window.location.href = '/play/' + SHORT_CODE;
+            window.location.href = eduqrPath('/play/' + SHORT_CODE);
         }
     } catch {
         // keep polling

@@ -7,6 +7,7 @@ namespace EduQR\Tests\Unit;
 use EduQR\Contracts\ParticipantRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Services\ParticipantService;
+use EduQR\Support\DeviceHash;
 use EduQR\Support\ProfanityFilter;
 use PHPUnit\Framework\TestCase;
 
@@ -149,6 +150,33 @@ class ParticipantServiceTest extends TestCase
         $this->assertSame('Elif', $result['nickname']);
     }
 
+    public function testJoinStoresDeviceHashWhenDeviceCookieExists_FR46_FR49(): void
+    {
+        $capturedHash = null;
+        $service = $this->makeJoinServiceWithCapturedDeviceHash($capturedHash);
+
+        $deviceCookieId = 'device-cookie-123';
+        $userAgent = 'Mozilla/5.0';
+
+        $service->join('ABCD23', 'Elif', $deviceCookieId, $userAgent);
+
+        $this->assertSame(DeviceHash::compute($deviceCookieId, $userAgent), $capturedHash);
+    }
+
+    public function testRestoreReturnsParticipantForMatchingDeviceHash_FR49(): void
+    {
+        $deviceCookieId = 'device-cookie-123';
+        $userAgent = 'Mozilla/5.0';
+        $expectedHash = DeviceHash::compute($deviceCookieId, $userAgent);
+
+        $service = $this->makeRestoreService($expectedHash);
+        $participant = $service->restore('ABCD23', $deviceCookieId, $userAgent);
+
+        $this->assertIsArray($participant);
+        $this->assertSame(44, (int) $participant['id']);
+        $this->assertSame(1, (int) $participant['session_id']);
+    }
+
     // ── Stub factories ─────────────────────────────────────────────────────────
 
     private function makeService(
@@ -241,6 +269,207 @@ class ParticipantServiceTest extends TestCase
         // Point profanity filter at the real config dir
         $_ENV['PROFANITY_DIR'] = dirname(__DIR__, 2) . '/config/profanity';
         putenv('PROFANITY_DIR=' . dirname(__DIR__, 2) . '/config/profanity');
+
+        return new ParticipantService($participantRepo, $sessionRepo);
+    }
+
+    private function makeJoinServiceWithCapturedDeviceHash(?string &$capturedHash): ParticipantService
+    {
+        $session = [
+            'id' => 1,
+            'short_code' => 'ABCD23',
+            'title' => 'Test Session',
+            'status' => 'active',
+            'language' => 'en',
+        ];
+
+        $sessionRepo = new class ($session) implements SessionRepositoryInterface {
+            public function __construct(private ?array $session)
+            {
+            }
+
+            public function findById(int $id): ?array
+            {
+                return $this->session;
+            }
+
+            public function findByShortCode(string $code): ?array
+            {
+                return $this->session;
+            }
+
+            public function shortCodeExists(string $code): bool
+            {
+                return false;
+            }
+
+            public function create(int $courseId, string $title, string $shortCode, string $language, int $isQuiz = 0): int
+            {
+                return 1;
+            }
+
+            public function update(int $id, array $fields): void
+            {
+            }
+
+            public function listByCourse(int $courseId): array
+            {
+                return [];
+            }
+
+            public function countParticipants(int $sessionId): int
+            {
+                return 0;
+            }
+
+            public function anonymize(int $sessionId): void
+            {
+            }
+        };
+
+        $participantRepo = new class ($capturedHash) implements ParticipantRepositoryInterface {
+            public function __construct(private ?string &$capturedHash)
+            {
+            }
+
+            public function register(int $sessionId, string $nickname, string $nicknameNormalized, ?string $deviceHash): int
+            {
+                $this->capturedHash = $deviceHash;
+
+                return 1;
+            }
+
+            public function existsByNicknameNormalized(int $sessionId, string $nicknameNormalized): bool
+            {
+                return false;
+            }
+
+            public function countBySession(int $sessionId): int
+            {
+                return 0;
+            }
+
+            public function findBySession(int $sessionId): array
+            {
+                return [];
+            }
+
+            public function findById(int $id): ?array
+            {
+                return null;
+            }
+
+            public function findBySessionAndDeviceHash(int $sessionId, string $deviceHash): ?array
+            {
+                return null;
+            }
+        };
+
+        $_ENV['PROFANITY_DIR'] = dirname(__DIR__, 2) . '/config/profanity';
+        putenv('PROFANITY_DIR=' . dirname(__DIR__, 2) . '/config/profanity');
+
+        return new ParticipantService($participantRepo, $sessionRepo);
+    }
+
+    private function makeRestoreService(string $expectedHash): ParticipantService
+    {
+        $session = [
+            'id' => 1,
+            'short_code' => 'ABCD23',
+            'title' => 'Test Session',
+            'status' => 'active',
+            'language' => 'en',
+        ];
+
+        $sessionRepo = new class ($session) implements SessionRepositoryInterface {
+            public function __construct(private ?array $session)
+            {
+            }
+
+            public function findById(int $id): ?array
+            {
+                return $this->session;
+            }
+
+            public function findByShortCode(string $code): ?array
+            {
+                return $this->session;
+            }
+
+            public function shortCodeExists(string $code): bool
+            {
+                return false;
+            }
+
+            public function create(int $courseId, string $title, string $shortCode, string $language, int $isQuiz = 0): int
+            {
+                return 1;
+            }
+
+            public function update(int $id, array $fields): void
+            {
+            }
+
+            public function listByCourse(int $courseId): array
+            {
+                return [];
+            }
+
+            public function countParticipants(int $sessionId): int
+            {
+                return 0;
+            }
+
+            public function anonymize(int $sessionId): void
+            {
+            }
+        };
+
+        $participantRepo = new class ($expectedHash) implements ParticipantRepositoryInterface {
+            public function __construct(private string $expectedHash)
+            {
+            }
+
+            public function register(int $sessionId, string $nickname, string $nicknameNormalized, ?string $deviceHash): int
+            {
+                return 1;
+            }
+
+            public function existsByNicknameNormalized(int $sessionId, string $nicknameNormalized): bool
+            {
+                return false;
+            }
+
+            public function countBySession(int $sessionId): int
+            {
+                return 0;
+            }
+
+            public function findBySession(int $sessionId): array
+            {
+                return [];
+            }
+
+            public function findById(int $id): ?array
+            {
+                return null;
+            }
+
+            public function findBySessionAndDeviceHash(int $sessionId, string $deviceHash): ?array
+            {
+                if ($deviceHash !== $this->expectedHash) {
+                    return null;
+                }
+
+                return [
+                    'id' => 44,
+                    'session_id' => $sessionId,
+                    'nickname' => 'Elif',
+                    'nickname_normalized' => 'elif',
+                    'device_hash' => $deviceHash,
+                ];
+            }
+        };
 
         return new ParticipantService($participantRepo, $sessionRepo);
     }

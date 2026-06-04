@@ -52,11 +52,11 @@ ob_start();
         </p>
     </div>
     <div class="d-flex flex-wrap gap-2 align-self-start">
-        <a href="/admin/courses/<?= (int) $session['course_id'] ?>" class="btn btn-outline-secondary btn-sm">
+        <a href="<?= htmlspecialchars(eduqr_path('/admin/courses/' . (int) $session['course_id']), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary btn-sm">
             <?= eduqr_icon('user') ?> <?= htmlspecialchars(t('common.back'), ENT_QUOTES, 'UTF-8') ?>
         </a>
         <?php if (!$isClosed): ?>
-        <a href="/live/<?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?>" target="_blank" class="btn btn-primary btn-sm">
+        <a href="<?= htmlspecialchars(eduqr_path('/live/' . $session['short_code']), ENT_QUOTES, 'UTF-8') ?>" target="_blank" class="btn btn-primary btn-sm">
             <?= eduqr_icon('chart') ?> <?= htmlspecialchars(t('session.action.view_live'), ENT_QUOTES, 'UTF-8') ?>
         </a>
         <?php endif; ?>
@@ -102,7 +102,7 @@ ob_start();
                         <?= htmlspecialchars(t('session.action.close'), ENT_QUOTES, 'UTF-8') ?>
                     </button>
                 <?php endif; ?>
-                <a href="/admin/sessions/<?= $sessionId ?>/results" class="btn btn-outline-success btn-sm">
+                <a href="<?= htmlspecialchars(eduqr_path('/admin/sessions/' . $sessionId . '/results'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-success btn-sm">
                     <?= htmlspecialchars(t('session.action.view_live'), ENT_QUOTES, 'UTF-8') ?>
                 </a>
             </div>
@@ -132,6 +132,39 @@ ob_start();
             </div>
 
             <div id="session-feedback" class="alert d-none" role="alert"></div>
+
+            <?php if (!$isClosed): ?>
+            <div class="row g-3 mb-4">
+                <div class="col-lg-7">
+                    <div class="eduqr-question-panel h-100">
+                        <div class="eduqr-section-head mb-2">
+                            <h2 class="h5 mb-0"><?= htmlspecialchars(t('question.import.title'), ENT_QUOTES, 'UTF-8') ?></h2>
+                        </div>
+                        <p class="text-muted small mb-3"><?= htmlspecialchars(t('question.import.help'), ENT_QUOTES, 'UTF-8') ?></p>
+                        <div id="import-feedback" class="alert d-none" role="alert"></div>
+                        <div class="eduqr-form-field mb-3">
+                            <label for="import-json"><?= htmlspecialchars(t('question.import.label'), ENT_QUOTES, 'UTF-8') ?></label>
+                            <textarea id="import-json" class="form-control" rows="8" placeholder="<?= htmlspecialchars(t('question.import.placeholder'), ENT_QUOTES, 'UTF-8') ?>"></textarea>
+                        </div>
+                        <button type="button" id="btn-import-questions" class="btn btn-primary btn-sm"><?= htmlspecialchars(t('question.import.submit'), ENT_QUOTES, 'UTF-8') ?></button>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="eduqr-question-panel h-100">
+                        <div class="eduqr-section-head mb-2">
+                            <h2 class="h5 mb-0"><?= htmlspecialchars(t('question.launch.title'), ENT_QUOTES, 'UTF-8') ?></h2>
+                        </div>
+                        <p class="text-muted small mb-3"><?= htmlspecialchars(t('question.launch.help'), ENT_QUOTES, 'UTF-8') ?></p>
+                        <div id="launch-feedback" class="alert d-none" role="alert"></div>
+                        <div class="eduqr-form-field mb-3">
+                            <label for="draft-question-select"><?= htmlspecialchars(t('question.launch.select_label'), ENT_QUOTES, 'UTF-8') ?></label>
+                            <select id="draft-question-select" class="form-select"></select>
+                        </div>
+                        <button type="button" id="btn-activate-selected" class="btn btn-success btn-sm"><?= htmlspecialchars(t('question.launch.submit'), ENT_QUOTES, 'UTF-8') ?></button>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
 
             <div class="eduqr-section-head">
                 <h2 class="h4 mb-0"><?= htmlspecialchars(t('question.new.title'), ENT_QUOTES, 'UTF-8') ?></h2>
@@ -192,6 +225,43 @@ ob_start();
             <div id="question-list" class="eduqr-question-list">
                 <p class="text-muted small" id="questions-empty"><?= htmlspecialchars(t('question.no_active'), ENT_QUOTES, 'UTF-8') ?></p>
             </div>
+
+            <div class="eduqr-section-head mt-4">
+                <h2 class="h4 mb-0"><?= htmlspecialchars(t('question.bank.title'), ENT_QUOTES, 'UTF-8') ?></h2>
+            </div>
+            <p class="text-muted small mb-3"><?= htmlspecialchars(t('question.bank.help'), ENT_QUOTES, 'UTF-8') ?></p>
+            <div id="bank-feedback" class="alert d-none" role="alert"></div>
+            <div class="row g-3">
+                <div class="col-lg-6">
+                    <div class="eduqr-question-panel h-100">
+                        <div class="eduqr-form-field mb-3">
+                            <label for="bank-source-title"><?= htmlspecialchars(t('question.bank.source_title.label'), ENT_QUOTES, 'UTF-8') ?></label>
+                            <input id="bank-source-title" class="form-control" type="text" maxlength="200" value="<?= htmlspecialchars($session['topic_name'] ?: $session['title'], ENT_QUOTES, 'UTF-8') ?>" placeholder="<?= htmlspecialchars(t('question.bank.source_title.placeholder'), ENT_QUOTES, 'UTF-8') ?>">
+                        </div>
+                        <div class="eduqr-form-field mb-3">
+                            <label for="bank-notes"><?= htmlspecialchars(t('question.bank.notes.label'), ENT_QUOTES, 'UTF-8') ?></label>
+                            <textarea id="bank-notes" class="form-control" rows="8" placeholder="<?= htmlspecialchars(t('question.bank.notes.placeholder'), ENT_QUOTES, 'UTF-8') ?>"></textarea>
+                            <div class="form-text"><?= htmlspecialchars(t('question.bank.notes.help'), ENT_QUOTES, 'UTF-8') ?></div>
+                        </div>
+                        <button type="button" id="btn-generate-bank" class="btn btn-primary btn-sm">
+                            <?= htmlspecialchars(t('question.bank.generate'), ENT_QUOTES, 'UTF-8') ?>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="eduqr-question-panel h-100">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                            <h3 class="h5 mb-0"><?= htmlspecialchars(t('question.bank.title'), ENT_QUOTES, 'UTF-8') ?></h3>
+                            <button type="button" id="btn-copy-bank" class="btn btn-success btn-sm" <?= $isClosed ? 'disabled' : '' ?>>
+                                <?= htmlspecialchars(t('question.bank.copy_selected'), ENT_QUOTES, 'UTF-8') ?>
+                            </button>
+                        </div>
+                        <div id="bank-list" class="eduqr-question-list">
+                            <p class="text-muted small" id="bank-empty"><?= htmlspecialchars(t('question.bank.no_items'), ENT_QUOTES, 'UTF-8') ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
             </div>
         </div>
     </div>
@@ -201,7 +271,7 @@ ob_start();
         <div class="eduqr-surface p-4 p-lg-5 text-center">
             <p class="fw-semibold mb-2"><?= htmlspecialchars(t('session.qr.title'), ENT_QUOTES, 'UTF-8') ?></p>
             <div class="eduqr-image-frame d-inline-block">
-                <img src="/api/v1/sessions/<?= (int) $session['id'] ?>/qr.png?size=400"
+                <img src="<?= htmlspecialchars(eduqr_path('/api/v1/sessions/' . (int) $session['id'] . '/qr.png?size=400'), ENT_QUOTES, 'UTF-8') ?>"
                      alt="<?= htmlspecialchars(t('session.qr.title'), ENT_QUOTES, 'UTF-8') ?>"
                      class="img-fluid"
                      style="max-width:320px">
@@ -213,6 +283,8 @@ ob_start();
 
 <script>
 const SESSION_ID  = <?= (int) $session['id'] ?>;
+const COURSE_ID   = <?= (int) $session['course_id'] ?>;
+const SESSION_TOPIC_NAME = <?= json_encode($session['topic_name'] ?? '') ?>;
 const CSRF_TOKEN  = <?= json_encode($csrfToken) ?>;
 const IS_ACTIVE   = <?= $isActive ? 'true' : 'false' ?>;
 const IS_CLOSED   = <?= $isClosed ? 'true' : 'false' ?>;
@@ -231,6 +303,37 @@ const L = {
     imgRemove:   <?= json_encode(t('question.image.remove')) ?>,
     imgAlt:      <?= json_encode(t('question.image.preview_alt')) ?>,
     optionPlaceholder: <?= json_encode(t('question.option.placeholder')) ?>,
+    importInvalidJson: <?= json_encode(t('question.import.invalid_json')) ?>,
+    launchNone: <?= json_encode(t('question.launch.none')) ?>,
+    launchPlaceholder: <?= json_encode(t('question.launch.placeholder')) ?>,
+    launchSelectRequired: <?= json_encode(t('question.launch.select_required')) ?>,
+    imported:    <?= json_encode(t('question.imported')) ?>,
+    activated:   <?= json_encode(t('question.activated')) ?>,
+    bank: {
+        title: <?= json_encode(t('question.bank.title')) ?>,
+        help: <?= json_encode(t('question.bank.help')) ?>,
+        notesLabel: <?= json_encode(t('question.bank.notes.label')) ?>,
+        notesHelp: <?= json_encode(t('question.bank.notes.help')) ?>,
+        notesRequired: <?= json_encode(t('question.bank.notes.required')) ?>,
+        notesPlaceholder: <?= json_encode(t('question.bank.notes.placeholder')) ?>,
+        sourceTitleLabel: <?= json_encode(t('question.bank.source_title.label')) ?>,
+        sourceTitlePlaceholder: <?= json_encode(t('question.bank.source_title.placeholder')) ?>,
+        generate: <?= json_encode(t('question.bank.generate')) ?>,
+        copySelected: <?= json_encode(t('question.bank.copy_selected')) ?>,
+        saveToBank: <?= json_encode(t('question.bank.save_to_bank')) ?>,
+        noItems: <?= json_encode(t('question.bank.no_items')) ?>,
+        selectRequired: <?= json_encode(t('question.bank.select_required')) ?>,
+        generated: <?= json_encode(t('question.bank.generated')) ?>,
+        saved: <?= json_encode(t('question.bank.saved')) ?>,
+        copied: <?= json_encode(t('question.bank.copied')) ?>,
+        sourceLectureNotes: <?= json_encode(t('question.bank.source_kind.lecture_notes')) ?>,
+        sourceSessionQuestion: <?= json_encode(t('question.bank.source_kind.session_question')) ?>,
+    },
+    stages: {
+        opening: <?= json_encode(t('question.stage.opening')) ?>,
+        middle: <?= json_encode(t('question.stage.middle')) ?>,
+        closing: <?= json_encode(t('question.stage.closing')) ?>,
+    },
     types: {
         multiple_choice: <?= json_encode(t('question.type.multiple_choice')) ?>,
         open_text:       <?= json_encode(t('question.type.open_text')) ?>,
@@ -242,6 +345,20 @@ const L = {
 // ── Session controls ──────────────────────────────────────────────────────────
 
 const feedbackEl = document.getElementById('session-feedback');
+const importFeedbackEl = document.getElementById('import-feedback');
+const launchFeedbackEl = document.getElementById('launch-feedback');
+const bankFeedbackEl = document.getElementById('bank-feedback');
+const importJsonEl = document.getElementById('import-json');
+const draftQuestionSelect = document.getElementById('draft-question-select');
+const activateSelectedBtn = document.getElementById('btn-activate-selected');
+const bankNotesEl = document.getElementById('bank-notes');
+const bankSourceTitleEl = document.getElementById('bank-source-title');
+const bankListEl = document.getElementById('bank-list');
+const bankEmptyEl = document.getElementById('bank-empty');
+const bankGenerateBtn = document.getElementById('btn-generate-bank');
+const bankCopyBtn = document.getElementById('btn-copy-bank');
+
+let bankItems = [];
 
 function showFeedback(msg, type) {
     feedbackEl.textContent = msg;
@@ -249,9 +366,28 @@ function showFeedback(msg, type) {
     feedbackEl.classList.remove('d-none');
 }
 
+function showPanelFeedback(el, msg, type) {
+    if (!el) {
+        return;
+    }
+
+    el.textContent = msg;
+    el.className = 'alert alert-' + type;
+    el.classList.remove('d-none');
+}
+
+function hidePanelFeedback(el) {
+    if (!el) {
+        return;
+    }
+
+    el.textContent = '';
+    el.className = 'alert d-none';
+}
+
 async function sendSessionAction(action) {
     try {
-        const res  = await fetch('/api/v1/sessions/' + SESSION_ID + '/' + action, {
+        const res  = await fetch(eduqrPath('/api/v1/sessions/' + SESSION_ID + '/' + action), {
             method:  'POST',
             headers: { 'X-CSRF-Token': CSRF_TOKEN },
         });
@@ -279,7 +415,7 @@ const toggleModeration  = document.getElementById('toggle-moderation');
 
 async function patchSession(fields) {
     try {
-        const res  = await fetch('/api/v1/sessions/' + SESSION_ID, {
+        const res  = await fetch(eduqrPath('/api/v1/sessions/' + SESSION_ID), {
             method:  'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -315,7 +451,7 @@ toggleQuiz?.addEventListener('change', function () {
 
 async function refreshCount() {
     try {
-        const res  = await fetch('/api/v1/sessions/' + SESSION_ID + '/participants/count');
+        const res  = await fetch(eduqrPath('/api/v1/sessions/' + SESSION_ID + '/participants/count'));
         const data = await res.json();
         if (data.success) {
             document.getElementById('participant-count').textContent = data.data.count;
@@ -335,11 +471,12 @@ let dragSrcId  = null;
 
 async function loadQuestions() {
     try {
-        const res  = await fetch('/api/v1/sessions/' + SESSION_ID + '/questions');
+        const res  = await fetch(eduqrPath('/api/v1/sessions/' + SESSION_ID + '/questions'));
         const data = await res.json();
         if (data.success) {
             questions = data.data;
             renderQuestions();
+            renderDraftSelector();
         }
     } catch {}
 }
@@ -361,6 +498,238 @@ function renderQuestions() {
         const row = buildQuestionRow(q);
         list.appendChild(row);
     });
+}
+
+function renderDraftSelector() {
+    if (!draftQuestionSelect || !activateSelectedBtn) {
+        return;
+    }
+
+    const drafts = questions.filter(q => q.status === 'draft');
+    draftQuestionSelect.innerHTML = '';
+
+    if (drafts.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = L.launchNone;
+        option.disabled = true;
+        option.selected = true;
+        draftQuestionSelect.appendChild(option);
+        activateSelectedBtn.disabled = true;
+
+        return;
+    }
+
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = L.launchPlaceholder;
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    draftQuestionSelect.appendChild(placeholder);
+
+    drafts.forEach(q => {
+        const option = document.createElement('option');
+        option.value = String(q.id);
+
+        const textShort = q.question_text.length > 80
+            ? q.question_text.slice(0, 80) + '…'
+            : q.question_text;
+        const typeLabel = L.types[q.question_type] || q.question_type;
+        option.textContent = `${textShort} · ${typeLabel}`;
+
+        draftQuestionSelect.appendChild(option);
+    });
+
+    syncLaunchButtonState();
+}
+
+function syncLaunchButtonState() {
+    if (!draftQuestionSelect || !activateSelectedBtn) {
+        return;
+    }
+
+    activateSelectedBtn.disabled = draftQuestionSelect.value === '';
+}
+
+async function loadBank() {
+    try {
+        const res = await fetch(eduqrPath('/api/v1/courses/' + COURSE_ID + '/question-bank'));
+        const data = await res.json();
+        if (data.success) {
+            bankItems = data.data;
+            renderBank();
+        }
+    } catch {}
+}
+
+function renderBank() {
+    if (!bankListEl || !bankEmptyEl) {
+        return;
+    }
+
+    bankListEl.querySelectorAll('.bank-row').forEach(el => el.remove());
+
+    if (bankItems.length === 0) {
+        bankEmptyEl.classList.remove('d-none');
+        syncBankCopyButtonState();
+
+        return;
+    }
+
+    bankEmptyEl.classList.add('d-none');
+
+    bankItems.forEach(item => {
+        bankListEl.appendChild(buildBankRow(item));
+    });
+
+    syncBankCopyButtonState();
+}
+
+function buildBankRow(item) {
+    const q = item.question || {};
+    const selectable = !IS_CLOSED;
+    const sourceLabel = item.source_kind === 'lecture_notes'
+        ? L.bank.sourceLectureNotes
+        : L.bank.sourceSessionQuestion;
+
+    const optCount = Array.isArray(q.options) && q.options.length > 0 ? ` (${q.options.length})` : '';
+    const typeLabel = (L.types[q.question_type] || q.question_type || '') + optCount;
+    const stageLabel = L.stages[q.stage] || q.stage || '';
+    const textShort = (q.question_text || '').length > 120
+        ? (q.question_text || '').slice(0, 120) + '…'
+        : (q.question_text || '');
+
+    const div = document.createElement('div');
+    div.className = 'bank-row eduqr-question-row';
+    div.dataset.id = item.id;
+
+    div.innerHTML = `
+        <div class="form-check flex-shrink-0 mt-1">
+            <input class="form-check-input bank-select" type="checkbox" value="${item.id}" ${selectable ? '' : 'disabled'}>
+        </div>
+        <div class="flex-grow-1">
+            <div class="eduqr-question-meta mb-1">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="badge text-bg-light border text-dark">${escHtml(sourceLabel)}</span>
+                    <span class="badge text-bg-secondary">${escHtml(stageLabel)}</span>
+                    <span class="badge text-bg-light border text-dark">${escHtml(typeLabel)}</span>
+                </div>
+            </div>
+            <p class="mb-1 small">${escHtml(textShort)}</p>
+            ${item.source_title ? `<div class="text-muted small">${escHtml(item.source_title)}</div>` : ''}
+        </div>`;
+
+    return div;
+}
+
+function syncBankCopyButtonState() {
+    if (!bankCopyBtn) {
+        return;
+    }
+
+    if (IS_CLOSED) {
+        bankCopyBtn.disabled = true;
+
+        return;
+    }
+
+    const selected = bankListEl ? bankListEl.querySelectorAll('.bank-select:checked').length : 0;
+    bankCopyBtn.disabled = selected === 0;
+}
+
+async function generateBankQuestions() {
+    hidePanelFeedback(bankFeedbackEl);
+
+    const lectureNotes = bankNotesEl?.value.trim() || '';
+    if (lectureNotes === '') {
+        showPanelFeedback(bankFeedbackEl, L.bank.notesRequired, 'danger');
+
+        return;
+    }
+
+    try {
+        const res = await fetch(eduqrPath('/api/v1/courses/' + COURSE_ID + '/question-bank/generate'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': CSRF_TOKEN,
+            },
+            body: JSON.stringify({
+                source_title: bankSourceTitleEl?.value.trim() || '',
+                topic_name: SESSION_TOPIC_NAME,
+                lecture_notes: lectureNotes,
+            }),
+        });
+        const data = await res.json();
+        if (data.success) {
+            if (bankNotesEl) {
+                bankNotesEl.value = '';
+            }
+            await loadBank();
+            showPanelFeedback(bankFeedbackEl, data.message || L.bank.generated, 'success');
+        } else {
+            showPanelFeedback(bankFeedbackEl, data.error?.message || MSG_SERVER, 'danger');
+        }
+    } catch {
+        showPanelFeedback(bankFeedbackEl, MSG_SERVER, 'danger');
+    }
+}
+
+async function copySelectedBankQuestions() {
+    hidePanelFeedback(bankFeedbackEl);
+
+    if (IS_CLOSED) {
+        return;
+    }
+
+    const ids = bankListEl
+        ? Array.from(bankListEl.querySelectorAll('.bank-select:checked')).map(input => Number(input.value)).filter(Boolean)
+        : [];
+
+    if (ids.length === 0) {
+        showPanelFeedback(bankFeedbackEl, L.bank.selectRequired, 'danger');
+
+        return;
+    }
+
+    try {
+        const res = await fetch(eduqrPath('/api/v1/sessions/' + SESSION_ID + '/questions/from-bank'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': CSRF_TOKEN,
+            },
+            body: JSON.stringify({ bank_question_ids: ids }),
+        });
+        const data = await res.json();
+        if (data.success) {
+            await loadQuestions();
+            await loadBank();
+            showPanelFeedback(bankFeedbackEl, data.message || L.bank.copied, 'success');
+        } else {
+            showPanelFeedback(bankFeedbackEl, data.error?.message || MSG_SERVER, 'danger');
+        }
+    } catch {
+        showPanelFeedback(bankFeedbackEl, MSG_SERVER, 'danger');
+    }
+}
+
+async function saveQuestionToBank(id) {
+    try {
+        const res = await fetch(eduqrPath('/api/v1/questions/' + id + '/bank'), {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': CSRF_TOKEN },
+        });
+        const data = await res.json();
+        if (data.success) {
+            await loadBank();
+            showPanelFeedback(bankFeedbackEl, data.message || L.bank.saved, 'success');
+        } else {
+            showPanelFeedback(bankFeedbackEl, data.error?.message || MSG_SERVER, 'danger');
+        }
+    } catch {
+        showPanelFeedback(bankFeedbackEl, MSG_SERVER, 'danger');
+    }
 }
 
 function buildQuestionRow(q) {
@@ -388,6 +757,7 @@ function buildQuestionRow(q) {
             actions += `<button class="btn btn-warning btn-sm" onclick="closeQuestion(${q.id})">${L.closeQ}</button>`;
         }
     }
+    actions += ` <button class="btn btn-outline-primary btn-sm" onclick="saveQuestionToBank(${q.id})">${L.bank.saveToBank}</button>`;
 
     const thumbHtml = q.image_url
         ? `<img src="${escHtml(q.image_url)}" alt="${escHtml(L.imgAlt)}" class="rounded border" style="width:48px;height:48px;object-fit:cover;flex-shrink:0">`
@@ -465,7 +835,7 @@ async function onDrop(e) {
 
     // Persist to server
     try {
-        await fetch('/api/v1/sessions/' + SESSION_ID + '/questions/reorder', {
+        await fetch(eduqrPath('/api/v1/sessions/' + SESSION_ID + '/questions/reorder'), {
             method:  'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF_TOKEN },
             body:    JSON.stringify({ order: questions.map(q => q.id) }),
@@ -481,24 +851,105 @@ function onDragEnd(e) {
 // ── Question actions ──────────────────────────────────────────────────────────
 
 async function activateQuestion(id) {
+    return activateQuestionWithFeedback(id, null);
+}
+
+async function activateQuestionWithFeedback(id, feedbackEl) {
     try {
-        const res  = await fetch('/api/v1/questions/' + id + '/activate', {
+        const res  = await fetch(eduqrPath('/api/v1/questions/' + id + '/activate'), {
             method: 'POST', headers: { 'X-CSRF-Token': CSRF_TOKEN },
         });
         const data = await res.json();
         if (data.success) {
             await loadQuestions();
+            if (feedbackEl) {
+                showPanelFeedback(feedbackEl, data.message || L.activated, 'success');
+            }
         } else {
-            showFeedback(data.error?.message || MSG_SERVER, 'danger');
+            if (feedbackEl) {
+                showPanelFeedback(feedbackEl, data.error?.message || MSG_SERVER, 'danger');
+            } else {
+                showFeedback(data.error?.message || MSG_SERVER, 'danger');
+            }
         }
     } catch {
-        showFeedback(MSG_SERVER, 'danger');
+        if (feedbackEl) {
+            showPanelFeedback(feedbackEl, MSG_SERVER, 'danger');
+        } else {
+            showFeedback(MSG_SERVER, 'danger');
+        }
     }
 }
 
+async function importQuestions() {
+    if (!importJsonEl) {
+        return;
+    }
+
+    hidePanelFeedback(importFeedbackEl);
+
+    let payload;
+    try {
+        payload = JSON.parse(importJsonEl.value);
+    } catch {
+        showPanelFeedback(importFeedbackEl, L.importInvalidJson, 'danger');
+        return;
+    }
+
+    try {
+        const res  = await fetch(eduqrPath('/api/v1/sessions/' + SESSION_ID + '/questions/import'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': CSRF_TOKEN,
+            },
+            body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (data.success) {
+            importJsonEl.value = '';
+            await loadQuestions();
+            showPanelFeedback(importFeedbackEl, data.message || L.imported, 'success');
+        } else {
+            showPanelFeedback(importFeedbackEl, data.error?.message || MSG_SERVER, 'danger');
+        }
+    } catch {
+        showPanelFeedback(importFeedbackEl, MSG_SERVER, 'danger');
+    }
+}
+
+async function activateSelectedQuestion() {
+    if (!draftQuestionSelect) {
+        return;
+    }
+
+    hidePanelFeedback(launchFeedbackEl);
+
+    const questionId = draftQuestionSelect.value;
+    if (!questionId) {
+        showPanelFeedback(launchFeedbackEl, L.launchSelectRequired, 'danger');
+
+        return;
+    }
+
+    await activateQuestionWithFeedback(Number(questionId), launchFeedbackEl);
+}
+
+document.getElementById('btn-import-questions')?.addEventListener('click', importQuestions);
+activateSelectedBtn?.addEventListener('click', activateSelectedQuestion);
+draftQuestionSelect?.addEventListener('change', function () {
+    hidePanelFeedback(launchFeedbackEl);
+    syncLaunchButtonState();
+});
+bankGenerateBtn?.addEventListener('click', generateBankQuestions);
+bankCopyBtn?.addEventListener('click', copySelectedBankQuestions);
+bankListEl?.addEventListener('change', syncBankCopyButtonState);
+loadQuestions();
+loadBank();
+
 async function closeQuestion(id) {
     try {
-        const res  = await fetch('/api/v1/questions/' + id + '/close', {
+        const res  = await fetch(eduqrPath('/api/v1/questions/' + id + '/close'), {
             method: 'POST', headers: { 'X-CSRF-Token': CSRF_TOKEN },
         });
         const data = await res.json();
@@ -515,7 +966,7 @@ async function closeQuestion(id) {
 async function deleteQuestion(id) {
     if (!confirm(MSG_CONFIRM)) return;
     try {
-        const res  = await fetch('/api/v1/questions/' + id, {
+        const res  = await fetch(eduqrPath('/api/v1/questions/' + id), {
             method: 'DELETE', headers: { 'X-CSRF-Token': CSRF_TOKEN },
         });
         const data = await res.json();
@@ -638,7 +1089,7 @@ document.getElementById('btn-create-question')?.addEventListener('click', async 
 
     btn.disabled = true;
     try {
-        const res  = await fetch('/api/v1/sessions/' + SESSION_ID + '/questions', {
+        const res  = await fetch(eduqrPath('/api/v1/sessions/' + SESSION_ID + '/questions'), {
             method:  'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF_TOKEN },
             body:    JSON.stringify(body),
@@ -651,7 +1102,7 @@ document.getElementById('btn-create-question')?.addEventListener('click', async 
             if (newId && imageFile) {
                 const fd = new FormData();
                 fd.append('image', imageFile);
-                const uploadRes = await fetch('/api/v1/questions/' + newId + '/image', {
+                const uploadRes = await fetch(eduqrPath('/api/v1/questions/' + newId + '/image'), {
                     method: 'POST',
                     headers: { 'X-CSRF-Token': CSRF_TOKEN },
                     body: fd,
@@ -706,8 +1157,6 @@ document.getElementById('q-image')?.addEventListener('change', function () {
 initOptions();
 // Show options section only for multiple_choice on initial load
 document.getElementById('q-type')?.dispatchEvent(new Event('change'));
-
-loadQuestions();
 </script>
 <?php
 $content   = ob_get_clean();

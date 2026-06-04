@@ -74,7 +74,7 @@ $participantId = (int) ($_COOKIE['eduqr_participant'] ?? 0);
 if ($participantId <= 0) {
     // Not joined — redirect to join page
     http_response_code(302);
-    header('Location: /join/' . rawurlencode($shortCode));
+    header('Location: ' . eduqr_path('/join/' . rawurlencode($shortCode)));
     exit;
 }
 
@@ -85,7 +85,7 @@ $question     = $questionRepo->findActiveBySessionCode($shortCode);
 if ($question === null) {
     // No active question right now — go to wait screen
     http_response_code(302);
-    header('Location: /join/' . rawurlencode($shortCode) . '/wait');
+    header('Location: ' . eduqr_path('/join/' . rawurlencode($shortCode) . '/wait'));
     exit;
 }
 
@@ -100,7 +100,7 @@ $alreadyDone = $answerRepo->existsByParticipantAndQuestion($participantId, (int)
 if ($alreadyDone) {
     // Already answered — show confirmation screen
     http_response_code(302);
-    header('Location: /play/' . rawurlencode($shortCode) . '/answered?answered_q=' . (int) $question['id']);
+    header('Location: ' . eduqr_path('/play/' . rawurlencode($shortCode) . '/answered?answered_q=' . (int) $question['id']));
     exit;
 }
 
@@ -127,11 +127,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $service->submit($participantId, $body);
         // Redirect to confirmation (PRG pattern)
         http_response_code(303);
-        header('Location: /play/' . rawurlencode($shortCode) . '/answered?answered_q=' . (int) $question['id']);
+        header('Location: ' . eduqr_path('/play/' . rawurlencode($shortCode) . '/answered?answered_q=' . (int) $question['id']));
         exit;
     } catch (DuplicateAnswerException) {
         http_response_code(303);
-        header('Location: /play/' . rawurlencode($shortCode) . '/answered?answered_q=' . (int) $question['id']);
+        header('Location: ' . eduqr_path('/play/' . rawurlencode($shortCode) . '/answered?answered_q=' . (int) $question['id']));
         exit;
     } catch (\InvalidArgumentException $e) {
         $noJsError = t('error.invalid_answer_shape');
@@ -180,7 +180,7 @@ ob_start();
                 <?php if (! empty($question['image_path'])): ?>
                 <div class="text-center mb-4">
                     <div class="eduqr-image-frame d-inline-block" style="max-width:100%">
-                        <img src="/<?= htmlspecialchars($question['image_path'], ENT_QUOTES, 'UTF-8') ?>"
+                        <img src="<?= htmlspecialchars(eduqr_path($question['image_path']), ENT_QUOTES, 'UTF-8') ?>"
                              alt="<?= htmlspecialchars(t('question.image.preview_alt'), ENT_QUOTES, 'UTF-8') ?>"
                              class="img-fluid rounded"
                              style="max-height:320px;object-fit:contain">
@@ -200,7 +200,7 @@ ob_start();
                 <form
                     id="answer-form"
                     method="POST"
-                    action="/play/<?= rawurlencode($shortCode) ?>"
+                    action="<?= htmlspecialchars(eduqr_path('/play/' . rawurlencode($shortCode)), ENT_QUOTES, 'UTF-8') ?>"
                     novalidate
                 >
                 <?php if ($qType === 'open_text'): ?>
@@ -269,7 +269,7 @@ ob_start();
                         <?= htmlspecialchars(t('student.answer.submit'), ENT_QUOTES, 'UTF-8') ?>
                     </button>
 
-                    <a href="/play/<?= rawurlencode($shortCode) ?>/batch"
+                    <a href="<?= htmlspecialchars(eduqr_path('/play/' . rawurlencode($shortCode) . '/batch'), ENT_QUOTES, 'UTF-8') ?>"
                        class="btn btn-outline-secondary w-100">
                         <?= htmlspecialchars(t('student.batch.open'), ENT_QUOTES, 'UTF-8') ?>
                     </a>
@@ -362,7 +362,7 @@ form.addEventListener('submit', async function (e) {
     submitBtn.innerHTML = '<span class="eduqr-spinner me-2"></span>' + <?= json_encode(t('common.loading')) ?>;
 
     try {
-        const res  = await fetch('/api/v1/answers', {
+        const res  = await fetch(eduqrPath('/api/v1/answers'), {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify(body),
@@ -372,7 +372,7 @@ form.addEventListener('submit', async function (e) {
         if (data.success || res.status === 409) {
             submitBtn.innerHTML = '✓ ' + <?= json_encode(t('student.answer.submitted')) ?>;
             await new Promise(r => setTimeout(r, 350));
-            window.location.href = '/play/' + SHORT_CODE + '/answered?answered_q=' + QUESTION_ID;
+            window.location.href = eduqrPath('/play/' + SHORT_CODE + '/answered?answered_q=' + QUESTION_ID);
         } else {
             showError((data.error && data.error.message) ? data.error.message : MSG_SERVER);
             submitBtn.disabled = false;

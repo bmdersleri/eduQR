@@ -119,7 +119,7 @@ function extractActiveQuestion(payload) {
 async function pollResults() {
     try {
         // Check for an active question change
-        const qRes  = await fetch('/api/v1/sessions/' + SHORT_CODE + '/active-question');
+        const qRes  = await fetch(eduqrPath('/api/v1/sessions/' + SHORT_CODE + '/active-question'));
         const qData = await qRes.json();
         const q = extractActiveQuestion(qData);
 
@@ -153,7 +153,7 @@ async function pollResults() {
         }
 
         // Fetch results for this question
-        const rRes  = await fetch('/api/v1/sessions/' + SESSION_ID + '/results?question_id=' + ACTIVE_Q_ID);
+        const rRes  = await fetch(eduqrPath('/api/v1/sessions/' + SESSION_ID + '/results?question_id=' + ACTIVE_Q_ID));
         const rData = await rRes.json();
 
         if (!rData.success || !rData.data || !rData.data.length) return;

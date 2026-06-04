@@ -76,6 +76,8 @@ State-changing instructor endpoints (POST, PATCH, DELETE) MUST present a matchin
 | 410 | Gone (session or question closed) |
 | 422 | Unprocessable (semantic validation failure) |
 | 429 | Rate limit exceeded |
+| 502 | Upstream AI provider error |
+| 503 | Service unavailable |
 | 500 | Server error |
 
 ### 1.7 Locale
@@ -585,6 +587,105 @@ Response 201:
 
 Errors: 400 `invalid_import_payload`, 400 `missing_fields`, 404 `session_not_found`, 403 `forbidden`, 422 `invalid_question_type`, 422 `invalid_option_count`.
 
+#### 5.3.3 Course question bank and LLM generation
+
+`GET /api/v1/courses/{id}/question-bank`
+
+Returns the reusable question bank for the instructor's course. Each item contains the stored question payload plus source metadata.
+
+Response 200:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 9101,
+      "source_kind": "lecture_notes",
+      "source_title": "Week 5 notes",
+      "question": {
+        "question_text": "What is the key idea behind recursion?",
+        "question_type": "open_text",
+        "stage": "opening",
+        "show_results": false,
+        "allow_multiple_answers": false,
+        "options": []
+      },
+      "created_at": "2026-06-04T18:00:00Z"
+    }
+  ]
+}
+```
+
+`POST /api/v1/courses/{id}/question-bank/generate`
+
+Generates reusable bank questions from lecture notes using the configured LLM provider and stores the results in the course bank.
+
+Request:
+
+```json
+{
+  "source_title": "Week 5 notes",
+  "lecture_notes": "...text pasted from the lecture notes..."
+}
+```
+
+Response 201:
+
+```json
+{
+  "success": true,
+  "data": {
+    "ids": [9101, 9102, 9103],
+    "count": 3
+  },
+  "message": "Questions generated successfully."
+}
+```
+
+Errors: 400 `missing_fields`, 404 `course_not_found`, 403 `forbidden`, 422 `invalid_question_type`, 422 `invalid_option_count`, 422 `invalid_llm_response`, 503 `llm_unavailable`.
+
+`POST /api/v1/questions/{id}/bank`
+
+Copies an existing session question into the course question bank so it can be reused in later sessions.
+
+Response 201:
+
+```json
+{
+  "success": true,
+  "data": { "id": 9201 },
+  "message": "Question saved to the bank."
+}
+```
+
+Errors: 404 `question_not_found`, 403 `forbidden`.
+
+`POST /api/v1/sessions/{id}/questions/from-bank`
+
+Copies one or more bank questions into the session as draft questions.
+
+Request:
+
+```json
+{ "bank_question_ids": [9101, 9102, 9103] }
+```
+
+Response 201:
+
+```json
+{
+  "success": true,
+  "data": {
+    "ids": [4001, 4002, 4003],
+    "count": 3
+  },
+  "message": "Questions imported successfully."
+}
+```
+
+Errors: 400 `missing_fields`, 404 `session_not_found`, 404 `question_bank_not_found`, 403 `forbidden`, 422 `invalid_question_type`, 422 `invalid_option_count`.
+
 ### 5.4 QR code image
 
 `GET /api/v1/sessions/{id}/qr.png?size=512`
@@ -755,6 +856,7 @@ Stable, machine-readable codes. Add to this table when introducing a new code.
 | `session_not_found` | 404 | Short code or session ID does not resolve |
 | `course_not_found` | 404 | |
 | `question_not_found` | 404 | |
+| `question_bank_not_found` | 404 | Reusable question bank item not found or not in scope |
 | `answer_not_found` | 404 | |
 | `upload_error` | 400 | Uploaded image transfer failed |
 | `email_taken` | 409 | Account email already exists |
@@ -765,12 +867,14 @@ Stable, machine-readable codes. Add to this table when introducing a new code.
 | `invalid_answer_shape` | 422 | Answer body does not match the question type |
 | `invalid_question_type` | 422 | Unknown `question_type` value |
 | `invalid_option_count` | 422 | Wrong number of options for the type |
+| `invalid_llm_response` | 422 | AI provider returned malformed question JSON |
 | `file_too_large` | 422 | Uploaded image is larger than allowed |
 | `invalid_file_type` | 422 | Uploaded image is not JPG or PNG |
 | `invalid_state_transition` | 422 | e.g. resuming a closed session |
 | `session_paused` | 422 | Action not allowed while session is paused |
 | `session_not_active` | 422 | Action requires an active session |
 | `too_many_attempts` | 429 | Rate limit hit |
+| `llm_unavailable` | 503 | LLM provider unavailable or not configured |
 | `upload_failed` | 500 | Uploaded image could not be saved |
 | `server_error` | 500 | Unhandled exception |
 

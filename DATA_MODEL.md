@@ -21,6 +21,7 @@ erDiagram
     USERS ||--o{ COURSES : owns
     COURSES ||--o{ SESSIONS : has
     SESSIONS ||--o{ QUESTIONS : contains
+    COURSES ||--o{ QUESTION_BANK_ITEMS : has
     QUESTIONS ||--o{ OPTIONS : has
     SESSIONS ||--o{ PARTICIPANTS : has
     PARTICIPANTS ||--o{ ANSWERS : submits
@@ -83,6 +84,16 @@ erDiagram
         tinyint show_results
         datetime activated_at
         datetime closed_at
+        datetime created_at
+        datetime updated_at
+    }
+    QUESTION_BANK_ITEMS {
+        bigint id PK
+        bigint course_id FK
+        bigint created_by_user_id FK
+        string source_kind
+        string source_title
+        json payload_json
         datetime created_at
         datetime updated_at
     }
@@ -276,7 +287,39 @@ Rules:
 - `image_path` optional, relative path under `public/uploads/questions/` (`FR-39`). NULL when no image. Deleted on question delete (CASCADE) or when replaced via the image endpoint.
 - `allow_multiple_answers` default `false`; controls the `answers` uniqueness rule.
 
-### 2.5 `options`
+### 2.5 `question_bank_items`
+
+Reusable course-scoped question templates. Each row stores a normalized question payload in `payload_json` so it can be copied into any future session for the same course.
+
+```sql
+CREATE TABLE question_bank_items (
+    id                 BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    course_id          BIGINT UNSIGNED NOT NULL,
+    created_by_user_id BIGINT UNSIGNED NOT NULL,
+    source_kind        ENUM('session_question','lecture_notes') NOT NULL DEFAULT 'session_question',
+    source_title       VARCHAR(200) NULL,
+    payload_json       JSON NOT NULL,
+    created_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+                                          ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_question_bank_course (course_id),
+    INDEX idx_question_bank_creator (created_by_user_id),
+    INDEX idx_question_bank_course_source (course_id, source_kind),
+    CONSTRAINT fk_question_bank_course
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+    CONSTRAINT fk_question_bank_creator
+        FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+Rules:
+
+- `course_id` scopes reuse to later sessions in the same course.
+- `created_by_user_id` records which instructor saved or generated the bank item.
+- `source_kind` describes whether the item came from an existing session question or lecture-note generation.
+- `payload_json` stores the question body shape used by `QuestionService::create()` so the item can be cloned into a session without loss of structure.
+
+### 2.6 `options`
 
 Choices for `multiple_choice`, `yes_no`, and `likert_5` questions. For `open_text`, this table has zero rows for that question.
 
@@ -302,7 +345,7 @@ Rules:
 - `yes_no` has exactly 2 options, generated automatically with `option_value` `yes` / `no`.
 - `likert_5` has exactly 5 options, `option_value` `1`–`5`.
 
-### 2.6 `participants`
+### 2.7 `participants`
 
 Anonymous-ish students who joined a session.
 
@@ -330,7 +373,7 @@ Rules:
 - `is_approved` reserved for future moderated-join flows; defaults to `1`.
 - Anonymization (`FR-70`) sets `nickname` and `nickname_normalized` to a placeholder like `anon_<id>` and `device_hash` to `NULL`.
 
-### 2.7 `answers`
+### 2.8 `answers`
 
 A submitted answer. Exactly one of `selected_option_id` / `answer_text` is populated.
 
@@ -365,7 +408,7 @@ Rules:
 
 > **`allow_multiple_answers` and the unique index:** When a question allows multiple answers, the `UNIQUE (question_id, participant_id)` index would block the second insert. For MVP, `allow_multiple_answers` defaults to `false` and is not exposed in the question-creation UI; the column and flag exist so the schema is forward-compatible. If/when multiple answers are enabled, a migration must drop this unique index and the service layer becomes solely responsible for any per-question answer caps. Document that change in an ADR.
 
-### 2.8 `audit_logs`
+### 2.9 `audit_logs`
 
 Records important system actions (`FR-90`).
 
@@ -389,7 +432,7 @@ Tracked actions: `session.created`, `session.closed`, `session.anonymized`, `ses
 
 Retention: 365 days.
 
-### 2.9 `login_attempts`
+### 2.10 `login_attempts`
 
 For rate-limiting failed logins (`FR-05`).
 
@@ -408,7 +451,7 @@ Rate-limit rule: ≥ 5 rows with `succeeded = 0` for the same `email` within 10 
 
 Retention: 90 days.
 
-### 2.10 `schema_migrations`
+### 2.11 `schema_migrations`
 
 Tracks applied migrations. Created by `bin/migrate.php`.
 

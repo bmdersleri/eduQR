@@ -174,6 +174,7 @@ Each phase in `TASKS.md` is gated by the checkpoint below. Do not start the next
 [ ] Student can join an active session with a valid nickname
 [ ] Duplicate nicknames (case-insensitive) are rejected
 [ ] Profanity-listed nicknames are rejected
+[ ] Returning students are auto-restored via the persistent device cookie
 [ ] Closed / paused sessions show a clear localized message and block joining
 [ ] Student lands on a waiting screen when no question is active
 [ ] The privacy notice is visible on the join page

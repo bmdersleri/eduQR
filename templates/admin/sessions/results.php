@@ -46,10 +46,10 @@ ob_start();
         <p class="text-muted mb-0"><code><?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?></code></p>
     </div>
     <div class="d-flex gap-2 flex-wrap align-self-start">
-        <a href="/admin/sessions/<?= $sessionId ?>" class="btn btn-outline-secondary btn-sm">
+        <a href="<?= htmlspecialchars(eduqr_path('/admin/sessions/' . $sessionId), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary btn-sm">
             <?= eduqr_icon('user') ?> <?= htmlspecialchars(t('common.back'), ENT_QUOTES, 'UTF-8') ?>
         </a>
-        <a href="/live/<?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?>" target="_blank" class="btn btn-primary btn-sm">
+        <a href="<?= htmlspecialchars(eduqr_path('/live/' . $session['short_code']), ENT_QUOTES, 'UTF-8') ?>" target="_blank" class="btn btn-primary btn-sm">
             <?= eduqr_icon('spark') ?> <?= htmlspecialchars(t('session.action.view_live'), ENT_QUOTES, 'UTF-8') ?>
         </a>
     </div>
@@ -143,7 +143,7 @@ async function fetchResults() {
     if (!currentQId) return;
 
     try {
-        const res  = await fetch('/api/v1/sessions/' + SESSION_ID + '/results?question_id=' + currentQId);
+        const res  = await fetch(eduqrPath('/api/v1/sessions/' + SESSION_ID + '/results?question_id=' + currentQId));
         const data = await res.json();
         if (data.success && data.data && data.data.length > 0) {
             renderResults(data.data[0]);
@@ -277,7 +277,7 @@ async function toggleHide(answerId, currentlyHidden, li, btn, badge) {
     const action = currentlyHidden ? 'unhide' : 'hide';
     btn.disabled = true;
     try {
-        const res = await fetch('/api/v1/answers/' + answerId + '/' + action, {
+        const res = await fetch(eduqrPath('/api/v1/answers/' + answerId + '/' + action), {
             method:  'POST',
             headers: {
                 'Content-Type': 'application/json',

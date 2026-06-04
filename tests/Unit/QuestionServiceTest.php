@@ -9,6 +9,7 @@ use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Services\QuestionService;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class QuestionServiceTest extends TestCase
@@ -27,7 +28,7 @@ class QuestionServiceTest extends TestCase
         ]);
     }
 
-    /** @dataProvider validTypeProvider */
+    #[DataProvider('validTypeProvider')]
     public function testAllValidTypesAccepted(string $type): void
     {
         $service = $this->makeService();

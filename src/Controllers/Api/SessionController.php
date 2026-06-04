@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
-use EduQR\Config;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
 use EduQR\Repositories\AuditLogRepository;
 use EduQR\Repositories\CourseRepository;
 use EduQR\Repositories\SessionRepository;
 use EduQR\Services\SessionService;
+use EduQR\Support\Url;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
@@ -69,8 +69,7 @@ final class SessionController
             $this->handleRuntimeException($e);
         }
 
-        $appUrl = rtrim(Config::get('APP_URL', ''), '/');
-        $joinUrl = $appUrl . '/join/' . $session['short_code'];
+        $joinUrl = Url::absolute('/join/' . $session['short_code']);
 
         $this->json(200, [
             'success' => true,
@@ -182,8 +181,7 @@ final class SessionController
         }
 
         $size = max(128, min(1024, (int) ($_GET['size'] ?? 512)));
-        $appUrl = rtrim(Config::get('APP_URL', ''), '/');
-        $joinUrl = $appUrl . '/join/' . $session['short_code'];
+        $joinUrl = Url::absolute('/join/' . $session['short_code']);
 
         $result = Builder::create()
             ->writer(new PngWriter())
@@ -285,7 +283,7 @@ final class SessionController
             'moderation_mode' => (bool) $session['moderation_mode'],
             'is_quiz' => (bool) $session['is_quiz'],
             'join_url' => $joinUrl,
-            'qr_url' => '/api/v1/sessions/' . (int) $session['id'] . '/qr.png',
+            'qr_url' => Url::path('/api/v1/sessions/' . (int) $session['id'] . '/qr.png'),
             'started_at' => $session['started_at'],
             'paused_at' => $session['paused_at'],
             'closed_at' => $session['closed_at'],

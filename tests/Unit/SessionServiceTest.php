@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace EduQR\Tests\Unit;
 
+use EduQR\Config;
 use EduQR\Contracts\CourseRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Services\SessionService;
 use EduQR\Support\ShortCode;
+use EduQR\Support\Url;
 use PHPUnit\Framework\TestCase;
 
 class SessionServiceTest extends TestCase
@@ -235,6 +237,9 @@ class SessionServiceTest extends TestCase
         $this->assertArrayHasKey('short_code', $result);
         $this->assertSame(6, strlen($result['short_code']));
         $this->assertSame('active', $result['status']);
+        $basePath = Url::basePathFromAppUrl((string) Config::get('APP_URL', ''));
+        $this->assertSame($basePath . '/join/' . $result['short_code'], parse_url($result['join_url'], PHP_URL_PATH));
+        $this->assertSame($basePath . '/api/v1/sessions/' . $result['id'] . '/qr.png', $result['qr_url']);
     }
 
     public function testCreateSessionThrowsForMissingCourse(): void

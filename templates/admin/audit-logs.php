@@ -25,7 +25,7 @@ ob_start();
 </div>
 
 <div class="eduqr-form-shell mb-4">
-<form method="get" action="/admin/audit-logs" class="d-flex gap-2 align-items-end flex-wrap">
+<form method="get" action="<?= htmlspecialchars(eduqr_path('/admin/audit-logs'), ENT_QUOTES, 'UTF-8') ?>" class="d-flex gap-2 align-items-end flex-wrap">
     <div class="eduqr-form-field" style="min-width: 240px;">
         <label for="actor_type"><?= htmlspecialchars(t('audit.filter.all'), ENT_QUOTES, 'UTF-8') ?></label>
         <select id="actor_type" name="actor_type" class="form-select form-select-sm">
@@ -101,7 +101,7 @@ ob_start();
         var params = 'page=' + page + '&limit=50';
         if (actorType) { params += '&actor_type=' + encodeURIComponent(actorType); }
 
-        fetch('/api/v1/audit-logs?' + params, { headers: { Accept: 'application/json' } })
+        fetch(eduqrPath('/api/v1/audit-logs?' + params), { headers: { Accept: 'application/json' } })
             .then(function (r) { return r.json(); })
             .then(function (res) {
                 if (!res.success) { return; }

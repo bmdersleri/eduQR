@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace EduQR;
 
+use EduQR\Support\Url;
+
 /**
  * Thin custom router. Matches HTTP method + URL pattern and dispatches to callables.
  *
@@ -81,8 +83,8 @@ final class Router
     public function dispatch(string $method, string $uri): void
     {
         $method = strtoupper($method);
-        // Strip query string
-        $path = parse_url($uri, PHP_URL_PATH) ?? '/';
+        // Strip query string and deployment base path
+        $path = Url::stripBasePath(parse_url($uri, PHP_URL_PATH) ?? '/');
         // Normalize: remove trailing slash (except root)
         if ($path !== '/') {
             $path = rtrim($path, '/');

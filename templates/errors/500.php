@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= function_exists('t') ? htmlspecialchars(t('error.server_error'), ENT_QUOTES, 'UTF-8') : 'eduQR' ?> — eduQR</title>
-    <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/assets/css/app.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars(eduqr_path('/assets/css/bootstrap.min.css'), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(eduqr_path('/assets/css/app.css'), ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body class="eduqr-public">
 <main class="eduqr-error-page">
@@ -16,7 +16,7 @@
         </div>
         <h1 class="h3 mb-3"><?= function_exists('t') ? htmlspecialchars(t('error.server_error'), ENT_QUOTES, 'UTF-8') : 'eduQR' ?></h1>
         <p class="mb-4"><?= function_exists('t') ? htmlspecialchars(t('error.server_error'), ENT_QUOTES, 'UTF-8') : 'eduQR' ?></p>
-        <a href="/" class="btn btn-primary"><?= function_exists('t') ? htmlspecialchars(t('common.back'), ENT_QUOTES, 'UTF-8') : 'eduQR' ?></a>
+        <a href="<?= htmlspecialchars(eduqr_path('/'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-primary"><?= function_exists('t') ? htmlspecialchars(t('common.back'), ENT_QUOTES, 'UTF-8') : 'eduQR' ?></a>
     </section>
 </main>
 </body>

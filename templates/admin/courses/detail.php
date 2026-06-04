@@ -43,13 +43,13 @@ ob_start();
         <p class="text-muted mb-0"><?= htmlspecialchars($course['description'] ?? t('course.list.empty'), ENT_QUOTES, 'UTF-8') ?></p>
     </div>
     <div class="d-flex align-items-start gap-2 flex-wrap">
-        <a href="/admin/courses" class="btn btn-outline-secondary btn-sm">
+        <a href="<?= htmlspecialchars(eduqr_path('/admin/courses'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary btn-sm">
             <?= eduqr_icon('user') ?> <?= htmlspecialchars(t('common.back'), ENT_QUOTES, 'UTF-8') ?>
         </a>
-        <a href="/admin/courses/<?= (int) $course['id'] ?>/analytics" class="btn btn-outline-secondary btn-sm">
+        <a href="<?= htmlspecialchars(eduqr_path('/admin/courses/' . (int) $course['id'] . '/analytics'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary btn-sm">
             <?= eduqr_icon('chart') ?> <?= htmlspecialchars(t('course.analytics.view'), ENT_QUOTES, 'UTF-8') ?>
         </a>
-        <a href="/admin/courses/<?= (int) $course['id'] ?>/edit" class="btn btn-primary btn-sm">
+        <a href="<?= htmlspecialchars(eduqr_path('/admin/courses/' . (int) $course['id'] . '/edit'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-primary btn-sm">
             <?= eduqr_icon('spark') ?> <?= htmlspecialchars(t('common.edit'), ENT_QUOTES, 'UTF-8') ?>
         </a>
     </div>
@@ -84,7 +84,7 @@ ob_start();
 <div class="eduqr-section-head">
     <h2 class="h4 mb-0"><?= htmlspecialchars(t('nav.sessions'), ENT_QUOTES, 'UTF-8') ?></h2>
     <?php if ($course['status'] === 'active'): ?>
-    <a href="/admin/courses/<?= (int) $course['id'] ?>/sessions/new" class="btn btn-primary btn-sm">
+    <a href="<?= htmlspecialchars(eduqr_path('/admin/courses/' . (int) $course['id'] . '/sessions/new'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-primary btn-sm">
         <?= eduqr_icon('spark') ?> <?= htmlspecialchars(t('session.new.submit'), ENT_QUOTES, 'UTF-8') ?>
     </a>
     <?php endif; ?>
@@ -109,7 +109,7 @@ ob_start();
         <div class="eduqr-card-row">
             <div>
                 <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
-                    <a href="/admin/sessions/<?= (int) $s['id'] ?>" class="h5 mb-0 text-decoration-none">
+                    <a href="<?= htmlspecialchars(eduqr_path('/admin/sessions/' . (int) $s['id']), ENT_QUOTES, 'UTF-8') ?>" class="h5 mb-0 text-decoration-none">
                         <?= htmlspecialchars($s['title'], ENT_QUOTES, 'UTF-8') ?>
                     </a>
                     <span class="badge <?= $badgeClass ?>"><?= htmlspecialchars(t('session.status.' . $s['status']), ENT_QUOTES, 'UTF-8') ?></span>
@@ -120,7 +120,7 @@ ob_start();
                 </div>
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
-                <a href="/admin/sessions/<?= (int) $s['id'] ?>" class="btn btn-outline-secondary btn-sm">
+                <a href="<?= htmlspecialchars(eduqr_path('/admin/sessions/' . (int) $s['id']), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary btn-sm">
                     <?= eduqr_icon('chart') ?> <?= htmlspecialchars(t('common.actions'), ENT_QUOTES, 'UTF-8') ?>
                 </a>
             </div>

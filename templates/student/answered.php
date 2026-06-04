@@ -87,13 +87,13 @@ setTimeout(() => {
 // ── Poll for next question ───────────────────────────────────────
 async function pollForNextQuestion() {
     try {
-        const res  = await fetch('/api/v1/sessions/' + SHORT_CODE + '/active-question');
+        const res  = await fetch(eduqrPath('/api/v1/sessions/' + SHORT_CODE + '/active-question'));
         const data = await res.json();
         const question = extractActiveQuestion(data);
         if (question) {
             const newId = question.id;
             if (newId && (ANSWERED_QUESTION_ID === 0 || newId !== ANSWERED_QUESTION_ID)) {
-                window.location.href = '/play/' + SHORT_CODE;
+                window.location.href = eduqrPath('/play/' + SHORT_CODE);
             }
         }
     } catch {

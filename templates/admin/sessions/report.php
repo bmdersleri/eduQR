@@ -50,18 +50,18 @@ ob_start();
         <p><?= htmlspecialchars($session['course_title'], ENT_QUOTES, 'UTF-8') ?></p>
     </div>
     <div class="d-flex gap-2 flex-wrap align-items-start justify-content-end">
-        <a href="/admin/sessions/<?= $sessionId ?>" class="btn btn-outline-secondary btn-sm">
+        <a href="<?= htmlspecialchars(eduqr_path('/admin/sessions/' . $sessionId), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary btn-sm">
             <?= eduqr_icon('user') ?> <?= htmlspecialchars(t('common.back'), ENT_QUOTES, 'UTF-8') ?>
         </a>
-        <a href="/api/v1/sessions/<?= $sessionId ?>/report.pdf" target="_blank"
+        <a href="<?= htmlspecialchars(eduqr_path('/api/v1/sessions/' . $sessionId . '/report.pdf'), ENT_QUOTES, 'UTF-8') ?>" target="_blank"
            class="btn btn-outline-primary btn-sm">
             <?= htmlspecialchars(t('report.export_pdf'), ENT_QUOTES, 'UTF-8') ?>
         </a>
-        <a href="/api/v1/sessions/<?= $sessionId ?>/report.csv"
+        <a href="<?= htmlspecialchars(eduqr_path('/api/v1/sessions/' . $sessionId . '/report.csv'), ENT_QUOTES, 'UTF-8') ?>"
            class="btn btn-outline-success btn-sm">
             <?= htmlspecialchars(t('report.export_csv'), ENT_QUOTES, 'UTF-8') ?>
         </a>
-        <a href="/api/v1/sessions/<?= $sessionId ?>/report.html" target="_blank"
+        <a href="<?= htmlspecialchars(eduqr_path('/api/v1/sessions/' . $sessionId . '/report.html'), ENT_QUOTES, 'UTF-8') ?>" target="_blank"
            class="btn btn-outline-secondary btn-sm">
             <?= htmlspecialchars(t('report.export_html'), ENT_QUOTES, 'UTF-8') ?>
         </a>
@@ -244,8 +244,8 @@ async function doAction(action, btn) {
 
     const method = action === 'delete' ? 'DELETE' : 'POST';
     const url    = action === 'delete'
-        ? '/api/v1/sessions/' + SESSION_ID
-        : '/api/v1/sessions/' + SESSION_ID + '/' + action;
+        ? eduqrPath('/api/v1/sessions/' + SESSION_ID)
+        : eduqrPath('/api/v1/sessions/' + SESSION_ID + '/' + action);
 
     try {
         const res  = await fetch(url, {
@@ -255,7 +255,7 @@ async function doAction(action, btn) {
         });
         const data = await res.json();
         if (data.success) {
-            location.href = '/admin/sessions/' + SESSION_ID;
+            location.href = eduqrPath('/admin/sessions/' + SESSION_ID);
         } else {
             alert(data.error?.message ?? <?= json_encode(t('common.error')) ?>);
             btn.disabled = false;

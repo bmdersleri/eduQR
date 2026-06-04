@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace EduQR\I18n;
 
+use EduQR\Support\Url;
+
 final class I18nMiddleware
 {
     private const SUPPORTED = ['en', 'tr'];
@@ -40,7 +42,7 @@ final class I18nMiddleware
 
     private static function fromUri(): ?string
     {
-        $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
+        $path = Url::requestPath();
         $first = explode('/', ltrim((string) $path, '/'))[0] ?? '';
 
         return in_array($first, self::SUPPORTED, true) ? $first : null;

@@ -39,7 +39,7 @@ Documented as the upgrade path, **not** part of MVP work:
 | Frontend | Migrate instructor panel to React + Vite. Student side stays lightweight. |
 | Build | CI pipeline with PHPUnit, PHP-CS-Fixer, Playwright e2e. |
 | Hosting | Containerize with Docker; deploy to a small VPS or managed Kubernetes. |
-| AI | Add an LLM-backed service for open-text theme extraction. |
+| AI | Add an LLM-backed service for lecture-note question generation and open-text theme extraction. |
 
 **Keep the door open, do not walk through it yet.**
 

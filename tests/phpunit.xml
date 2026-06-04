@@ -21,13 +21,6 @@
         </include>
     </source>
 
-    <coverage>
-        <report>
-            <html outputDirectory="../coverage"/>
-            <text outputFile="php://stdout" showUncoveredFiles="false"/>
-        </report>
-    </coverage>
-
     <php>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_DEBUG" value="true"/>

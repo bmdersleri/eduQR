@@ -68,7 +68,7 @@ if ($participantId > 0) {
     if ($participant !== null && (int) $participant['session_id'] === (int) $session['id']) {
         $setParticipantCookie($participantId);
         http_response_code(302);
-        header('Location: /play/' . rawurlencode($shortCode));
+        header('Location: ' . eduqr_path('/play/' . rawurlencode($shortCode)));
         exit;
     }
 }
@@ -83,7 +83,7 @@ $returningParticipant = $participantService->restore(
 if ($returningParticipant !== null) {
     $setParticipantCookie((int) $returningParticipant['id']);
     http_response_code(302);
-    header('Location: /play/' . rawurlencode($shortCode));
+    header('Location: ' . eduqr_path('/play/' . rawurlencode($shortCode)));
     exit;
 }
 
@@ -190,7 +190,7 @@ form.addEventListener('submit', async function (e) {
     joinBtn.innerHTML = '<span class="eduqr-spinner me-2"></span>' + <?= json_encode(t('common.loading')) ?>;
 
     try {
-        const res  = await fetch('/api/v1/sessions/' + SHORT_CODE + '/join', {
+        const res  = await fetch(eduqrPath('/api/v1/sessions/' + SHORT_CODE + '/join'), {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({ nickname }),
@@ -200,7 +200,7 @@ form.addEventListener('submit', async function (e) {
         if (data.success) {
             joinBtn.innerHTML = <?= json_encode(t('student.join.joining')) ?>;
             await new Promise(r => setTimeout(r, 400));
-            window.location.href = '/join/' + SHORT_CODE + '/wait';
+            window.location.href = eduqrPath('/join/' + SHORT_CODE + '/wait');
         } else {
             const err = data.error ?? {};
             if (err.field === 'nickname') {

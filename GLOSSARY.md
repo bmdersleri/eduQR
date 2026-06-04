@@ -86,6 +86,10 @@ The read-only display at `/live/{short_code}` intended for the classroom project
 
 A row in the `questions` table. Belongs to one **session**. Has a `question_type` of `multiple_choice`, `open_text`, `yes_no`, or `likert_5`.
 
+### question bank
+
+A course-scoped collection of reusable question templates stored outside any single session. Bank questions can be generated from lecture notes or created manually, then copied into future sessions as draft questions.
+
 ### report
 
 The post-session summary returned by `GET /api/v1/sessions/{id}/report` (JSON), `report.csv` (CSV), or `report.html` (printable). Contains participant count, question-by-question breakdown, raw answers, timestamps. Exportable.

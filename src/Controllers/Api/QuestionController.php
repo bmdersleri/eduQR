@@ -195,9 +195,9 @@ final class QuestionController
                         $prefixParts[] = $topicName;
                     }
                     $phaseLabel = match ($phase) {
-                        'opening' => 'Acilis',
-                        'middle' => 'Orta',
-                        default => 'Kapanis',
+                        'opening' => t('question.stage.opening'),
+                        'middle' => t('question.stage.middle'),
+                        default => t('question.stage.closing'),
                     };
                     $prefixParts[] = $phaseLabel;
 

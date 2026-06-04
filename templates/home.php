@@ -28,7 +28,7 @@ ob_start();
                     </div>
                 </div>
             </div>
-            <a href="/login" class="btn btn-primary btn-lg px-4">
+            <a href="<?= htmlspecialchars(eduqr_path('/login'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-primary btn-lg px-4">
                 <?= htmlspecialchars(t('auth.login.submit'), ENT_QUOTES, 'UTF-8') ?>
                 <span class="ms-1"><?= eduqr_icon('spark') ?></span>
             </a>

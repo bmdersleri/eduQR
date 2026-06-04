@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace EduQR\Middleware;
 
 use EduQR\Services\AuthService;
+use EduQR\Support\Url;
 
 /**
  * Guards instructor / admin routes.
@@ -58,7 +59,7 @@ final class AuthMiddleware
             ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         } else {
             http_response_code(302);
-            header('Location: /login');
+            header('Location: ' . Url::path('/login'));
         }
         exit;
     }

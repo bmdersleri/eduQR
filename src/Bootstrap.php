@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace EduQR;
 
+use EduQR\Support\Url;
+
 /**
  * Application bootstrap. Called once from public/index.php.
  *
@@ -51,8 +53,6 @@ final class Bootstrap
 
     private static function sendSecurityHeaders(): void
     {
-        $appUrl = Config::get('APP_URL', '');
-
         header('X-Frame-Options: DENY');
         header('X-Content-Type-Options: nosniff');
         header('X-XSS-Protection: 1; mode=block');
@@ -149,7 +149,7 @@ final class Bootstrap
         // ── Admin ─────────────────────────────────────────────────────────────
         $router->get('/admin', function (array $p): void {
             http_response_code(302);
-            header('Location: /admin/dashboard');
+            header('Location: ' . Url::path('/admin/dashboard'));
         });
 
         $router->get('/admin/dashboard', function (array $p): void {
@@ -309,6 +309,26 @@ final class Bootstrap
         // reorder must come before /{id} sub-routes to avoid ambiguity
         $router->post('/api/v1/sessions/{id}/questions/reorder', function (array $p): void {
             (new Controllers\Api\QuestionController())->reorder((int) $p['id']);
+        });
+
+        $router->post('/api/v1/sessions/{id}/questions/import', function (array $p): void {
+            (new Controllers\Api\QuestionController())->import((int) $p['id']);
+        });
+
+        $router->get('/api/v1/courses/{id}/question-bank', function (array $p): void {
+            (new Controllers\Api\QuestionBankController())->index((int) $p['id']);
+        });
+
+        $router->post('/api/v1/courses/{id}/question-bank/generate', function (array $p): void {
+            (new Controllers\Api\QuestionBankController())->generate((int) $p['id']);
+        });
+
+        $router->post('/api/v1/questions/{id}/bank', function (array $p): void {
+            (new Controllers\Api\QuestionBankController())->saveQuestion((int) $p['id']);
+        });
+
+        $router->post('/api/v1/sessions/{id}/questions/from-bank', function (array $p): void {
+            (new Controllers\Api\QuestionBankController())->importToSession((int) $p['id']);
         });
 
         $router->get('/api/v1/sessions/{id}/questions', function (array $p): void {

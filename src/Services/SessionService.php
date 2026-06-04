@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace EduQR\Services;
 
-use EduQR\Config;
 use EduQR\Contracts\CourseRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Support\ShortCode;
+use EduQR\Support\Url;
 
 final class SessionService
 {
@@ -41,14 +41,13 @@ final class SessionService
 
         $id = $this->sessions->create($courseId, $title, $shortCode, $language, $isQuiz);
 
-        $appUrl = rtrim(Config::get('APP_URL', ''), '/');
-        $joinUrl = $appUrl . '/join/' . $shortCode;
+        $joinUrl = Url::absolute('/join/' . $shortCode);
 
         return [
             'id' => $id,
             'short_code' => $shortCode,
             'join_url' => $joinUrl,
-            'qr_url' => '/api/v1/sessions/' . $id . '/qr.png',
+            'qr_url' => Url::path('/api/v1/sessions/' . $id . '/qr.png'),
             'status' => 'active',
             'is_quiz' => (bool)$isQuiz,
         ];
@@ -82,8 +81,7 @@ final class SessionService
         }
 
         $course = $this->courses->findById((int) $session['course_id']);
-        $appUrl = rtrim(Config::get('APP_URL', ''), '/');
-        $joinUrl = $appUrl . '/join/' . $session['short_code'];
+        $joinUrl = Url::absolute('/join/' . $session['short_code']);
 
         return [
             'short_code' => $session['short_code'],

@@ -95,6 +95,7 @@ Every ID is stable for the life of the project. Do not renumber. To deprecate a 
 | FR-46 | SHOULD | A `device_hash` SHOULD be derived (SHA-256 of `server_secret || persistent_cookie_id || user_agent`) for duplicate-join detection. |
 | FR-47 | MUST | A student joining a closed or paused session MUST see a clear, localized message and MUST NOT be able to answer. |
 | FR-48 | MAY  | Students MAY be able to react with simple emoji ("got it", "lost") in Phase 11. |
+| FR-49 | MUST | A returning student MUST be auto-restored into the same session via the persistent `eduqr_device` cookie when the device hash matches. |
 
 ### 3.6 Live Results
 
@@ -152,6 +153,9 @@ See `I18N_SPEC.md` for the implementation contract.
 | FR-90 | SHOULD | The system SHOULD write an `audit_logs` row for these actions: `session.created`, `session.closed`, `session.anonymized`, `session.deleted`, `question.activated`, `question.closed`, `report.exported`, `user.created`. |
 | FR-91 | MAY  | An admin UI for browsing the audit log MAY be added in Phase 11. |
 | FR-92 | SHOULD | A session SHOULD support quiz mode (is_quiz=1). In quiz mode, multiple_choice questions with at least one correct option (is_correct=1) contribute to a per-participant score. The session report SHOULD display each participant's score and a ranking. |
+| FR-93 | MUST | An instructor MUST be able to save reusable questions in a course-scoped question bank and copy them into any later session under the same course. |
+| FR-94 | MUST | The system MUST be able to generate question bank entries from lecture notes via an LLM, including opening, middle, and closing questions. |
+| FR-95 | MUST | An instructor MUST be able to review generated bank questions and publish selected entries into a session as draft questions. |
 
 ---
 

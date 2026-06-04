@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use EduQR\I18n\I18nService;
 use EduQR\I18n\LocaleHelper;
+use EduQR\Support\Url;
 
 /**
  * Translate a locale key with optional {placeholder} substitution.
@@ -48,6 +49,30 @@ function fmt_number(float $n, ?string $locale = null): string
 function fmt_percent(float $n, ?string $locale = null): string
 {
     return LocaleHelper::formatPercent($n, $locale ?? I18nService::getLocale());
+}
+
+/**
+ * Return the configured deployment base path, if any.
+ */
+function eduqr_base_path(): string
+{
+    return Url::basePath();
+}
+
+/**
+ * Build a path relative to the app mount point.
+ */
+function eduqr_path(string $path = ''): string
+{
+    return Url::path($path);
+}
+
+/**
+ * Build an absolute public URL using APP_URL.
+ */
+function eduqr_url(string $path = ''): string
+{
+    return Url::absolute($path);
 }
 
 /**

@@ -59,10 +59,10 @@ ob_start();
         <p class="text-muted mb-0"><?= htmlspecialchars(t('course.analytics.subtitle'), ENT_QUOTES, 'UTF-8') ?></p>
     </div>
     <div class="d-flex align-items-start gap-2 flex-wrap">
-        <a href="/admin/courses/<?= (int) $course['id'] ?>" class="btn btn-outline-secondary btn-sm">
+        <a href="<?= htmlspecialchars(eduqr_path('/admin/courses/' . (int) $course['id']), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary btn-sm">
             <?= eduqr_icon('user') ?> <?= htmlspecialchars(t('common.back'), ENT_QUOTES, 'UTF-8') ?>
         </a>
-        <a href="/api/v1/courses/<?= (int) $course['id'] ?>/analytics" class="btn btn-primary btn-sm" target="_blank" rel="noopener">
+        <a href="<?= htmlspecialchars(eduqr_path('/api/v1/courses/' . (int) $course['id'] . '/analytics'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-primary btn-sm" target="_blank" rel="noopener">
             <?= eduqr_icon('spark') ?> <?= htmlspecialchars(t('course.analytics.open_json'), ENT_QUOTES, 'UTF-8') ?>
         </a>
     </div>
@@ -150,7 +150,7 @@ ob_start();
     <div class="eduqr-card-row">
         <div>
             <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
-                <a href="/admin/sessions/<?= (int) $session['session_id'] ?>" class="h5 mb-0 text-decoration-none">
+                <a href="<?= htmlspecialchars(eduqr_path('/admin/sessions/' . (int) $session['session_id']), ENT_QUOTES, 'UTF-8') ?>" class="h5 mb-0 text-decoration-none">
                     <?= htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') ?>
                 </a>
                 <span class="badge <?= $badgeClass ?>"><?= htmlspecialchars(t('session.status.' . $session['status']), ENT_QUOTES, 'UTF-8') ?></span>
@@ -182,7 +182,7 @@ ob_start();
             </div>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
-            <a href="/admin/sessions/<?= (int) $session['session_id'] ?>/report" class="btn btn-outline-secondary btn-sm">
+            <a href="<?= htmlspecialchars(eduqr_path('/admin/sessions/' . (int) $session['session_id'] . '/report'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary btn-sm">
                 <?= eduqr_icon('chart') ?> <?= htmlspecialchars(t('session.action.view_report'), ENT_QUOTES, 'UTF-8') ?>
             </a>
         </div>

@@ -31,7 +31,7 @@ ob_start();
         <h1 class="h2 mb-2"><?= htmlspecialchars($course['title'], ENT_QUOTES, 'UTF-8') ?></h1>
         <p><?= htmlspecialchars(t('session.new.title'), ENT_QUOTES, 'UTF-8') ?></p>
     </div>
-    <a href="/admin/courses/<?= (int) $course['id'] ?>" class="btn btn-outline-secondary btn-sm">
+    <a href="<?= htmlspecialchars(eduqr_path('/admin/courses/' . (int) $course['id']), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary btn-sm">
         <?= eduqr_icon('user') ?> <?= htmlspecialchars(t('common.back'), ENT_QUOTES, 'UTF-8') ?>
     </a>
 </div>
@@ -66,7 +66,7 @@ ob_start();
                 <button type="submit" class="btn btn-primary">
                     <?= htmlspecialchars(t('session.new.submit'), ENT_QUOTES, 'UTF-8') ?>
                 </button>
-                <a href="/admin/courses/<?= (int) $course['id'] ?>" class="btn btn-outline-secondary">
+                <a href="<?= htmlspecialchars(eduqr_path('/admin/courses/' . (int) $course['id']), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary">
                     <?= htmlspecialchars(t('common.cancel'), ENT_QUOTES, 'UTF-8') ?>
                 </a>
             </div>
@@ -96,7 +96,7 @@ document.getElementById('session-form').addEventListener('submit', async functio
     };
 
     try {
-        const res  = await fetch('/api/v1/courses/' + COURSE_ID + '/sessions', {
+        const res  = await fetch(eduqrPath('/api/v1/courses/' + COURSE_ID + '/sessions'), {
             method:  'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ document.getElementById('session-form').addEventListener('submit', async functio
         const data = await res.json();
 
         if (data.success) {
-            window.location.href = '/admin/sessions/' + data.data.id;
+            window.location.href = eduqrPath('/admin/sessions/' + data.data.id);
         } else {
             errorEl.textContent = data.error?.message || MSG_ERROR;
             errorEl.classList.remove('d-none');

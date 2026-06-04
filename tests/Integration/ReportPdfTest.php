@@ -23,12 +23,10 @@ class ReportPdfTest extends TestCase
 
         $reflection = new ReflectionClass(Bootstrap::class);
         $method = $reflection->getMethod('registerRoutes');
-        $method->setAccessible(true);
         $method->invoke(null, $router, $projectRoot);
 
         $routerReflection = new ReflectionClass(Router::class);
         $routesProperty = $routerReflection->getProperty('routes');
-        $routesProperty->setAccessible(true);
         $routes = $routesProperty->getValue($router);
 
         $found = false;

@@ -25,7 +25,7 @@ ob_start();
         <h1 class="h2 mb-2"><?= htmlspecialchars(t('course.list.title'), ENT_QUOTES, 'UTF-8') ?></h1>
         <p class="text-muted mb-0"><?= htmlspecialchars(t('instructor.dashboard.welcome', ['name' => $instructor['display_name']]), ENT_QUOTES, 'UTF-8') ?></p>
     </div>
-    <a href="/admin/courses/new" class="btn btn-primary align-self-start">
+    <a href="<?= htmlspecialchars(eduqr_path('/admin/courses/new'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-primary align-self-start">
         <?= eduqr_icon('spark') ?> <?= htmlspecialchars(t('course.action.create'), ENT_QUOTES, 'UTF-8') ?>
     </a>
 </div>
@@ -42,7 +42,7 @@ ob_start();
     <div class="eduqr-card-row">
         <div>
             <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-                <a href="/admin/courses/<?= (int) $course['id'] ?>" class="h5 mb-0 text-decoration-none">
+                <a href="<?= htmlspecialchars(eduqr_path('/admin/courses/' . (int) $course['id']), ENT_QUOTES, 'UTF-8') ?>" class="h5 mb-0 text-decoration-none">
                     <?= htmlspecialchars($course['title'], ENT_QUOTES, 'UTF-8') ?>
                 </a>
                 <?php if ($course['status'] === 'archived'): ?>
@@ -59,10 +59,10 @@ ob_start();
             </div>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
-            <a href="/admin/courses/<?= (int) $course['id'] ?>" class="btn btn-outline-secondary btn-sm">
+            <a href="<?= htmlspecialchars(eduqr_path('/admin/courses/' . (int) $course['id']), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary btn-sm">
                 <?= eduqr_icon('chart') ?> <?= htmlspecialchars(t('common.actions'), ENT_QUOTES, 'UTF-8') ?>
             </a>
-            <a href="/admin/courses/<?= (int) $course['id'] ?>/edit" class="btn btn-primary btn-sm">
+            <a href="<?= htmlspecialchars(eduqr_path('/admin/courses/' . (int) $course['id'] . '/edit'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-primary btn-sm">
                 <?= eduqr_icon('spark') ?> <?= htmlspecialchars(t('common.edit'), ENT_QUOTES, 'UTF-8') ?>
             </a>
         </div>

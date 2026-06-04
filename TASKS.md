@@ -155,7 +155,7 @@ Goal: students join with a nickname, no account.
 [x] T-511  i18n keys for all student UI                                                   [FR-80]
 [x] T-512  Unit tests: nickname validation, normalization, profanity                      [NFR-52]
 [x] T-513  Integration test: full join flow                                               [—]
-[ ] T-514  Returning student auto-restore via persistent device cookie                    [FR-49]
+[x] T-514  Returning student auto-restore via persistent device cookie                    [FR-49]
 ```
 
 Acceptance checkpoint: student opens the join link, enters a nickname, joins an active session, lands on a waiting screen; closed/paused sessions show a clear message; the privacy notice is visible.
@@ -303,6 +303,9 @@ Not part of the MVP. Each item must be escalated to the human owner before work 
 [x] T-1102  PDF report export (locale-aware fonts)                                          [FR-63]
 [x] T-1103  Cross-session course-level analytics                                            [FR-64]
 [x] T-1104  Quiz mode with scoring (uses options.is_correct)                                [FR-92]
+[x] T-1117  Course-scoped question bank                                                     [FR-93, FR-95]
+[x] T-1118  LLM question generation from lecture notes                                      [FR-94]
+[x] T-1119  Admin UI: generate bank questions and copy them into sessions                   [FR-93, FR-94, FR-95]
 [ ] T-1105  Light gamification (badges, streaks)                                            [FR-48]
 [x] T-1106  Question image attachments                                                      [FR-39]
 [ ] T-1107  Email-based password reset                                                      [FR-06]
