@@ -298,7 +298,7 @@ Acceptance checkpoint: hardening checklist in `SECURITY_PRIVACY.md` §21 is full
 Not part of the MVP. Each item must be escalated to the human owner before work starts.
 
 ```text
-[ ] T-1100  AI-assisted open-text theme extraction                                         [FR-65]
+[x] T-1100  AI-assisted open-text theme extraction                                         [FR-65]
 [ ] T-1101  Word cloud generation from open-text answers                                    [—]
 [x] T-1102  PDF report export (locale-aware fonts)                                          [FR-63]
 [x] T-1103  Cross-session course-level analytics                                            [FR-64]

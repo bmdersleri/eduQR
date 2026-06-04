@@ -249,6 +249,7 @@
     "error.session_paused": "This session is paused.",
     "error.course_not_found": "Course not found.",
     "error.question_not_found": "Question not found.",
+    "error.question_not_open_text": "Theme extraction is only available for open-text questions.",
     "error.question_closed": "This question is closed.",
     "error.duplicate_nickname": "This nickname is already taken in this session.",
     "error.profane_nickname": "Please choose a different nickname.",

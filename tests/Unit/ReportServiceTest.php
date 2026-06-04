@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace EduQR\Tests\Unit;
 
 use EduQR\Contracts\CourseRepositoryInterface;
+use EduQR\Contracts\OpenTextThemeExtractionServiceInterface;
 use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
@@ -69,6 +70,7 @@ class ReportServiceTest extends TestCase
         ?array $sessionRow = null,
         ?array $courseRow = null,
         ?array $sessionList = null,
+        ?OpenTextThemeExtractionServiceInterface $themeExtractor = null,
     ): ReportService {
         $q = $questionRow ?? [
             'id' => 1,
@@ -93,7 +95,7 @@ class ReportServiceTest extends TestCase
 
         $options = $this->createMock(OptionRepositoryInterface::class);
 
-        return new ReportService($sessions, $questions, $options, $courses, $this->pdo);
+        return new ReportService($sessions, $questions, $options, $courses, $this->pdo, $themeExtractor);
     }
 
     /** Insert option rows directly into the SQLite DB. */
@@ -262,6 +264,47 @@ class ReportServiceTest extends TestCase
         // Instructor: includeHidden = true
         $all = $service->openTextAnswers(2, true);
         $this->assertCount(2, $all);
+    }
+
+    public function testExtractThemesUsesVisibleOpenTextAnswers_FR65(): void
+    {
+        $this->pdo->exec("INSERT INTO participants (id, session_id, nickname) VALUES (1, 10, 'Alice')");
+        $this->pdo->exec("INSERT INTO participants (id, session_id, nickname) VALUES (2, 10, 'Bob')");
+        $this->pdo->exec("INSERT INTO answers (question_id, participant_id, answer_text) VALUES (2, 1, 'Visible')");
+        $this->pdo->exec("INSERT INTO answers (question_id, participant_id, answer_text, is_hidden) VALUES (2, 2, 'Hidden', 1)");
+
+        $themeExtractor = new class () implements OpenTextThemeExtractionServiceInterface {
+            public array $capturedAnswers = [];
+
+            public function extractThemes(string $questionText, array $answers, string $language): array
+            {
+                $this->capturedAnswers = $answers;
+
+                return [[
+                    'title' => 'Pointer basics',
+                    'summary' => 'Students mention pointer logic.',
+                    'keywords' => ['pointers'],
+                    'example_answers' => ['Visible'],
+                ]];
+            }
+        };
+
+        $service = $this->makeService(questionRow: [
+            'id' => 2,
+            'session_id' => 10,
+            'question_type' => 'open_text',
+            'question_text' => 'Tell us.',
+            'status' => 'closed',
+            'show_results' => 1,
+        ], themeExtractor: $themeExtractor);
+
+        $result = $service->extractThemes(2, 99);
+
+        $this->assertSame(1, $result['answer_count']);
+        $this->assertCount(1, $result['themes']);
+        $this->assertSame('Pointer basics', $result['themes'][0]['title']);
+        $this->assertCount(1, $themeExtractor->capturedAnswers);
+        $this->assertSame('Visible', $themeExtractor->capturedAnswers[0]['answer_text']);
     }
 
     // ── T-804: results_hidden for student ─────────────────────────────────────

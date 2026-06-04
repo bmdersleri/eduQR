@@ -356,6 +356,10 @@ final class Bootstrap
             (new Controllers\Api\QuestionController())->close((int) $p['id']);
         });
 
+        $router->get('/api/v1/questions/{id}/themes', function (array $p): void {
+            (new Controllers\Api\ReportController())->themes((int) $p['id']);
+        });
+
         // image upload / delete (FR-39)
         $router->post('/api/v1/questions/{id}/image', function (array $p): void {
             (new Controllers\Api\QuestionImageController())->upload((int) $p['id']);

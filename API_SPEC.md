@@ -796,7 +796,36 @@ JSON report shape:
 
 When `anonymize=true`, nicknames are replaced with `Participant 1`, `Participant 2`, … in the order they appear. Device hashes never appear in any variant (`FR-73`).
 
-### 5.8 Locales
+### 5.8 Open-text theme extraction
+
+`GET /api/v1/questions/{id}/themes`
+
+Returns AI-assisted themes derived from the visible open-text answers of a question. The response is scoped to the instructor who owns the session.
+
+Response 200:
+
+```json
+{
+  "success": true,
+  "data": {
+    "question_id": 4002,
+    "question_text": "What was the hardest part?",
+    "answer_count": 21,
+    "themes": [
+      {
+        "title": "Pointer basics",
+        "summary": "Students repeatedly mention pointer usage and following references.",
+        "keywords": ["pointers", "references"],
+        "example_answers": ["Pointer logic", "Following references"]
+      }
+    ]
+  }
+}
+```
+
+Errors: 404 `question_not_found`, 403 `forbidden`, 422 `question_not_open_text`, 422 `invalid_llm_response`, 503 `llm_unavailable`.
+
+### 5.9 Locales
 
 `GET /api/v1/locales` → list of active locales (used by the language switcher).
 
@@ -856,6 +885,7 @@ Stable, machine-readable codes. Add to this table when introducing a new code.
 | `session_not_found` | 404 | Short code or session ID does not resolve |
 | `course_not_found` | 404 | |
 | `question_not_found` | 404 | |
+| `question_not_open_text` | 422 | Theme extraction requested for a non open-text question |
 | `question_bank_not_found` | 404 | Reusable question bank item not found or not in scope |
 | `answer_not_found` | 404 | |
 | `upload_error` | 400 | Uploaded image transfer failed |

@@ -53,6 +53,29 @@ final class ReportController
         exit;
     }
 
+    // ── GET /api/v1/questions/{id}/themes ───────────────────────────────────
+
+    public function themes(int $questionId): void
+    {
+        $user = AuthMiddleware::require();
+
+        try {
+            $data = $this->report->extractThemes($questionId, (int) $user['id']);
+        } catch (
+            \RuntimeException $e
+        ) {
+            $this->handleError($e);
+        }
+
+        http_response_code(200);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(
+            ['success' => true, 'data' => $data],
+            JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR
+        );
+        exit;
+    }
+
     // ── GET /api/v1/courses/{id}/analytics ───────────────────────────────────
 
     public function courseAnalytics(int $courseId): void
@@ -273,7 +296,11 @@ final class ReportController
         $map = [
             'session_not_found' => [404, t('error.session_not_found')],
             'course_not_found' => [404, t('error.course_not_found')],
+            'question_not_found' => [404, t('error.question_not_found')],
+            'question_not_open_text' => [422, t('error.question_not_open_text')],
             'forbidden' => [403, t('error.forbidden')],
+            'llm_unavailable' => [503, t('error.llm_unavailable')],
+            'invalid_llm_response' => [422, t('error.invalid_llm_response')],
         ];
         [$status, $msg] = $map[$e->getMessage()] ?? [500, t('error.server_error')];
         http_response_code($status);

@@ -249,6 +249,7 @@
     "error.session_paused": "Bu oturum duraklatılmıştır.",
     "error.course_not_found": "Ders bulunamadı.",
     "error.question_not_found": "Soru bulunamadı.",
+    "error.question_not_open_text": "Tema çıkarımı yalnızca açık uçlu sorular için kullanılabilir.",
     "error.question_closed": "Bu soru kapatılmıştır.",
     "error.duplicate_nickname": "Bu takma ad bu oturumda zaten alınmış.",
     "error.profane_nickname": "Lütfen farklı bir takma ad seç.",

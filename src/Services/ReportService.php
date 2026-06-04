@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace EduQR\Services;
 
 use EduQR\Contracts\CourseRepositoryInterface;
+use EduQR\Contracts\OpenTextThemeExtractionServiceInterface;
 use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
@@ -28,6 +29,7 @@ final class ReportService
         private readonly OptionRepositoryInterface   $options,
         private readonly CourseRepositoryInterface   $courses,
         private readonly ?PDO                        $pdo = null,
+        private readonly ?OpenTextThemeExtractionServiceInterface $themeExtractor = null,
     ) {
     }
 
@@ -134,6 +136,44 @@ final class ReportService
         $stmt->execute([$questionId]);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // ── AI-assisted theme extraction (FR-65) ─────────────────────────────────
+
+    /**
+     * Builds a set of AI-assisted themes from the visible open-text answers of a question.
+     *
+     * @throws \RuntimeException question_not_found | question_not_open_text | forbidden | llm_unavailable | invalid_llm_response
+     */
+    public function extractThemes(int $questionId, int $userId): array
+    {
+        $question = $this->requireQuestion($questionId, $userId);
+        if (($question['question_type'] ?? '') !== 'open_text') {
+            throw new \RuntimeException('question_not_open_text');
+        }
+
+        $answers = $this->openTextAnswers($questionId, false);
+        $visibleAnswers = array_map(static fn (array $row): array => [
+            'answer_text' => $row['text'],
+            'nickname' => $row['nickname'],
+            'created_at' => $row['created_at'],
+        ], $answers);
+
+        $session = $this->sessions->findById((int) $question['session_id']);
+        $language = (string) ($session['language'] ?? 'en');
+
+        $themeExtractor = $this->themeExtractor ?? OpenTextThemeExtractionService::fromConfig();
+
+        return [
+            'question_id' => $questionId,
+            'question_text' => $question['question_text'],
+            'answer_count' => count($visibleAnswers),
+            'themes' => $themeExtractor->extractThemes(
+                (string) $question['question_text'],
+                $visibleAnswers,
+                $language
+            ),
+        ];
     }
 
     // ── Private helpers ────────────────────────────────────────────────────────
@@ -507,5 +547,20 @@ final class ReportService
         }
 
         return $course;
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    private function requireQuestion(int $questionId, int $userId): array
+    {
+        $question = $this->questions->findById($questionId);
+        if ($question === null) {
+            throw new \RuntimeException('question_not_found');
+        }
+
+        $this->requireSession((int) $question['session_id'], $userId);
+
+        return $question;
     }
 }
