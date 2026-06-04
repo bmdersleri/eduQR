@@ -45,6 +45,10 @@ final class AuthServiceTest extends TestCase
                 $this->touched[] = $id;
             }
 
+            public function updatePassword(int $id, string $passwordHash): void
+            {
+            }
+
             public function touchedIds(): array
             {
                 return $this->touched;

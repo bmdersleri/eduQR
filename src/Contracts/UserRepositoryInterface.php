@@ -17,4 +17,6 @@ interface UserRepositoryInterface
     ): int;
 
     public function touchLastLogin(int $id): void;
+
+    public function updatePassword(int $id, string $passwordHash): void;
 }

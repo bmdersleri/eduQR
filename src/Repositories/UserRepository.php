@@ -55,4 +55,12 @@ final class UserRepository implements UserRepositoryInterface
         );
         $stmt->execute([$id]);
     }
+
+    public function updatePassword(int $id, string $passwordHash): void
+    {
+        $stmt = $this->pdo->prepare(
+            'UPDATE users SET password_hash = ? WHERE id = ?'
+        );
+        $stmt->execute([$passwordHash, $id]);
+    }
 }

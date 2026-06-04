@@ -308,7 +308,7 @@ Not part of the MVP. Each item must be escalated to the human owner before work 
 [x] T-1119  Admin UI: generate bank questions and copy them into sessions                   [FR-93, FR-94, FR-95]
 [ ] T-1105  Light gamification (badges, streaks)                                            [FR-48]
 [x] T-1106  Question image attachments                                                      [FR-39]
-[ ] T-1107  Email-based password reset                                                      [FR-06]
+[x] T-1107  Email-based password reset                                                      [FR-06]
 [ ] T-1108  Add de.json, fr.json (>= 95% coverage each)                                     [FR-86]
 [ ] T-1109  RTL support + ar.json                                                           [FR-86]
 [ ] T-1110  WebSocket / Socket.IO real-time (replaces polling)                              [NFR-02]

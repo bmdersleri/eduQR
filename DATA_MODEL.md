@@ -28,6 +28,7 @@ erDiagram
     QUESTIONS ||--o{ ANSWERS : receives
     OPTIONS ||--o{ ANSWERS : selected_by
     USERS ||--o{ LOGIN_ATTEMPTS : generates
+    USERS ||--o{ PASSWORD_RESETS : requests
     USERS ||--o{ AUDIT_LOGS : performs
 
     USERS {
@@ -138,6 +139,15 @@ erDiagram
         string email
         char ip_hash
         tinyint succeeded
+        datetime created_at
+    }
+    PASSWORD_RESETS {
+        bigint id PK
+        bigint user_id FK
+        string email
+        char token_hash
+        datetime expires_at
+        datetime used_at
         datetime created_at
     }
 ```
@@ -451,7 +461,37 @@ Rate-limit rule: ≥ 5 rows with `succeeded = 0` for the same `email` within 10 
 
 Retention: 90 days.
 
-### 2.11 `schema_migrations`
+### 2.11 `password_resets`
+
+Email-based password reset tokens for instructors (`FR-06`).
+
+```sql
+CREATE TABLE password_resets (
+    id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id     BIGINT UNSIGNED NOT NULL,
+    email       VARCHAR(190) NOT NULL,
+    token_hash  CHAR(64) NOT NULL UNIQUE,
+    expires_at  DATETIME NOT NULL,
+    used_at     DATETIME NULL,
+    created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_password_resets_user (user_id),
+    INDEX idx_password_resets_email (email),
+    INDEX idx_password_resets_expires_at (expires_at),
+    CONSTRAINT fk_password_resets_user
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+Rules:
+
+- Tokens are stored only as SHA-256 hashes.
+- Reset links expire after 60 minutes.
+- A used token cannot be reused.
+- Creating a new reset request clears prior requests for the same user.
+
+Retention: 30 days.
+
+### 2.12 `schema_migrations`
 
 Tracks applied migrations. Created by `bin/migrate.php`.
 
@@ -462,7 +502,7 @@ CREATE TABLE schema_migrations (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
-### 2.11 `locales` (metadata)
+### 2.13 `locales` (metadata)
 
 Lists supported locales for the language switcher. Translation strings themselves live in JSON files, **not** the database.
 

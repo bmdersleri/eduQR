@@ -8,17 +8,21 @@ use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
 use EduQR\Repositories\AuditLogRepository;
 use EduQR\Repositories\LoginAttemptRepository;
+use EduQR\Repositories\PasswordResetRepository;
 use EduQR\Repositories\UserRepository;
 use EduQR\Services\AuthService;
+use EduQR\Services\PasswordResetService;
 
 final class AuthController
 {
     private AuthService $auth;
+    private PasswordResetService $passwordResets;
     private AuditLogRepository $auditLog;
 
     public function __construct()
     {
         $this->auth = new AuthService(new UserRepository(), new LoginAttemptRepository());
+        $this->passwordResets = new PasswordResetService(new UserRepository(), new PasswordResetRepository());
         $this->auditLog = new AuditLogRepository();
     }
 
@@ -106,6 +110,56 @@ final class AuthController
         ]);
     }
 
+    // ── POST /api/v1/auth/password-reset/request ─────────────────────────────
+
+    public function requestPasswordReset(): void
+    {
+        CsrfMiddleware::verify();
+
+        $body = $this->jsonBody();
+        $email = trim((string) ($body['email'] ?? ''));
+
+        try {
+            $this->passwordResets->requestReset($email);
+        } catch (\InvalidArgumentException $e) {
+            $this->handlePasswordResetValidation($e);
+        }
+
+        $this->json(200, [
+            'success' => true,
+            'message' => t('auth.reset.request.success'),
+        ]);
+    }
+
+    // ── POST /api/v1/auth/password-reset/confirm ────────────────────────────
+
+    public function confirmPasswordReset(): void
+    {
+        CsrfMiddleware::verify();
+
+        $body = $this->jsonBody();
+        $token = trim((string) ($body['token'] ?? ''));
+        $password = (string) ($body['password'] ?? '');
+        $confirm = (string) ($body['password_confirmation'] ?? '');
+
+        if ($password !== $confirm) {
+            $this->error(400, 'validation_error', t('auth.reset.error.mismatch'), 'password_confirmation');
+        }
+
+        try {
+            $this->passwordResets->resetPassword($token, $password);
+        } catch (\InvalidArgumentException $e) {
+            $this->handlePasswordResetValidation($e);
+        } catch (\RuntimeException $e) {
+            $this->error(400, 'invalid_reset_token', t('auth.reset.error.invalid_token'), 'token');
+        }
+
+        $this->json(200, [
+            'success' => true,
+            'message' => t('auth.reset.success'),
+        ]);
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     private function jsonBody(): array
@@ -134,11 +188,32 @@ final class AuthController
         exit;
     }
 
-    private function error(int $status, string $code, string $message): never
+    private function error(int $status, string $code, string $message, ?string $field = null): never
     {
-        $this->json($status, [
+        $payload = [
             'success' => false,
             'error' => ['code' => $code, 'message' => $message],
-        ]);
+        ];
+
+        if ($field !== null && $field !== '') {
+            $payload['error']['field'] = $field;
+        }
+
+        $this->json($status, $payload);
+    }
+
+    private function handlePasswordResetValidation(\InvalidArgumentException $e): never
+    {
+        [$field, $rule] = array_pad(explode(':', $e->getMessage(), 2), 2, 'validation_error');
+
+        $message = match ($field . ':' . $rule) {
+            'email:required', 'token:required' => t('validation.required'),
+            'password:too_short' => t('validation.password_too_short'),
+            'password:too_long' => t('validation.text_too_long'),
+            'password:too_weak' => t('validation.password_too_weak'),
+            default => t('common.error'),
+        };
+
+        $this->error(400, 'validation_error', $message, $field);
     }
 }

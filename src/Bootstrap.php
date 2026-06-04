@@ -146,6 +146,19 @@ final class Bootstrap
             include __DIR__ . '/../templates/auth/login.php';
         });
 
+        $router->get('/forgot-password', function (array $p): void {
+            http_response_code(200);
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/../templates/auth/forgot.php';
+        });
+
+        $router->get('/reset-password/{token}', function (array $p): void {
+            http_response_code(200);
+            header('Content-Type: text/html; charset=utf-8');
+            $token = $p['token'];
+            include __DIR__ . '/../templates/auth/reset.php';
+        });
+
         // ── Admin ─────────────────────────────────────────────────────────────
         $router->get('/admin', function (array $p): void {
             http_response_code(302);
@@ -475,6 +488,14 @@ final class Bootstrap
 
         $router->get('/api/v1/auth/me', function (array $p): void {
             (new Controllers\Api\AuthController())->me();
+        });
+
+        $router->post('/api/v1/auth/password-reset/request', function (array $p): void {
+            (new Controllers\Api\AuthController())->requestPasswordReset();
+        });
+
+        $router->post('/api/v1/auth/password-reset/confirm', function (array $p): void {
+            (new Controllers\Api\AuthController())->confirmPasswordReset();
         });
     }
 }

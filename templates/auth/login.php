@@ -63,6 +63,12 @@ $csrfToken = CsrfMiddleware::getToken();
                                class="form-control" autocomplete="current-password" required>
                     </div>
 
+                    <div class="mb-3 text-end">
+                        <a href="<?= htmlspecialchars(eduqr_path('/forgot-password'), ENT_QUOTES, 'UTF-8') ?>">
+                            <?= htmlspecialchars(t('auth.reset.forgot_link'), ENT_QUOTES, 'UTF-8') ?>
+                        </a>
+                    </div>
+
                     <button type="submit" id="login-btn" class="btn btn-primary w-100">
                         <?= htmlspecialchars(t('auth.login.submit'), ENT_QUOTES, 'UTF-8') ?>
                     </button>

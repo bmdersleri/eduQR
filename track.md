@@ -40,7 +40,7 @@
 | 8 | Canlı Sonuçlar | 🟢 | 13 / 13 | 2026-05-15 | 2026-05-15 |
 | 9 | Raporlama & Dışa Aktarma | 🟢 | 13 / 13 | 2026-05-15 | 2026-05-15 |
 | 10 | Güvenlik & Kalite Sertleştirme | 🟢 | 17 / 17 | 2026-05-15 | 2026-05-15 |
-| 11 | Gelecek İyileştirmeler (post-MVP) | ⏸ | 7 / 17 | — | — |
+| 11 | Gelecek İyileştirmeler (post-MVP) | ⏸ | 8 / 17 | — | — |
 
 **MVP Toplam (Faz 0–10):** 157 / 157 görev tamamlandı (%100) 🎉
 
@@ -594,7 +594,7 @@
 [x] T-1104  Quiz mode with scoring (uses options.is_correct)                             [FR-92]
 [ ] T-1105  Light gamification (badges, streaks)                                         [FR-48]
 [x] T-1106  Question image attachments                                                   [FR-39]
-[ ] T-1107  Email-based password reset                                                   [FR-06]
+[x] T-1107  Email-based password reset                                                   [FR-06]
 [ ] T-1108  Add de.json, fr.json (>= 95% coverage each)                                  [FR-86]
 [ ] T-1109  RTL support + ar.json                                                        [FR-86]
 [ ] T-1110  WebSocket / Socket.IO real-time (replaces polling)                           [NFR-02]
