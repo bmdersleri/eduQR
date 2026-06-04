@@ -40,7 +40,7 @@
 | 8 | Canlı Sonuçlar | 🟢 | 13 / 13 | 2026-05-15 | 2026-05-15 |
 | 9 | Raporlama & Dışa Aktarma | 🟢 | 13 / 13 | 2026-05-15 | 2026-05-15 |
 | 10 | Güvenlik & Kalite Sertleştirme | 🟢 | 17 / 17 | 2026-05-15 | 2026-05-15 |
-| 11 | Gelecek İyileştirmeler (post-MVP) | ⏸ | 6 / 17 | — | — |
+| 11 | Gelecek İyileştirmeler (post-MVP) | ⏸ | 7 / 17 | — | — |
 
 **MVP Toplam (Faz 0–10):** 157 / 157 görev tamamlandı (%100) 🎉
 

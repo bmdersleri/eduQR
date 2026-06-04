@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Contracts\AuditLogRepositoryInterface;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Repositories\AuditLogRepository;
 
@@ -14,11 +15,11 @@ use EduQR\Repositories\AuditLogRepository;
  */
 final class AuditLogController
 {
-    private AuditLogRepository $repo;
+    private AuditLogRepositoryInterface $repo;
 
-    public function __construct()
+    public function __construct(?AuditLogRepositoryInterface $repo = null)
     {
-        $this->repo = new AuditLogRepository();
+        $this->repo = $repo ?? new AuditLogRepository();
     }
 
     // ── GET /api/v1/audit-logs ────────────────────────────────────────────────
@@ -29,17 +30,28 @@ final class AuditLogController
 
         $limit = min(100, max(1, (int) ($_GET['limit'] ?? 50)));
         $page = max(1, (int) ($_GET['page'] ?? 1));
-        $offset = ($page - 1) * $limit;
         $actorType = in_array($_GET['actor_type'] ?? '', ['instructor', 'admin', 'system'], true)
             ? $_GET['actor_type']
             : null;
 
-        $total = $this->repo->count($actorType);
-        $logs = $this->repo->list($limit, $offset, $actorType);
+        $payload = $this->buildPayload($limit, $page, $actorType);
 
         http_response_code(200);
         header('Content-Type: application/json; charset=utf-8');
-        echo json_encode([
+        echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        exit;
+    }
+
+    /**
+     * @return array{success:bool,data:array{logs:list<array<string,mixed>>,total:int,page:int,limit:int,pages:int}}
+     */
+    private function buildPayload(int $limit, int $page, ?string $actorType): array
+    {
+        $offset = ($page - 1) * $limit;
+        $total = $this->repo->count($actorType);
+        $logs = $this->repo->list($limit, $offset, $actorType);
+
+        return [
             'success' => true,
             'data' => [
                 'logs' => $logs,
@@ -48,7 +60,6 @@ final class AuditLogController
                 'limit' => $limit,
                 'pages' => $total > 0 ? (int) ceil($total / $limit) : 1,
             ],
-        ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-        exit;
+        ];
     }
 }
