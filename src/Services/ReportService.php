@@ -18,6 +18,7 @@ use PDO;
  * Provides two aggregate queries:
  *  - aggregate()          counts + percentages per option (T-801)
  *  - openTextAnswers()    answer list with nickname + timestamp (T-802)
+ *  - buildWordCloud()     deterministic word cloud for open-text answers (FR-66)
  *
  * Also guards student visibility via show_results flags (T-804).
  */
@@ -55,7 +56,9 @@ final class ReportService
             $qs = [$q];
         }
 
-        return array_map(fn (array $q) => $this->buildQuestionResults($q, false), $qs);
+        $language = (string) ($session['language'] ?? 'en');
+
+        return array_map(fn (array $q) => $this->buildQuestionResults($q, false, $language), $qs);
     }
 
     // ── Student: get results gated by show_results flags (T-804) ─────────────
@@ -89,7 +92,9 @@ final class ReportService
         // Filter: only questions that have show_results = 1
         $qs = array_filter($qs, fn (array $q) => (bool) $q['show_results']);
 
-        return array_map(fn (array $q) => $this->buildQuestionResults($q, true), array_values($qs));
+        $language = (string) ($session['language'] ?? 'en');
+
+        return array_map(fn (array $q) => $this->buildQuestionResults($q, true, $language), array_values($qs));
     }
 
     // ── Aggregate: counts + percentages per option (T-801) ────────────────────
@@ -105,7 +110,9 @@ final class ReportService
             throw new \RuntimeException('question_not_found');
         }
 
-        return $this->buildQuestionResults($question, false);
+        $session = $this->sessions->findById((int) $question['session_id']) ?? ['language' => 'en'];
+
+        return $this->buildQuestionResults($question, false, (string) ($session['language'] ?? 'en'));
     }
 
     // ── Open-text answers with nickname + timestamp (T-802) ───────────────────
@@ -178,7 +185,7 @@ final class ReportService
 
     // ── Private helpers ────────────────────────────────────────────────────────
 
-    private function buildQuestionResults(array $question, bool $studentView): array
+    private function buildQuestionResults(array $question, bool $studentView, string $language = 'en'): array
     {
         $qId = (int) $question['id'];
         $qType = $question['question_type'];
@@ -195,6 +202,7 @@ final class ReportService
 
             return array_merge($base, [
                 'answer_count' => count($rows),
+                'word_cloud' => $this->buildWordCloud($rows, $language),
                 'answers' => array_map(fn (array $r) => [
                     'id' => (int) $r['id'],
                     'text' => $r['text'],
@@ -345,7 +353,10 @@ final class ReportService
                         'created_at' => $r['created_at'],
                     ];
                 }
-                $questionResults[] = array_merge($base, ['answers' => $answers]);
+                $questionResults[] = array_merge($base, [
+                    'answers' => $answers,
+                    'word_cloud' => $this->buildWordCloud($rows, (string) ($session['language'] ?? 'en')),
+                ]);
             } else {
                 $agg = $this->aggregateOptions($qId);
                 $questionResults[] = array_merge($base, [
@@ -394,6 +405,104 @@ final class ReportService
         }
 
         return $report;
+    }
+
+    /**
+     * Builds a deterministic word cloud from open-text answers.
+     *
+     * @param array<int,array<string,mixed>> $answers
+     * @return array<int,array{term:string,count:int,weight:float}>
+     */
+    private function buildWordCloud(array $answers, string $language): array
+    {
+        $counts = [];
+        $stopWords = array_fill_keys($this->wordCloudStopWords($language), true);
+
+        foreach ($answers as $row) {
+            $text = mb_strtolower(trim((string) ($row['text'] ?? $row['answer_text'] ?? '')), 'UTF-8');
+            if ($text === '') {
+                continue;
+            }
+
+            $normalized = preg_replace('/[^\p{L}\p{N}]+/u', ' ', $text);
+            if ($normalized === null || trim($normalized) === '') {
+                continue;
+            }
+
+            $tokens = preg_split('/\s+/u', trim($normalized), -1, PREG_SPLIT_NO_EMPTY);
+            if ($tokens === false) {
+                continue;
+            }
+
+            foreach ($tokens as $token) {
+                $token = trim($token, "'’`-_");
+                if ($token === '' || mb_strlen($token, 'UTF-8') < 2) {
+                    continue;
+                }
+                if (preg_match('/^\p{N}+$/u', $token) === 1) {
+                    continue;
+                }
+                if (isset($stopWords[$token])) {
+                    continue;
+                }
+
+                $counts[$token] = ($counts[$token] ?? 0) + 1;
+            }
+        }
+
+        if ($counts === []) {
+            return [];
+        }
+
+        uksort($counts, static function (string $left, string $right) use ($counts): int {
+            $countCompare = $counts[$right] <=> $counts[$left];
+            if ($countCompare !== 0) {
+                return $countCompare;
+            }
+
+            return strcmp($left, $right);
+        });
+
+        $counts = array_slice($counts, 0, 12, true);
+        $max = max($counts);
+
+        $cloud = [];
+        foreach ($counts as $term => $count) {
+            $cloud[] = [
+                'term' => $term,
+                'count' => (int) $count,
+                'weight' => $max > 0 ? round((float) $count / $max, 2) : 0.0,
+            ];
+        }
+
+        return $cloud;
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    private function wordCloudStopWords(string $language): array
+    {
+        $language = strtolower(substr($language, 0, 2));
+
+        if ($language === 'tr') {
+            return [
+                've', 'veya', 'ile', 'bir', 'bu', 'şu', 'o', 'için', 'gibi', 'ama',
+                'de', 'da', 'mi', 'mı', 'mu', 'mü', 'çok', 'daha', 'en', 'kadar', 'olarak',
+                'ben', 'sen', 'biz', 'siz', 'onlar', 'ne', 'neden', 'nasıl', 'hangi', 'şey',
+                'biraz', 'şimdi', 'burada', 'orada', 'yani', 'değil', 'hem', 'hemde', 'çünkü',
+            ];
+        }
+
+        return [
+            'a', 'an', 'and', 'are', 'as', 'at', 'be', 'been', 'but', 'by', 'can', 'could',
+            'did', 'do', 'does', 'for', 'from', 'had', 'has', 'have', 'he', 'her', 'here',
+            'him', 'his', 'i', 'if', 'in', 'into', 'is', 'it', 'its', 'me', 'my', 'not',
+            'of', 'on', 'or', 'our', 'out', 'she', 'so', 'that', 'the', 'their', 'them',
+            'there', 'these', 'they', 'this', 'those', 'to', 'too', 'us', 'very', 'was',
+            'we', 'were', 'what', 'when', 'where', 'which', 'who', 'will', 'with', 'you',
+            'your',
+        ];
     }
 
     /**

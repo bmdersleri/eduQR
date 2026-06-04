@@ -181,6 +181,23 @@ ob_start();
                 <?php endforeach; ?>
                 </ul>
             <?php endif; ?>
+
+            <div class="mt-3">
+                <div class="text-muted small mb-2 fw-semibold"><?= htmlspecialchars(t('results.word_cloud'), ENT_QUOTES, 'UTF-8') ?></div>
+                <?php if (empty($q['word_cloud'])): ?>
+                    <p class="text-muted mb-0"><em><?= htmlspecialchars(t('results.word_cloud.empty'), ENT_QUOTES, 'UTF-8') ?></em></p>
+                <?php else: ?>
+                    <div class="d-flex flex-wrap gap-2">
+                        <?php foreach ($q['word_cloud'] as $term): ?>
+                            <?php $fontSize = 0.9 + ((float) ($term['weight'] ?? 0)) * 0.7; ?>
+                            <span class="badge rounded-pill text-bg-primary" style="font-size: <?= number_format($fontSize, 2, '.', '') ?>rem;">
+                                <?= htmlspecialchars($term['term'], ENT_QUOTES, 'UTF-8') ?>
+                                <small>(<?= (int) $term['count'] ?>)</small>
+                            </span>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
         <?php else: ?>
             <?php foreach ($q['distribution'] as $opt): ?>
             <?php $pct = (float) $opt['percentage']; ?>

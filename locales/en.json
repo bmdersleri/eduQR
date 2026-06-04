@@ -214,6 +214,8 @@
     "results.answer.hide": "Hide answer",
     "results.answer.unhide": "Show answer",
     "results.answer.hidden_badge": "Hidden",
+    "results.word_cloud": "Word cloud",
+    "results.word_cloud.empty": "No terms yet.",
     "report.title": "Session Report",
     "report.course": "Course",
     "report.session": "Session",

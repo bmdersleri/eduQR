@@ -118,6 +118,7 @@ Every ID is stable for the life of the project. Do not renumber. To deprecate a 
 | FR-63 | SHOULD | The report SHOULD be exportable as printable HTML / PDF. |
 | FR-64 | MAY  | A cross-session course-level report MAY be added in Phase 11. |
 | FR-65 | MAY  | AI-assisted theme extraction for open-text answers MAY be added in Phase 11. |
+| FR-66 | MAY  | The system MAY generate a deterministic word cloud from visible open-text answers and display it in live results and reports. |
 
 ### 3.8 Privacy Controls
 

@@ -214,6 +214,8 @@
     "results.answer.hide": "Cevabı gizle",
     "results.answer.unhide": "Cevabı göster",
     "results.answer.hidden_badge": "Gizli",
+    "results.word_cloud": "Kelime bulutu",
+    "results.word_cloud.empty": "Henüz terim yok.",
     "report.title": "Oturum Raporu",
     "report.course": "Ders",
     "report.session": "Oturum",

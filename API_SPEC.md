@@ -726,6 +726,10 @@ Open-text response:
     "question_type": "open_text",
     "answer_count": 12,
     "participant_count": 42,
+    "word_cloud": [
+      { "term": "pointer", "count": 7, "weight": 1.0 },
+      { "term": "logic",   "count": 5, "weight": 0.71 }
+    ],
     "answers": [
       { "answer_id": 77770, "nickname": "Yasemin", "answer_text": "Pointer logic.",   "is_hidden": false, "created_at": "2026-05-13T19:13:02Z" },
       { "answer_id": 77771, "nickname": "Bahar",   "answer_text": "Insertion order.", "is_hidden": false, "created_at": "2026-05-13T19:13:08Z" }
@@ -784,6 +788,10 @@ JSON report shape:
         "type": "open_text",
         "text": "What was the hardest part?",
         "answer_count": 21,
+        "word_cloud": [
+          { "term": "pointer", "count": 7, "weight": 1.0 },
+          { "term": "logic",   "count": 5, "weight": 0.71 }
+        ],
         "answers": [
           { "nickname": "Elif",   "answer_text": "Pointer logic" },
           { "nickname": "İsmail", "answer_text": "Recursive operations" }

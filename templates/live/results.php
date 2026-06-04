@@ -67,6 +67,9 @@ ob_start();
         <!-- Chart (option-based) -->
         <div class="col-12 d-none" id="chart-area"></div>
 
+        <!-- Word cloud -->
+        <div class="col-12 d-none mb-4" id="word-cloud-area"></div>
+
         <!-- Open-text list -->
         <div class="col-12 d-none" id="open-text-area">
             <ul id="open-text-list" class="list-unstyled px-4"></ul>
@@ -91,6 +94,7 @@ const questionText  = document.getElementById('question-text');
 const questionType  = document.getElementById('question-type-label');
 const answerCount   = document.getElementById('answer-count-label');
 const chartArea     = document.getElementById('chart-area');
+const wordCloudArea = document.getElementById('word-cloud-area');
 const textArea      = document.getElementById('open-text-area');
 const waitingArea   = document.getElementById('waiting-area');
 
@@ -103,6 +107,8 @@ const TYPE_LABELS = <?= json_encode([
 
 const MSG_ANSWER_COUNT = <?= json_encode(t('results.answer_count')) ?>;
 const MSG_NO_ACTIVE    = <?= json_encode(t('question.no_active')) ?>;
+const MSG_WORD_CLOUD   = <?= json_encode(t('results.word_cloud')) ?>;
+const MSG_WORD_EMPTY   = <?= json_encode(t('results.word_cloud.empty')) ?>;
 
 function extractActiveQuestion(payload) {
     if (!payload || !payload.success || !payload.data) {
@@ -130,9 +136,11 @@ async function pollResults() {
             questionType.textContent = '';
             answerCount.textContent  = '';
             chartArea.classList.add('d-none');
+            wordCloudArea.classList.add('d-none');
             textArea.classList.add('d-none');
             waitingArea.classList.remove('d-none');
             document.getElementById('chart-area').innerHTML = '';
+            wordCloudArea.innerHTML = '';
             return;
         }
 
@@ -163,11 +171,14 @@ async function pollResults() {
 
         if (q.type === 'open_text') {
             chartArea.classList.add('d-none');
+            wordCloudArea.classList.remove('d-none');
             textArea.classList.remove('d-none');
+            renderWordCloud(result.word_cloud ?? []);
             renderOpenText(result.answers ?? []);
             document.getElementById('chart-area').innerHTML = '';
         } else {
             textArea.classList.add('d-none');
+            wordCloudArea.classList.add('d-none');
             chartArea.classList.remove('d-none');
             renderBarChart(result.options ?? []);
         }
@@ -248,6 +259,31 @@ function renderOpenText(answers) {
         `;
         list.appendChild(li);
     });
+}
+
+function renderWordCloud(words) {
+    const area = document.getElementById('word-cloud-area');
+    if (!Array.isArray(words) || words.length === 0) {
+        area.innerHTML = `<p class="text-white-50 text-center mb-0">${escHtml(MSG_WORD_EMPTY)}</p>`;
+        return;
+    }
+
+    const chips = words.map((item) => {
+        const term = escHtml(String(item.term ?? ''));
+        const count = Number(item.count) || 0;
+        const weight = Math.max(0.35, Math.min(1.4, Number(item.weight) || 0));
+        const fontSize = (1.0 + (weight * 0.8)).toFixed(2);
+        return `<span class="badge rounded-pill text-bg-light text-dark me-2 mb-2" style="font-size:${fontSize}rem">${term} <small>(${count})</small></span>`;
+    }).join('');
+
+    area.innerHTML = `
+        <div class="eduqr-statcard mb-4" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.08)">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="h5 mb-0 text-white">${escHtml(MSG_WORD_CLOUD)}</h3>
+            </div>
+            <div class="d-flex flex-wrap">${chips}</div>
+        </div>
+    `;
 }
 
 function escHtml(s) {

@@ -99,6 +99,8 @@ ob_start();
                 <div id="chart-area" class="d-none"></div>
 
                 <!-- Open-text area -->
+                <div id="word-cloud-area" class="d-none mb-4"></div>
+
                 <div id="open-text-area" class="d-none">
                     <ul id="open-text-list" class="list-group list-group-flush"></ul>
                 </div>
@@ -121,6 +123,8 @@ const MSG_HIDE         = <?= json_encode(t('results.answer.hide')) ?>;
 const MSG_UNHIDE       = <?= json_encode(t('results.answer.unhide')) ?>;
 const MSG_HIDDEN_BADGE = <?= json_encode(t('results.answer.hidden_badge')) ?>;
 const MSG_ANSWERS      = <?= json_encode(t('results.answer_count', ['{count}' => ''])) ?>;
+const MSG_WORD_CLOUD   = <?= json_encode(t('results.word_cloud')) ?>;
+const MSG_WORD_EMPTY   = <?= json_encode(t('results.word_cloud.empty')) ?>;
 
 let chart          = null;
 let currentQId     = <?= $questions ? (int) $questions[0]['id'] : 0 ?>;
@@ -160,19 +164,50 @@ function renderResults(result) {
 
     const noMsg      = document.getElementById('no-answers-msg');
     const chartArea  = document.getElementById('chart-area');
+    const cloudArea  = document.getElementById('word-cloud-area');
     const textArea   = document.getElementById('open-text-area');
 
     if (result.question_type === 'open_text') {
         chartArea.classList.add('d-none');
         textArea.classList.remove('d-none');
+        cloudArea.classList.remove('d-none');
         noMsg.classList.toggle('d-none', answerCount > 0);
+        renderWordCloud(result.word_cloud ?? []);
         renderOpenText(result.answers ?? []);
     } else {
         textArea.classList.add('d-none');
+        cloudArea.classList.add('d-none');
         chartArea.classList.remove('d-none');
         noMsg.classList.toggle('d-none', answerCount > 0);
         renderBarChart(result.options ?? []);
     }
+}
+
+function renderWordCloud(words) {
+    const area = document.getElementById('word-cloud-area');
+    if (!Array.isArray(words) || words.length === 0) {
+        area.innerHTML = `<p class="text-muted text-center mb-0">${escapeHtml(MSG_WORD_EMPTY)}</p>`;
+        return;
+    }
+
+    area.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h3 class="h6 mb-0">${escapeHtml(MSG_WORD_CLOUD)}</h3>
+        </div>
+        <div class="d-flex flex-wrap gap-2"></div>
+    `;
+
+    const wrap = area.querySelector('.d-flex.flex-wrap');
+    words.forEach((item) => {
+        const term = String(item.term ?? '');
+        const count = Number(item.count) || 0;
+        const weight = Math.max(0.35, Math.min(1.3, Number(item.weight) || 0));
+        const chip = document.createElement('span');
+        chip.className = 'badge rounded-pill text-bg-primary';
+        chip.style.fontSize = `${0.85 + (weight * 0.6)}rem`;
+        chip.textContent = `${term} (${count})`;
+        wrap.appendChild(chip);
+    });
 }
 
 function renderBarChart(options) {

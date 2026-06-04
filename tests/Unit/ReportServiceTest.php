@@ -266,6 +266,78 @@ class ReportServiceTest extends TestCase
         $this->assertCount(2, $all);
     }
 
+    public function testBuildReportAddsWordCloudForOpenTextQuestions_FR66(): void
+    {
+        $this->pdo->exec("INSERT INTO participants (id, session_id, nickname) VALUES (1, 10, 'Alice')");
+        $this->pdo->exec("INSERT INTO participants (id, session_id, nickname) VALUES (2, 10, 'Bob')");
+        $this->pdo->exec("INSERT INTO participants (id, session_id, nickname) VALUES (3, 10, 'Cem')");
+        $this->pdo->exec("INSERT INTO answers (question_id, participant_id, answer_text) VALUES (2, 1, 'Pointer logic')");
+        $this->pdo->exec("INSERT INTO answers (question_id, participant_id, answer_text) VALUES (2, 2, 'Pointer usage')");
+        $this->pdo->exec("INSERT INTO answers (question_id, participant_id, answer_text) VALUES (2, 3, 'The pointer is clear')");
+
+        $service = $this->makeService(questionRow: [
+            'id' => 2,
+            'session_id' => 10,
+            'question_type' => 'open_text',
+            'question_text' => 'Tell us.',
+            'status' => 'closed',
+            'show_results' => 1,
+        ], sessionRow: [
+            'id' => 10,
+            'status' => 'closed',
+            'course_id' => 5,
+            'show_results_to_students' => 1,
+            'title' => 'S',
+            'language' => 'en',
+            'started_at' => null,
+            'closed_at' => null,
+            'anonymized' => 0,
+        ]);
+
+        $report = $service->buildReport(10, 99);
+        $question = $report['questions'][0];
+
+        $this->assertArrayHasKey('word_cloud', $question);
+        $this->assertSame(['pointer', 'clear', 'logic', 'usage'], array_column($question['word_cloud'], 'term'));
+        $this->assertSame(3, $question['word_cloud'][0]['count']);
+    }
+
+    public function testStudentResultsWordCloudExcludesHiddenAnswers_FR66(): void
+    {
+        $this->pdo->exec("INSERT INTO participants (id, session_id, nickname) VALUES (1, 10, 'Alice')");
+        $this->pdo->exec("INSERT INTO participants (id, session_id, nickname) VALUES (2, 10, 'Bob')");
+        $this->pdo->exec("INSERT INTO answers (question_id, participant_id, answer_text) VALUES (2, 1, 'Alpha beta')");
+        $this->pdo->exec("INSERT INTO answers (question_id, participant_id, answer_text, is_hidden) VALUES (2, 2, 'Gamma delta', 1)");
+
+        $service = $this->makeService(questionRow: [
+            'id' => 2,
+            'session_id' => 10,
+            'question_type' => 'open_text',
+            'question_text' => 'Tell us.',
+            'status' => 'closed',
+            'show_results' => 1,
+        ], sessionRow: [
+            'id' => 10,
+            'status' => 'active',
+            'course_id' => 5,
+            'show_results_to_students' => 1,
+            'short_code' => 'ABCD12',
+            'title' => 'S',
+            'language' => 'en',
+            'started_at' => null,
+            'closed_at' => null,
+            'anonymized' => 0,
+        ]);
+
+        $results = $service->getStudentResults('ABCD12', 2);
+        $question = $results[0];
+        $terms = array_column($question['word_cloud'], 'term');
+
+        $this->assertSame(['alpha', 'beta'], $terms);
+        $this->assertNotContains('gamma', $terms);
+        $this->assertNotContains('delta', $terms);
+    }
+
     public function testExtractThemesUsesVisibleOpenTextAnswers_FR65(): void
     {
         $this->pdo->exec("INSERT INTO participants (id, session_id, nickname) VALUES (1, 10, 'Alice')");

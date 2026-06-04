@@ -258,6 +258,20 @@ final class ReportController
                     }
                     echo '</table>';
                 }
+
+                echo '<h3 style="margin-top:1rem">' . $e(t('results.word_cloud')) . '</h3>';
+                if (empty($q['word_cloud'])) {
+                    echo '<p><em>' . $e(t('results.word_cloud.empty')) . '</em></p>';
+                } else {
+                    echo '<div style="display:flex;flex-wrap:wrap;gap:.5rem">';
+                    foreach ($q['word_cloud'] as $term) {
+                        $fontSize = 0.9 + ((float) ($term['weight'] ?? 0)) * 0.7;
+                        echo '<span style="display:inline-block;padding:.35rem .7rem;border-radius:999px;background:#0d6efd;color:#fff;font-size:' . number_format($fontSize, 2, '.', '') . 'rem">';
+                        echo $e($term['term']) . ' <small>(' . (int) $term['count'] . ')</small>';
+                        echo '</span>';
+                    }
+                    echo '</div>';
+                }
             } else {
                 echo '<table><tr><th>' . $e(t('report.answer_distribution')) . '</th>';
                 echo '<th style="width:80px">N</th><th style="width:80px">%</th></tr>';
