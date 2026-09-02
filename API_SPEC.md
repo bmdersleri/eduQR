@@ -249,7 +249,7 @@ Errors: 400 `missing_fields`, 409 `duplicate_answer`, 410 `question_closed`, 410
 
 `GET /api/v1/sessions/{short_code}/results?question_id=4001`
 
-Same shape as the instructor results endpoint (§5.5), but returns data **only** when `sessions.show_results_to_students = true` AND `questions.show_results = true`. Otherwise 403 `results_hidden`.
+Same shape as the instructor results endpoint (§5.5), but returns data **only** when `sessions.show_results_to_students = true` AND `questions.show_results = true`. If `sessions.exam_mode = true`, this endpoint always returns 403 `results_hidden`, regardless of `show_results_to_students` or `show_results`. Otherwise 403 `results_hidden`.
 
 ---
 
@@ -408,12 +408,14 @@ Errors: 404 `course_not_found`, 403 `forbidden`.
 | --- | --- | --- |
 | POST | `/api/v1/courses/{id}/sessions` | Start a new session under a course |
 | GET | `/api/v1/sessions/{id}` | Session detail |
-| PATCH | `/api/v1/sessions/{id}` | Update (title, `show_results_to_students`, `moderation_mode`) |
+| PATCH | `/api/v1/sessions/{id}` | Update (title, `show_results_to_students`, `moderation_mode`, `is_quiz`, `exam_mode`) |
 | POST | `/api/v1/sessions/{id}/pause` | Pause |
 | POST | `/api/v1/sessions/{id}/resume` | Resume |
 | POST | `/api/v1/sessions/{id}/close` | Close |
 | POST | `/api/v1/sessions/{id}/anonymize` | Strip nicknames + device hashes |
 | DELETE | `/api/v1/sessions/{id}` | Request deletion (7-day grace) |
+
+`exam_mode` (boolean) overrides result visibility for students: while enabled, it hides live results and answer correctness regardless of `show_results_to_students` or per-question `show_results` (`FR-96`).
 
 Create body:
 

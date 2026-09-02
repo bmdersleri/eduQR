@@ -66,7 +66,7 @@ final class SessionRepository implements SessionRepositoryInterface
 
     public function update(int $id, array $fields): void
     {
-        $allowed = ['title', 'status', 'show_results_to_students', 'moderation_mode', 'is_quiz',
+        $allowed = ['title', 'status', 'show_results_to_students', 'moderation_mode', 'is_quiz', 'exam_mode',
                     'started_at', 'paused_at', 'closed_at', 'delete_requested_at', 'anonymized'];
         $sets = [];
         $values = [];

@@ -130,6 +130,7 @@
     "session.anonymized": "Oturum anonimleştirildi.",
     "session.delete_requested": "Oturum silinmek üzere işaretlendi.",
     "session.moderation_mode": "Moderasyon",
+    "session.exam_mode": "Sınav Modu (öğrencilerden sonuçları gizle)",
     "session.closed_message": "Bu oturum kapatılmıştır.",
     "session.paused_message": "Bu oturum duraklatıldı. Lütfen bekleyin.",
     "student.join.title": "Ders Oturumuna Katıl",

@@ -130,6 +130,7 @@
     "session.anonymized": "Session anonymized.",
     "session.delete_requested": "Session marked for deletion.",
     "session.moderation_mode": "Moderation",
+    "session.exam_mode": "Exam Mode (hide results from students)",
     "session.closed_message": "This session is closed.",
     "session.paused_message": "This session is paused. Please wait.",
     "student.join.title": "Join the Classroom Session",

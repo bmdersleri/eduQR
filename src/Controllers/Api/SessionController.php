@@ -281,6 +281,7 @@ final class SessionController
             'language' => $session['language'],
             'show_results_to_students' => (bool) $session['show_results_to_students'],
             'moderation_mode' => (bool) $session['moderation_mode'],
+            'exam_mode' => (bool) $session['exam_mode'],
             'is_quiz' => (bool) $session['is_quiz'],
             'join_url' => $joinUrl,
             'qr_url' => Url::path('/api/v1/sessions/' . (int) $session['id'] . '/qr.png'),

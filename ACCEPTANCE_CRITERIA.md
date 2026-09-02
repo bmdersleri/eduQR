@@ -340,6 +340,7 @@ Each phase in `TASKS.md` is gated by the checkpoint below. Do not start the next
 [ ] Projector view is classroom-readable                                                  [FR-54]
 [ ] show_results gating works                                                              [FR-53]
 [ ] Instructor can hide inappropriate open-text answers                                    [FR-55]
+[x] Instructor can enable exam_mode; students never see live results or correctness while it is on, regardless of show_results settings [FR-96]
 ```
 
 ### 4.8 Report Module

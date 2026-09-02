@@ -386,4 +386,33 @@ class SessionServiceTest extends TestCase
         );
         $service->closeSession(1, 10);
     }
+
+    // ── updateSession ──────────────────────────────────────────────────────────
+
+    public function testUpdateSessionPassesModerationModeToRepository(): void
+    {
+        $sessionRepo = $this->makeSessionRepo([$this->sampleSession(1, 1)]);
+        $service = new SessionService($sessionRepo, $this->makeCourseRepo([$this->sampleCourse(1, 10)]));
+        $service->updateSession(1, 10, ['moderation_mode' => true]);
+
+        $this->assertSame(1, $sessionRepo->updated[0]['fields']['moderation_mode']);
+    }
+
+    public function testUpdateSessionPassesExamModeToRepository(): void
+    {
+        $sessionRepo = $this->makeSessionRepo([$this->sampleSession(1, 1)]);
+        $service = new SessionService($sessionRepo, $this->makeCourseRepo([$this->sampleCourse(1, 10)]));
+        $service->updateSession(1, 10, ['exam_mode' => true]);
+
+        $this->assertSame(1, $sessionRepo->updated[0]['fields']['exam_mode']);
+    }
+
+    public function testUpdateSessionCanDisableExamMode(): void
+    {
+        $sessionRepo = $this->makeSessionRepo([$this->sampleSession(1, 1)]);
+        $service = new SessionService($sessionRepo, $this->makeCourseRepo([$this->sampleCourse(1, 10)]));
+        $service->updateSession(1, 10, ['exam_mode' => false]);
+
+        $this->assertSame(0, $sessionRepo->updated[0]['fields']['exam_mode']);
+    }
 }

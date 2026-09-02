@@ -406,6 +406,43 @@ class ReportServiceTest extends TestCase
         $service->getStudentResults('ABCD12', null);
     }
 
+    // ── FR-96: exam_mode overrides show_results_to_students ───────────────────
+
+    public function testStudentResultsThrowsWhenExamModeEnabledEvenIfShowResultsEnabled(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('results_hidden');
+
+        $service = $this->makeService(sessionRow: [
+            'id' => 10,
+            'status' => 'active',
+            'course_id' => 5,
+            'show_results_to_students' => 1,
+            'exam_mode' => 1,
+        ]);
+
+        $service->getStudentResults('ABCD12', null);
+    }
+
+    public function testStudentResultsReturnsResultsWhenExamModeDisabledAndShowResultsEnabled(): void
+    {
+        [$optA, $optB] = $this->seedOptions(1, ['Yes', 'No']);
+        $this->seedAnswer(1, 1, $optA);
+
+        $service = $this->makeService(sessionRow: [
+            'id' => 10,
+            'status' => 'active',
+            'course_id' => 5,
+            'show_results_to_students' => 1,
+            'exam_mode' => 0,
+        ]);
+
+        $results = $service->getStudentResults('ABCD12', null);
+
+        $this->assertCount(1, $results);
+        $this->assertSame(1, $results[0]['answer_count']);
+    }
+
     // ── fill_in_the_blank quiz scoring (FR-31, FR-92) ───────────────────────────
 
     public function testFillInTheBlankQuizScoringMatchesCaseInsensitiveTrimmed(): void

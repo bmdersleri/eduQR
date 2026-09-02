@@ -114,6 +114,9 @@ final class SessionService
         if (array_key_exists('is_quiz', $data)) {
             $fields['is_quiz'] = (int)(bool)$data['is_quiz'];
         }
+        if (array_key_exists('exam_mode', $data)) {
+            $fields['exam_mode'] = $data['exam_mode'] ? 1 : 0;
+        }
 
         if (! empty($fields)) {
             $this->sessions->update($id, $fields);

@@ -69,6 +69,7 @@ CREATE TABLE sessions (
     allow_anonymous           TINYINT(1)   NOT NULL DEFAULT 1,
     show_results_to_students  TINYINT(1)   NOT NULL DEFAULT 0,
     moderation_mode           TINYINT(1)   NOT NULL DEFAULT 0,
+    exam_mode                 TINYINT(1)   NOT NULL DEFAULT 0,
     is_quiz                   TINYINT(1)   NOT NULL DEFAULT 0,
     started_at                DATETIME     NULL,
     paused_at                 DATETIME     NULL,

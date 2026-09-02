@@ -231,6 +231,7 @@ CREATE TABLE sessions (
     allow_anonymous           TINYINT(1)   NOT NULL DEFAULT 1,
     show_results_to_students  TINYINT(1)   NOT NULL DEFAULT 0,
     moderation_mode           TINYINT(1)   NOT NULL DEFAULT 0,
+    exam_mode                 TINYINT(1)   NOT NULL DEFAULT 0,
     started_at                DATETIME     NULL,
     paused_at                 DATETIME     NULL,
     closed_at                 DATETIME     NULL,
@@ -255,6 +256,7 @@ Rules:
 - `closed` sessions reject new participants and new answers (`FR-24`).
 - `paused` sessions reject new answers (`FR-25`).
 - `moderation_mode = 1` requires open-text answers to be approved before public display (`FR-55`).
+- `exam_mode = 1` overrides `show_results_to_students` and per-question `show_results`: students never see live results or answer correctness while it is enabled (`FR-96`).
 - `delete_requested_at` set means a soft delete is pending; hard delete after 7 days (`FR-71`).
 - `anonymized = 1` means participant nicknames/hashes have been stripped (`FR-70`).
 

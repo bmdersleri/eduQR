@@ -308,6 +308,7 @@ Not part of the MVP. Each item must be escalated to the human owner before work 
 [x] T-1119  Admin UI: generate bank questions and copy them into sessions                   [FR-93, FR-94, FR-95]
 [x] T-1120  Restore an archived course through API and instructor UI                         [FR-16]
 [x] T-1121  Fill-in-the-blank question type (single correct-answer text match)               [FR-31]
+[x] T-1122  Session exam_mode toggle (hides live results/correctness from students)          [FR-96]
 [ ] T-1105  Light gamification (badges, streaks)                                            [FR-48]
 [x] T-1106  Question image attachments                                                      [FR-39]
 [x] T-1107  Email-based password reset                                                      [FR-06]

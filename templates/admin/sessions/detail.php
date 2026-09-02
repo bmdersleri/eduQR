@@ -129,6 +129,13 @@ ob_start();
                         <span><?= htmlspecialchars(t('session.quiz_mode'), ENT_QUOTES, 'UTF-8') ?></span>
                     </span>
                 </label>
+                <label class="eduqr-feature justify-content-start gap-3 mb-0">
+                    <input class="form-check-input m-0" type="checkbox" role="switch" id="toggle-exam-mode" <?= (bool) $session['exam_mode'] ? 'checked' : '' ?>>
+                    <span>
+                        <strong><?= htmlspecialchars(t('session.exam_mode'), ENT_QUOTES, 'UTF-8') ?></strong>
+                        <span><?= htmlspecialchars(t('session.exam_mode'), ENT_QUOTES, 'UTF-8') ?></span>
+                    </span>
+                </label>
             </div>
 
             <div id="session-feedback" class="alert d-none" role="alert"></div>
@@ -451,6 +458,11 @@ toggleQuiz?.addEventListener('change', function () {
     patchSession({ is_quiz: this.checked ? 1 : 0 }).then(() => {
         window.location.reload();
     });
+});
+
+const toggleExamMode = document.getElementById('toggle-exam-mode');
+toggleExamMode?.addEventListener('change', function () {
+    patchSession({ exam_mode: this.checked ? 1 : 0 });
 });
 
 // ── Participant count ─────────────────────────────────────────────────────────

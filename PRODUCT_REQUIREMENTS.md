@@ -158,6 +158,7 @@ See `I18N_SPEC.md` for the implementation contract.
 | FR-93 | MUST | An instructor MUST be able to save reusable questions in a course-scoped question bank and copy them into any later session under the same course. |
 | FR-94 | MUST | The system MUST be able to generate question bank entries from lecture notes via an LLM, including opening, middle, and closing questions. |
 | FR-95 | MUST | An instructor MUST be able to review generated bank questions and publish selected entries into a session as draft questions. |
+| FR-96 | MUST | An instructor MUST be able to enable exam_mode on a session. While exam_mode is enabled, students MUST NOT see live results or answer correctness under any circumstance, overriding `show_results_to_students` and per-question `show_results`. |
 
 ---
 

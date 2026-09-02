@@ -75,7 +75,7 @@ final class ReportService
             throw new \RuntimeException('session_not_found');
         }
 
-        if (! (bool) $session['show_results_to_students']) {
+        if ((bool) ($session['exam_mode'] ?? false) || ! (bool) $session['show_results_to_students']) {
             throw new \RuntimeException('results_hidden');
         }
 
