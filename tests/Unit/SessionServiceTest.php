@@ -57,10 +57,13 @@ class SessionServiceTest extends TestCase
 
     // ── Stub factories ─────────────────────────────────────────────────────────
 
-    private function makeCourseRepo(array $courses = []): CourseRepositoryInterface
+    /**
+     * @param array<int,list<int>> $coInstructors course id => co-instructor user ids (FR-97)
+     */
+    private function makeCourseRepo(array $courses = [], array $coInstructors = []): CourseRepositoryInterface
     {
-        return new class ($courses) implements CourseRepositoryInterface {
-            public function __construct(private array $rows)
+        return new class ($courses, $coInstructors) implements CourseRepositoryInterface {
+            public function __construct(private array $rows, private array $coInstructors = [])
             {
             }
 
@@ -95,6 +98,28 @@ class SessionServiceTest extends TestCase
             }
             public function restore(int $id): void
             {
+            }
+            public function roleFor(int $courseId, int $userId): ?string
+            {
+                $course = $this->findById($courseId);
+                if ($course !== null && (int) $course['instructor_id'] === $userId) {
+                    return 'owner';
+                }
+
+                return in_array($userId, $this->coInstructors[$courseId] ?? [], true)
+                    ? 'co_instructor'
+                    : null;
+            }
+            public function listInstructors(int $courseId): array
+            {
+                return [];
+            }
+            public function addInstructor(int $courseId, int $userId, string $role): void
+            {
+            }
+            public function removeInstructor(int $courseId, int $userId): bool
+            {
+                return false;
             }
         };
     }
@@ -221,12 +246,52 @@ class SessionServiceTest extends TestCase
         ];
     }
 
-    private function makeService(array $sessions = [], array $courses = []): SessionService
+    /** @param array<int,list<int>> $coInstructors course id => co-instructor user ids (FR-97) */
+    private function makeService(array $sessions = [], array $courses = [], array $coInstructors = []): SessionService
     {
         return new SessionService(
             $this->makeSessionRepo($sessions),
-            $this->makeCourseRepo($courses)
+            $this->makeCourseRepo($courses, $coInstructors)
         );
+    }
+
+    // ── Co-instructor access (FR-97) ───────────────────────────────────────────
+
+    public function testCreateSessionAllowedForCoInstructor_FR97(): void
+    {
+        $service = $this->makeService([], [$this->sampleCourse(1, 10)], [1 => [20]]);
+        $result = $service->createSession(1, 20, ['title' => 'Week 1']);
+        $this->assertSame(6, strlen($result['short_code']));
+    }
+
+    public function testCreateSessionStillForbiddenForStranger_FR97(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('forbidden');
+        $service = $this->makeService([], [$this->sampleCourse(1, 10)], [1 => [20]]);
+        $service->createSession(1, 99, ['title' => 'Week 1']);
+    }
+
+    public function testGetSessionAllowedForCoInstructor_FR97(): void
+    {
+        $service = $this->makeService(
+            [$this->sampleSession(1, 1)],
+            [$this->sampleCourse(1, 10)],
+            [1 => [20]]
+        );
+        $this->assertSame(1, (int) $service->getSession(1, 20)['id']);
+    }
+
+    public function testGetSessionStillForbiddenForStranger_FR97(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('forbidden');
+        $service = $this->makeService(
+            [$this->sampleSession(1, 1)],
+            [$this->sampleCourse(1, 10)],
+            [1 => [20]]
+        );
+        $service->getSession(1, 99);
     }
 
     // ── createSession ──────────────────────────────────────────────────────────

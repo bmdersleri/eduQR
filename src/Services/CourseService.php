@@ -5,12 +5,19 @@ declare(strict_types=1);
 namespace EduQR\Services;
 
 use EduQR\Contracts\CourseRepositoryInterface;
+use EduQR\Contracts\UserRepositoryInterface;
 
 /**
  * Business logic for course management.
  *
- * Ownership rule (FR-14): every mutating method receives $instructorId and
- * throws RuntimeException('forbidden') if the course belongs to another user.
+ * Access rule (FR-14, FR-97): access is decided by the caller's row in
+ * course_instructors, never by comparing courses.instructor_id directly.
+ *
+ *   getCourse()    — owner OR co_instructor. The read/write choke point.
+ *   requireOwner() — owner only. Archive, restore, and instructor management.
+ *
+ * Both throw RuntimeException('course_not_found') when no such course exists
+ * and RuntimeException('forbidden') when the caller lacks the needed role.
  *
  * Validation failures throw \InvalidArgumentException with message format
  * "field:error_key" (e.g. "title:required") so the controller can build a
@@ -22,9 +29,15 @@ final class CourseService
     private const MAX_TITLE_LEN = 200;
     private const MAX_CODE_LEN = 40;
     private const MAX_SEM_LEN = 40;
+    private const MAX_EMAIL_LEN = 190;
 
-    public function __construct(private readonly CourseRepositoryInterface $courses)
-    {
+    public const ROLE_OWNER = 'owner';
+    public const ROLE_CO_INSTRUCTOR = 'co_instructor';
+
+    public function __construct(
+        private readonly CourseRepositoryInterface $courses,
+        private readonly UserRepositoryInterface   $users,
+    ) {
     }
 
     // ── Read ───────────────────────────────────────────────────────────────────
@@ -45,10 +58,10 @@ final class CourseService
     }
 
     /**
-     * Returns the course, enforcing ownership.
+     * Returns the course if the caller owns or co-instructs it (FR-97).
      *
      * @throws \RuntimeException('course_not_found') if no such course
-     * @throws \RuntimeException('forbidden') if owned by another instructor
+     * @throws \RuntimeException('forbidden') if the caller has no role on it
      */
     public function getCourse(int $id, int $instructorId): array
     {
@@ -57,8 +70,41 @@ final class CourseService
         if ($course === null) {
             throw new \RuntimeException('course_not_found');
         }
-        if ((int) $course['instructor_id'] !== $instructorId) {
+        if ($this->courses->roleFor($id, $instructorId) === null) {
             throw new \RuntimeException('forbidden');
+        }
+
+        return $course;
+    }
+
+    /**
+     * Returns the course only if the caller is its owner (FR-97).
+     *
+     * Owner-only actions: archive, restore, and managing the instructor list.
+     * Deliberately a separate method rather than a flag on getCourse() so a
+     * call site cannot widen its own permissions by accident.
+     *
+     * A caller with no role at all gets 'forbidden'; a co-instructor — who can
+     * legitimately see the course — gets the more precise 'course_owner_only'.
+     * Both surface as HTTP 403 with the `forbidden` error code.
+     *
+     * @throws \RuntimeException('course_not_found'|'forbidden'|'course_owner_only')
+     */
+    public function requireOwner(int $id, int $instructorId): array
+    {
+        $course = $this->courses->findById($id);
+
+        if ($course === null) {
+            throw new \RuntimeException('course_not_found');
+        }
+
+        $role = $this->courses->roleFor($id, $instructorId);
+
+        if ($role === null) {
+            throw new \RuntimeException('forbidden');
+        }
+        if ($role !== self::ROLE_OWNER) {
+            throw new \RuntimeException('course_owner_only');
         }
 
         return $course;
@@ -80,7 +126,7 @@ final class CourseService
         return $this->courses->create($instructorId, $title, $code, $semester, $description, $lang);
     }
 
-    /** @throws \RuntimeException on ownership failure; \InvalidArgumentException on validation */
+    /** @throws \RuntimeException on access failure; \InvalidArgumentException on validation */
     public function updateCourse(int $id, int $instructorId, array $data): void
     {
         $this->getCourse($id, $instructorId);
@@ -108,22 +154,120 @@ final class CourseService
         $this->courses->update($id, $fields);
     }
 
-    /** @throws \RuntimeException on ownership failure */
+    /**
+     * Owner only (FR-97).
+     *
+     * @throws \RuntimeException on access failure
+     */
     public function archiveCourse(int $id, int $instructorId): void
     {
-        $this->getCourse($id, $instructorId);
+        $this->requireOwner($id, $instructorId);
         $this->courses->archive($id);
     }
 
-    /** @throws \RuntimeException on ownership or state failure */
+    /**
+     * Owner only (FR-97).
+     *
+     * @throws \RuntimeException on access or state failure
+     */
     public function restoreCourse(int $id, int $instructorId): void
     {
-        $course = $this->getCourse($id, $instructorId);
+        $course = $this->requireOwner($id, $instructorId);
         if ($course['status'] !== 'archived') {
             throw new \RuntimeException('invalid_course_state');
         }
 
         $this->courses->restore($id);
+    }
+
+    // ── Instructor list (FR-97) ────────────────────────────────────────────────
+
+    /**
+     * Visible to the owner and to co-instructors.
+     *
+     * @throws \RuntimeException course_not_found | forbidden
+     */
+    public function listInstructors(int $courseId, int $userId): array
+    {
+        $this->getCourse($courseId, $userId);
+
+        return array_map(
+            static fn (array $row): array => [
+                'user_id' => (int) $row['user_id'],
+                'email' => (string) $row['email'],
+                'display_name' => (string) $row['display_name'],
+                'role' => (string) $row['role'],
+                'created_at' => (string) $row['created_at'],
+            ],
+            $this->courses->listInstructors($courseId)
+        );
+    }
+
+    /**
+     * Grants co-instructor access to an existing instructor account, addressed
+     * by email. There is no invitation flow: an unknown email is rejected.
+     *
+     * Owner only.
+     *
+     * @return array{user_id:int,role:string}
+     *
+     * @throws \InvalidArgumentException email:required | email:invalid
+     * @throws \RuntimeException course_not_found | forbidden
+     *                           | instructor_not_found | already_course_instructor
+     */
+    public function addInstructor(int $courseId, int $ownerId, array $data): array
+    {
+        $this->requireOwner($courseId, $ownerId);
+
+        $email = $this->validateEmail($data['email'] ?? null);
+        $user = $this->users->findByEmail($email);
+
+        // A co-instructor must be an active instructor account (DATA_MODEL §2.2).
+        // Accounts that are not eligible are reported as not found rather than
+        // confirming that the address belongs to someone.
+        if ($user === null
+            || ($user['role'] ?? null) !== 'instructor'
+            || ! (bool) ($user['is_active'] ?? 1)) {
+            throw new \RuntimeException('instructor_not_found');
+        }
+
+        $userId = (int) $user['id'];
+
+        // Covers both "already a co-instructor" and "this is the owner".
+        if ($this->courses->roleFor($courseId, $userId) !== null) {
+            throw new \RuntimeException('already_course_instructor');
+        }
+
+        $this->courses->addInstructor($courseId, $userId, self::ROLE_CO_INSTRUCTOR);
+
+        return ['user_id' => $userId, 'role' => self::ROLE_CO_INSTRUCTOR];
+    }
+
+    /**
+     * Revokes co-instructor access. The owner cannot be removed — that would
+     * leave the course without an owner.
+     *
+     * Owner only.
+     *
+     * @throws \RuntimeException course_not_found | forbidden
+     *                           | cannot_remove_course_owner | course_instructor_not_found
+     */
+    public function removeInstructor(int $courseId, int $ownerId, int $userId): void
+    {
+        $this->requireOwner($courseId, $ownerId);
+
+        $role = $this->courses->roleFor($courseId, $userId);
+
+        if ($role === null) {
+            throw new \RuntimeException('course_instructor_not_found');
+        }
+        if ($role === self::ROLE_OWNER) {
+            throw new \RuntimeException('cannot_remove_course_owner');
+        }
+
+        if (! $this->courses->removeInstructor($courseId, $userId)) {
+            throw new \RuntimeException('course_instructor_not_found');
+        }
     }
 
     // ── Validators ─────────────────────────────────────────────────────────────
@@ -165,5 +309,23 @@ final class CourseService
         }
 
         return $lang;
+    }
+
+    private function validateEmail(mixed $raw): string
+    {
+        if (! is_string($raw)) {
+            throw new \InvalidArgumentException('email:required');
+        }
+
+        $email = mb_strtolower(trim($raw));
+
+        if ($email === '') {
+            throw new \InvalidArgumentException('email:required');
+        }
+        if (mb_strlen($email) > self::MAX_EMAIL_LEN || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new \InvalidArgumentException('email:invalid');
+        }
+
+        return $email;
     }
 }

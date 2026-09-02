@@ -146,8 +146,10 @@ final class QuestionImageController
             $this->error(404, 'session_not_found', t('error.session_not_found'));
         }
         $courseRepo = new CourseRepository();
-        $course = $courseRepo->findById((int) $session['course_id']);
-        if ($course === null || (int) $course['instructor_id'] !== $userId) {
+        $courseId = (int) $session['course_id'];
+        $course = $courseRepo->findById($courseId);
+        // Owner or co-instructor (FR-97).
+        if ($course === null || $courseRepo->roleFor($courseId, $userId) === null) {
             $this->error(403, 'forbidden', t('error.forbidden'));
         }
     }

@@ -601,7 +601,7 @@
 [x] T-1111  Health-check endpoint /api/v1/health                                         [NFR-72]
 [x] T-1112  Admin audit-log viewer UI                                                    [FR-91]
 [ ] T-1113  LMS integration (Moodle / Canvas export)                                    [—]
-[ ] T-1114  Multi-instructor course ownership                                            [—]
+[x] T-1114  Multi-instructor course ownership                                            [FR-97]
 [x] T-1115  Containerize (docker-compose: PHP + MySQL [+ Node later])                   [NFR-75]
 [x] T-1116  Question import V2 supporting legacy format and staged flow with metadata   [FR-31]
 ```

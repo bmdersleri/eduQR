@@ -3,12 +3,13 @@
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
 use EduQR\Repositories\CourseRepository;
+use EduQR\Repositories\UserRepository;
 use EduQR\Services\CourseService;
 
 $instructor = AuthMiddleware::require();
 $csrfToken  = CsrfMiddleware::getToken();
 
-$service = new CourseService(new CourseRepository());
+$service = new CourseService(new CourseRepository(), new UserRepository());
 $page    = max(1, (int) ($_GET['page'] ?? 1));
 $result  = $service->listMyCourses((int) $instructor['id'], $page, 20);
 $courses = $result['data'];
@@ -62,11 +63,12 @@ ob_start();
             <a href="<?= htmlspecialchars(eduqr_path('/admin/courses/' . (int) $course['id']), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary btn-sm">
                 <?= eduqr_icon('chart') ?> <?= htmlspecialchars(t('common.actions'), ENT_QUOTES, 'UTF-8') ?>
             </a>
-            <?php if ($course['status'] === 'archived'): ?>
+            <?php /* Restoring is owner-only (FR-97); the API enforces it too. */ ?>
+            <?php if ($course['status'] === 'archived' && (int) $course['instructor_id'] === (int) $instructor['id']): ?>
             <button type="button" class="btn btn-primary btn-sm course-restore-btn" data-course-id="<?= (int) $course['id'] ?>">
                 <?= eduqr_icon('spark') ?> <?= htmlspecialchars(t('course.action.restore'), ENT_QUOTES, 'UTF-8') ?>
             </button>
-            <?php else: ?>
+            <?php elseif ($course['status'] !== 'archived'): ?>
             <a href="<?= htmlspecialchars(eduqr_path('/admin/courses/' . (int) $course['id'] . '/edit'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-primary btn-sm">
                 <?= eduqr_icon('spark') ?> <?= htmlspecialchars(t('common.edit'), ENT_QUOTES, 'UTF-8') ?>
             </a>

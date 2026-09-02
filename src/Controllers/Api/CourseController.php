@@ -8,6 +8,7 @@ use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
 use EduQR\Repositories\AuditLogRepository;
 use EduQR\Repositories\CourseRepository;
+use EduQR\Repositories\UserRepository;
 use EduQR\Services\CourseService;
 
 final class CourseController
@@ -17,7 +18,7 @@ final class CourseController
 
     public function __construct()
     {
-        $this->service = new CourseService(new CourseRepository());
+        $this->service = new CourseService(new CourseRepository(), new UserRepository());
         $this->auditLog = new AuditLogRepository();
     }
 
@@ -157,6 +158,97 @@ final class CourseController
         ]);
     }
 
+    // ── GET /api/v1/courses/{id}/instructors ───────────────────────────────────
+
+    /** @requirement FR-97 */
+    public function listInstructors(int $id): void
+    {
+        $user = AuthMiddleware::require();
+
+        try {
+            $instructors = $this->service->listInstructors($id, (int) $user['id']);
+        } catch (\RuntimeException $e) {
+            $this->handleRuntimeException($e);
+        }
+
+        $this->json(200, [
+            'success' => true,
+            'data' => $instructors,
+        ]);
+    }
+
+    // ── POST /api/v1/courses/{id}/instructors ──────────────────────────────────
+
+    /** @requirement FR-97 */
+    public function addInstructor(int $id): void
+    {
+        $user = AuthMiddleware::require();
+        CsrfMiddleware::verify();
+
+        $body = $this->jsonBody();
+
+        try {
+            $added = $this->service->addInstructor($id, (int) $user['id'], $body);
+        } catch (\RuntimeException $e) {
+            $this->handleRuntimeException($e);
+        } catch (\InvalidArgumentException $e) {
+            $this->handleValidationException($e);
+        }
+
+        // Audit: FR-90
+        try {
+            $this->auditLog->write(
+                'instructor',
+                (int) $user['id'],
+                'course.instructor_added',
+                'course',
+                $id,
+                ['user_id' => $added['user_id'], 'role' => $added['role']]
+            );
+        } catch (\Throwable) {
+        }
+
+        $this->json(201, [
+            'success' => true,
+            'data' => $added,
+            'message' => t('course.instructor.added'),
+        ]);
+    }
+
+    // ── DELETE /api/v1/courses/{id}/instructors/{userId} ───────────────────────
+
+    /** @requirement FR-97 */
+    public function removeInstructor(int $id, int $userId): void
+    {
+        $user = AuthMiddleware::require();
+        CsrfMiddleware::verify();
+
+        try {
+            $this->service->removeInstructor($id, (int) $user['id'], $userId);
+        } catch (\RuntimeException $e) {
+            $this->handleRuntimeException($e);
+        }
+
+        // Audit: FR-90
+        try {
+            $this->auditLog->write(
+                'instructor',
+                (int) $user['id'],
+                'course.instructor_removed',
+                'course',
+                $id,
+                ['user_id' => $userId]
+            );
+        } catch (\Throwable) {
+        }
+
+        $this->json(200, [
+            'success' => true,
+            'data' => null,
+            'message' => t('course.instructor.removed'),
+        ]);
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     private function coursePayload(array $course): array
@@ -180,7 +272,24 @@ final class CourseController
         match ($e->getMessage()) {
             'course_not_found' => $this->error(404, 'course_not_found', t('error.course_not_found')),
             'forbidden' => $this->error(403, 'forbidden', t('error.forbidden')),
+            'course_owner_only' => $this->error(403, 'forbidden', t('error.course_owner_only')),
             'invalid_course_state' => $this->error(409, 'invalid_course_state', t('error.invalid_course_state')),
+            'instructor_not_found' => $this->error(404, 'instructor_not_found', t('error.instructor_not_found')),
+            'course_instructor_not_found' => $this->error(
+                404,
+                'course_instructor_not_found',
+                t('error.course_instructor_not_found')
+            ),
+            'already_course_instructor' => $this->error(
+                409,
+                'already_course_instructor',
+                t('error.already_course_instructor')
+            ),
+            'cannot_remove_course_owner' => $this->error(
+                409,
+                'cannot_remove_course_owner',
+                t('error.cannot_remove_course_owner')
+            ),
             default => $this->error(500, 'server_error', t('error.server_error')),
         };
     }
@@ -190,10 +299,11 @@ final class CourseController
         $parts = explode(':', $e->getMessage(), 2);
         $field = $parts[0];
         $key = $parts[1] ?? 'validation_error';
-        $message = match ($key) {
-            'required' => t('validation.required'),
-            'too_long' => t('validation.text_too_long'),
-            'invalid' => t('validation.invalid_language'),
+        $message = match (true) {
+            $key === 'required' => t('validation.required'),
+            $key === 'too_long' => t('validation.text_too_long'),
+            $key === 'invalid' && $field === 'email' => t('validation.invalid_email'),
+            $key === 'invalid' => t('validation.invalid_language'),
             default => t('common.error'),
         };
         $this->json(400, [

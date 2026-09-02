@@ -655,7 +655,8 @@ final class ReportService
         if ($course === null) {
             throw new \RuntimeException('course_not_found');
         }
-        if ((int) $course['instructor_id'] !== $userId) {
+        // Owner or co-instructor (FR-97).
+        if ($this->courses->roleFor($courseId, $userId) === null) {
             throw new \RuntimeException('forbidden');
         }
 

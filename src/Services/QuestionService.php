@@ -250,8 +250,10 @@ final class QuestionService
         if ($session === null) {
             throw new \RuntimeException('session_not_found');
         }
-        $course = $this->courses->findById((int) $session['course_id']);
-        if ($course === null || (int) $course['instructor_id'] !== $userId) {
+        $courseId = (int) $session['course_id'];
+        $course = $this->courses->findById($courseId);
+        // Owner or co-instructor (FR-97).
+        if ($course === null || $this->courses->roleFor($courseId, $userId) === null) {
             throw new \RuntimeException('forbidden');
         }
 

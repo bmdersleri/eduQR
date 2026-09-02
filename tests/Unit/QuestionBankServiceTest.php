@@ -16,6 +16,41 @@ use PHPUnit\Framework\TestCase;
 
 final class QuestionBankServiceTest extends TestCase
 {
+    // ── Co-instructor access (FR-97) ───────────────────────────────────────────
+
+    public function testSaveQuestionToBankAllowedForCoInstructor_FR97(): void
+    {
+        $created = [];
+        $service = $this->buildService(
+            bankRepo: $this->bankRepo($created),
+            questionRepo: $this->questionRepo(),
+            optionRepo: $this->optionRepo(),
+            sessionRepo: $this->sessionRepo(),
+            courseRepo: $this->courseRepo([20]),
+            generator: $this->generator([]),
+        );
+
+        $this->assertSame(1, $service->saveQuestion(50, 20));
+    }
+
+    public function testSaveQuestionToBankStillForbiddenForStranger_FR97(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('forbidden');
+
+        $created = [];
+        $service = $this->buildService(
+            bankRepo: $this->bankRepo($created),
+            questionRepo: $this->questionRepo(),
+            optionRepo: $this->optionRepo(),
+            sessionRepo: $this->sessionRepo(),
+            courseRepo: $this->courseRepo([20]),
+            generator: $this->generator([]),
+        );
+
+        $service->saveQuestion(50, 99);
+    }
+
     public function testSaveQuestionToBankCopiesExistingQuestion_FR93(): void
     {
         $created = [];
@@ -416,9 +451,14 @@ final class QuestionBankServiceTest extends TestCase
         };
     }
 
-    private function courseRepo(): CourseRepositoryInterface
+    /** @param list<int> $coInstructors co-instructor user ids (FR-97); user 7 is the owner */
+    private function courseRepo(array $coInstructors = []): CourseRepositoryInterface
     {
-        return new class () implements CourseRepositoryInterface {
+        return new class ($coInstructors) implements CourseRepositoryInterface {
+            public function __construct(private array $coInstructors = [])
+            {
+            }
+
             public function findById(int $id): ?array
             {
                 return [
@@ -455,6 +495,29 @@ final class QuestionBankServiceTest extends TestCase
 
             public function restore(int $id): void
             {
+            }
+
+            public function roleFor(int $courseId, int $userId): ?string
+            {
+                if ($userId === 7) {
+                    return 'owner';
+                }
+
+                return in_array($userId, $this->coInstructors, true) ? 'co_instructor' : null;
+            }
+
+            public function listInstructors(int $courseId): array
+            {
+                return [];
+            }
+
+            public function addInstructor(int $courseId, int $userId, string $role): void
+            {
+            }
+
+            public function removeInstructor(int $courseId, int $userId): bool
+            {
+                return false;
             }
         };
     }

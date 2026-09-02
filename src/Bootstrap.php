@@ -289,6 +289,19 @@ final class Bootstrap
             (new Controllers\Api\CourseController())->restore((int) $p['id']);
         });
 
+        // Course instructors (FR-97)
+        $router->get('/api/v1/courses/{id}/instructors', function (array $p): void {
+            (new Controllers\Api\CourseController())->listInstructors((int) $p['id']);
+        });
+
+        $router->post('/api/v1/courses/{id}/instructors', function (array $p): void {
+            (new Controllers\Api\CourseController())->addInstructor((int) $p['id']);
+        });
+
+        $router->delete('/api/v1/courses/{id}/instructors/{userId}', function (array $p): void {
+            (new Controllers\Api\CourseController())->removeInstructor((int) $p['id'], (int) $p['userId']);
+        });
+
         // ── API: Sessions ─────────────────────────────────────────────────────
         $router->post('/api/v1/courses/{id}/sessions', function (array $p): void {
             (new Controllers\Api\SessionController())->create((int) $p['id']);

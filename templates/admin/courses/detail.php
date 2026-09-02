@@ -4,13 +4,14 @@ use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
 use EduQR\Repositories\CourseRepository;
 use EduQR\Repositories\SessionRepository;
+use EduQR\Repositories\UserRepository;
 use EduQR\Services\CourseService;
 
 $instructor = AuthMiddleware::require();
 $csrfToken  = CsrfMiddleware::getToken();
 $courseId   = (int) ($p['id'] ?? 0);
 
-$service = new CourseService(new CourseRepository());
+$service = new CourseService(new CourseRepository(), new UserRepository());
 
 try {
     $course = $service->getCourse($courseId, (int) $instructor['id']);
@@ -23,6 +24,9 @@ try {
 
 $sessionRepo = new SessionRepository();
 $sessions    = $sessionRepo->listByCourse($courseId);
+
+// Owner-only controls (FR-97). The API enforces the same rule server-side.
+$isCourseOwner = (int) $course['instructor_id'] === (int) $instructor['id'];
 
 ob_start();
 ?>
@@ -49,11 +53,12 @@ ob_start();
         <a href="<?= htmlspecialchars(eduqr_path('/admin/courses/' . (int) $course['id'] . '/analytics'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary btn-sm">
             <?= eduqr_icon('chart') ?> <?= htmlspecialchars(t('course.analytics.view'), ENT_QUOTES, 'UTF-8') ?>
         </a>
-        <?php if ($course['status'] === 'archived'): ?>
+        <?php /* Restoring is owner-only (FR-97); the API enforces it too. */ ?>
+        <?php if ($course['status'] === 'archived' && $isCourseOwner): ?>
         <button type="button" id="course-restore-btn" class="btn btn-primary btn-sm">
             <?= eduqr_icon('spark') ?> <?= htmlspecialchars(t('course.action.restore'), ENT_QUOTES, 'UTF-8') ?>
         </button>
-        <?php else: ?>
+        <?php elseif ($course['status'] !== 'archived'): ?>
         <a href="<?= htmlspecialchars(eduqr_path('/admin/courses/' . (int) $course['id'] . '/edit'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-primary btn-sm">
             <?= eduqr_icon('spark') ?> <?= htmlspecialchars(t('common.edit'), ENT_QUOTES, 'UTF-8') ?>
         </a>
@@ -134,7 +139,7 @@ ob_start();
     <?php endforeach; ?>
 </div>
 <?php endif; ?>
-<?php if ($course['status'] === 'archived'): ?>
+<?php if ($course['status'] === 'archived' && $isCourseOwner): ?>
 <script>
 document.getElementById('course-restore-btn').addEventListener('click', async function () {
     this.disabled = true;

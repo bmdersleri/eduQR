@@ -166,8 +166,8 @@ final class ReactionService
     // ── Private helpers ────────────────────────────────────────────────────────
 
     /**
-     * Ownership check — identical to the other instructor session endpoints:
-     * the caller must own the course the session belongs to.
+     * Access check — identical to the other instructor session endpoints: the
+     * caller must own or co-instruct the course the session belongs to (FR-97).
      */
     private function requireSession(int $sessionId, int $userId): array
     {
@@ -176,11 +176,13 @@ final class ReactionService
             throw new \RuntimeException('session_not_found');
         }
 
-        $course = $this->courses->findById((int) $session['course_id']);
+        $courseId = (int) $session['course_id'];
+        $course = $this->courses->findById($courseId);
         if ($course === null) {
             throw new \RuntimeException('course_not_found');
         }
-        if ((int) $course['instructor_id'] !== $userId) {
+        // Owner or co-instructor (FR-97).
+        if ($this->courses->roleFor($courseId, $userId) === null) {
             throw new \RuntimeException('forbidden');
         }
 

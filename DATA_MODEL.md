@@ -19,6 +19,8 @@ This document defines every table eduQR uses, its columns, constraints, indexes,
 ```mermaid
 erDiagram
     USERS ||--o{ COURSES : owns
+    COURSES ||--o{ COURSE_INSTRUCTORS : grants
+    USERS ||--o{ COURSE_INSTRUCTORS : holds
     COURSES ||--o{ SESSIONS : has
     SESSIONS ||--o{ QUESTIONS : contains
     COURSES ||--o{ QUESTION_BANK_ITEMS : has
@@ -57,6 +59,13 @@ erDiagram
         string status
         datetime created_at
         datetime updated_at
+    }
+    COURSE_INSTRUCTORS {
+        bigint id PK
+        bigint course_id FK
+        bigint user_id FK
+        string role
+        datetime created_at
     }
     SESSIONS {
         bigint id PK
@@ -222,10 +231,41 @@ CREATE TABLE courses (
 Rules:
 
 - `instructor_id` must reference a `users` row whose `role = 'instructor'` (enforced at the service layer; the FK only guarantees a valid `users` row exists).
+- `instructor_id` means **the owner** — the instructor who created the course. It is never nullable and is never reassigned; the audit trail and every historical query depend on it.
 - Archiving sets `status = 'archived'`; sessions are preserved.
-- Course ownership is enforced in `CourseService` — an instructor can only read/modify their own courses (`FR-14`).
+- Course access is enforced in `CourseService` against `course_instructors` (`FR-14`, `FR-97`): the owner and any co-instructor may read and modify the course, and only the owner may archive, restore, or manage the instructor list.
 
-### 2.3 `sessions`
+### 2.3 `course_instructors`
+
+Who may access a course (`FR-97`). `courses.instructor_id` remains the owner; this table lists the owner plus any co-instructors and is the single source of truth for course authorization.
+
+```sql
+CREATE TABLE course_instructors (
+    id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    course_id   BIGINT UNSIGNED NOT NULL,
+    user_id     BIGINT UNSIGNED NOT NULL,
+    role        ENUM('owner','co_instructor') NOT NULL,
+    created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_course_instructors_course_user (course_id, user_id),
+    INDEX idx_course_instructors_course (course_id),
+    INDEX idx_course_instructors_user (user_id),
+    CONSTRAINT fk_course_instructors_course
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+    CONSTRAINT fk_course_instructors_user
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+Rules:
+
+- Every course has exactly one `owner` row, written in the same transaction as the `courses` insert, so a course can never exist without an owner. Migration `0019` backfilled one owner row per pre-existing course.
+- The `owner` row always mirrors `courses.instructor_id`. It is never deleted while the course exists; removing the owner is rejected at the service layer.
+- A `co_instructor` may read and modify the course and has full access to its sessions, questions, and reports. Archiving, restoring, and instructor management stay owner-only.
+- Like `courses.instructor_id`, `user_id` must reference an active `users` row whose `role = 'instructor'` (enforced in `CourseService::addInstructor()`; the FK only guarantees the row exists).
+- The unique key on `(course_id, user_id)` makes "already an instructor on this course" a database-level invariant, not just a service check.
+- `ON DELETE CASCADE` on both foreign keys: deleting a course or a user removes their access rows.
+
+### 2.4 `sessions`
 
 A single in-class live session. `short_code` is what the QR encodes.
 
@@ -272,7 +312,7 @@ Rules:
 - `delete_requested_at` set means a soft delete is pending; hard delete after 7 days (`FR-71`).
 - `anonymized = 1` means participant nicknames/hashes have been stripped (`FR-70`).
 
-### 2.4 `questions`
+### 2.5 `questions`
 
 Each question belongs to one session.
 
@@ -312,7 +352,7 @@ Rules:
 - `allow_multiple_answers` default `false`; controls the `answers` uniqueness rule.
 - `fill_in_the_blank` (`FR-31`) needs no new columns: the instructor's single correct answer is stored as one `options` row (`is_correct=1`, `option_text` = correct answer) and the student's response is stored in `answers.answer_text` exactly like `open_text`. Grading compares the two case-insensitively and trimmed.
 
-### 2.5 `question_bank_items`
+### 2.6 `question_bank_items`
 
 Reusable course-scoped question templates. Each row stores a normalized question payload in `payload_json` so it can be copied into any future session for the same course.
 
@@ -344,7 +384,7 @@ Rules:
 - `source_kind` describes whether the item came from an existing session question or lecture-note generation.
 - `payload_json` stores the question body shape used by `QuestionService::create()` so the item can be cloned into a session without loss of structure.
 
-### 2.6 `options`
+### 2.7 `options`
 
 Choices for `multiple_choice`, `yes_no`, and `likert_5` questions. For `open_text`, this table has zero rows for that question.
 
@@ -370,7 +410,7 @@ Rules:
 - `yes_no` has exactly 2 options, generated automatically with `option_value` `yes` / `no`.
 - `likert_5` has exactly 5 options, `option_value` `1`–`5`.
 
-### 2.7 `participants`
+### 2.8 `participants`
 
 Anonymous-ish students who joined a session.
 
@@ -398,7 +438,7 @@ Rules:
 - `is_approved` reserved for future moderated-join flows; defaults to `1`.
 - Anonymization (`FR-70`) sets `nickname` and `nickname_normalized` to a placeholder like `anon_<id>` and `device_hash` to `NULL`.
 
-### 2.8 `answers`
+### 2.9 `answers`
 
 A submitted answer. Exactly one of `selected_option_id` / `answer_text` is populated.
 
@@ -433,7 +473,7 @@ Rules:
 
 > **`allow_multiple_answers` and the unique index:** When a question allows multiple answers, the `UNIQUE (question_id, participant_id)` index would block the second insert. For MVP, `allow_multiple_answers` defaults to `false` and is not exposed in the question-creation UI; the column and flag exist so the schema is forward-compatible. If/when multiple answers are enabled, a migration must drop this unique index and the service layer becomes solely responsible for any per-question answer caps. Document that change in an ADR.
 
-### 2.9 `question_reactions`
+### 2.10 `question_reactions`
 
 A student's comprehension signal for one question (`FR-48`). Not an answer and not
 correctness data: it is unaffected by `exam_mode`, `show_results_to_students` and
@@ -469,7 +509,7 @@ Rules:
 - `session_id` is denormalized from `questions.session_id` so the instructor aggregate query is a single indexed scan.
 - Aggregates are instructor-only (`ReactionService::aggregatesForSession()`); the student endpoint returns no counts.
 
-### 2.10 `audit_logs`
+### 2.11 `audit_logs`
 
 Records important system actions (`FR-90`).
 
@@ -493,7 +533,7 @@ Tracked actions: `session.created`, `session.closed`, `session.anonymized`, `ses
 
 Retention: 365 days.
 
-### 2.11 `login_attempts`
+### 2.12 `login_attempts`
 
 For rate-limiting failed logins (`FR-05`).
 
@@ -512,7 +552,7 @@ Rate-limit rule: ≥ 5 rows with `succeeded = 0` for the same `email` within 10 
 
 Retention: 90 days.
 
-### 2.12 `password_resets`
+### 2.13 `password_resets`
 
 Email-based password reset tokens for instructors (`FR-06`).
 
@@ -542,7 +582,7 @@ Rules:
 
 Retention: 30 days.
 
-### 2.13 `schema_migrations`
+### 2.14 `schema_migrations`
 
 Tracks applied migrations. Created by `bin/migrate.php`.
 
@@ -553,7 +593,7 @@ CREATE TABLE schema_migrations (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
-### 2.14 `locales` (metadata)
+### 2.15 `locales` (metadata)
 
 Lists supported locales for the language switcher. Translation strings themselves live in JSON files, **not** the database.
 
@@ -573,7 +613,9 @@ CREATE TABLE locales (
 ## 3. Relationships Summary
 
 ```text
-users         1 ─── *  courses          (instructor_id)
+users         1 ─── *  courses          (instructor_id, the owner)
+courses       1 ─── *  course_instructors (course_id)
+users         1 ─── *  course_instructors (user_id)
 courses       1 ─── *  sessions         (course_id)
 sessions      1 ─── *  questions        (session_id)
 sessions      1 ─── *  participants     (session_id)
@@ -595,8 +637,11 @@ All foreign keys use `ON DELETE CASCADE` except `answers.selected_option_id`, wh
 | Table | Index | Purpose |
 | --- | --- | --- |
 | `users` | `email` (unique) | Login lookup |
-| `courses` | `instructor_id` | List-my-courses |
+| `courses` | `instructor_id` | Owner lookup |
 | `courses` | `status` | Filter archived |
+| `course_instructors` | `(course_id, user_id)` unique | Authorization check — every instructor request |
+| `course_instructors` | `course_id` | List a course's instructors |
+| `course_instructors` | `user_id` | List-my-courses join (owned + co-instructed) |
 | `sessions` | `short_code` (unique) | QR resolve — hot path |
 | `sessions` | `course_id` | Sessions per course |
 | `sessions` | `status` | Active sessions, auto-close sweep |

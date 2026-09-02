@@ -351,6 +351,9 @@ Require an `eduqr_session` cookie tied to a `users` row with `role IN ('instruct
 | PATCH | `/api/v1/courses/{id}` | Update |
 | DELETE | `/api/v1/courses/{id}` | Archive |
 | POST | `/api/v1/courses/{id}/restore` | Restore an archived course |
+| GET | `/api/v1/courses/{id}/instructors` | List the course's instructors |
+| POST | `/api/v1/courses/{id}/instructors` | Add a co-instructor by email (owner only) |
+| DELETE | `/api/v1/courses/{id}/instructors/{userId}` | Remove a co-instructor (owner only) |
 
 Create / update body:
 
@@ -374,7 +377,70 @@ Create response:
 }
 ```
 
-Ownership: an instructor only sees and modifies their own courses (`FR-14`). Accessing another instructor's course returns 403 `forbidden`.
+Ownership: an instructor only sees and modifies courses they own or co-instruct (`FR-14`, `FR-97`). Accessing any other course returns 403 `forbidden`.
+
+#### 5.1.1 Course instructors (`FR-97`)
+
+`courses.instructor_id` is the **owner** (the creator). `course_instructors` lists everyone with access and is the single source of truth for course authorization.
+
+| Action | Owner | Co-instructor |
+| --- | --- | --- |
+| Read the course, its sessions, questions, reports, exports | yes | yes |
+| Run sessions, add questions, moderate answers | yes | yes |
+| Update course fields | yes | yes |
+| Archive / restore the course | yes | no |
+| Add / remove instructors | yes | no |
+| See the course in `GET /api/v1/courses` | yes | yes |
+
+All three endpoints require instructor authentication; the two mutating ones require a valid CSRF token.
+
+A co-instructor who attempts an owner-only action (archive, restore, or either instructor mutation) gets 403 with the `forbidden` code and a message explaining that the action is owner-only; a caller with no access to the course gets the generic `forbidden` message. The machine-readable code is `forbidden` in both cases.
+
+**`GET /api/v1/courses/{id}/instructors`** — visible to the owner and to co-instructors.
+
+```json
+{
+  "success": true,
+  "data": [
+    { "user_id": 7,  "email": "owner@example.org", "display_name": "Ada Lovelace", "role": "owner",         "created_at": "2026-05-14 09:00:00" },
+    { "user_id": 12, "email": "co@example.org",    "display_name": "Alan Turing",  "role": "co_instructor", "created_at": "2026-06-01 11:20:00" }
+  ]
+}
+```
+
+Errors: 403 `forbidden`, 404 `course_not_found`.
+
+**`POST /api/v1/courses/{id}/instructors`** — owner only. The body identifies an **existing** instructor account by email; there is no invitation flow.
+
+```json
+{ "email": "co@example.org" }
+```
+
+```json
+{
+  "success": true,
+  "data": { "user_id": 12, "role": "co_instructor" },
+  "message": "Instructor added to the course."
+}
+```
+
+The target must be an **active account with `role = 'instructor'`**. Addresses that belong to no account, to an admin, or to a deactivated account are all reported as `instructor_not_found`, so the endpoint cannot be used to probe which addresses are registered.
+
+Validation failures follow the `field:reason` convention and return 400 `validation_error` with a `field` key (`email:required`, `email:invalid`). Errors: 400 `validation_error`, 403 `forbidden` (caller is not the owner), 404 `course_not_found`, 404 `instructor_not_found`, 409 `already_course_instructor` (the user is already the owner or already a co-instructor).
+
+**`DELETE /api/v1/courses/{id}/instructors/{userId}`** — owner only. The owner cannot be removed, because a course must always have an owner.
+
+```json
+{
+  "success": true,
+  "data": null,
+  "message": "Instructor removed from the course."
+}
+```
+
+Errors: 403 `forbidden`, 404 `course_not_found`, 404 `course_instructor_not_found` (that user is not on the course), 409 `cannot_remove_course_owner`.
+
+Both mutating endpoints write an `audit_logs` row (`course.instructor_added`, `course.instructor_removed`) against the `course` entity (`FR-90`).
 
 Restore response (`POST /api/v1/courses/{id}/restore`):
 
@@ -979,9 +1045,13 @@ Stable, machine-readable codes. Add to this table when introducing a new code.
 | `question_not_found` | 404 | |
 | `question_not_open_text` | 422 | Theme extraction requested for a non open-text question |
 | `question_bank_not_found` | 404 | Reusable question bank item not found or not in scope |
+| `instructor_not_found` | 404 | No active instructor account exists for the given email |
+| `course_instructor_not_found` | 404 | That user is not an instructor on this course |
 | `answer_not_found` | 404 | |
 | `upload_error` | 400 | Uploaded image transfer failed |
 | `email_taken` | 409 | Account email already exists |
+| `already_course_instructor` | 409 | User already has instructor access to this course |
+| `cannot_remove_course_owner` | 409 | The course owner cannot be removed from the course |
 | `duplicate_nickname` | 409 | Nickname already taken in this session |
 | `duplicate_answer` | 409 | Participant already answered this question |
 | `session_closed` | 410 | Session is closed |

@@ -30,6 +30,9 @@ The MVP is complete when **all** of the following hold.
 [ ] Create a course (title, code, semester, description, default language)  [FR-10]
 [ ] View, edit, and archive their own courses                               [FR-11, FR-12, FR-13]
 [x] Restore an archived course without losing its sessions or reports       [FR-16]
+[x] Grant a colleague co-instructor access to a course they own             [FR-97]
+[x] Revoke a co-instructor without losing the course or its sessions        [FR-97]
+[x] Work on a course they co-instruct: sessions, questions, reports         [FR-97]
 [ ] Be denied access to another instructor's course                         [FR-14]
 [ ] Start a live session under a course                                     [FR-20]
 [ ] See a generated 6-char short code and QR code                           [FR-21, FR-22]
@@ -277,6 +280,12 @@ Each phase in `TASKS.md` is gated by the checkpoint below. Do not start the next
 [ ] Instructor can list, edit, and archive courses                              [FR-11, FR-12, FR-13]
 [x] Instructor can restore an archived course they own                          [FR-16]
 [ ] Course ownership is enforced on every read and write                        [FR-14]
+[x] Owner and co-instructors both pass every course-derived access check        [FR-97]
+[x] Archive, restore, and instructor management are refused to co-instructors   [FR-97]
+[x] An unrelated instructor is still denied on every course-derived route       [FR-97]
+[x] Adding an unknown email, a duplicate, or the owner is rejected              [FR-97]
+[x] The course owner cannot be removed from the course                          [FR-97]
+[x] My-courses lists courses the instructor owns and co-instructs               [FR-97]
 [ ] Course UI uses translation keys                                              [FR-80]
 ```
 

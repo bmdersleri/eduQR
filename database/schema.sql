@@ -56,6 +56,26 @@ CREATE TABLE courses (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ─────────────────────────────────────────────────────────────
+-- course_instructors  —  who may access a course (FR-97)
+-- courses.instructor_id stays the owner; this table is the
+-- single source of truth for course authorization.
+-- ─────────────────────────────────────────────────────────────
+CREATE TABLE course_instructors (
+    id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    course_id   BIGINT UNSIGNED NOT NULL,
+    user_id     BIGINT UNSIGNED NOT NULL,
+    role        ENUM('owner','co_instructor') NOT NULL,
+    created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_course_instructors_course_user (course_id, user_id),
+    INDEX idx_course_instructors_course (course_id),
+    INDEX idx_course_instructors_user (user_id),
+    CONSTRAINT fk_course_instructors_course
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+    CONSTRAINT fk_course_instructors_user
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ─────────────────────────────────────────────────────────────
 -- sessions  —  a live classroom session (NOT a PHP HTTP session)
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE sessions (

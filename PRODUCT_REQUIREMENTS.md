@@ -159,6 +159,7 @@ See `I18N_SPEC.md` for the implementation contract.
 | FR-94 | MUST | The system MUST be able to generate question bank entries from lecture notes via an LLM, including opening, middle, and closing questions. |
 | FR-95 | MUST | An instructor MUST be able to review generated bank questions and publish selected entries into a session as draft questions. |
 | FR-96 | MUST | An instructor MUST be able to enable exam_mode on a session. While exam_mode is enabled, students MUST NOT see live results or answer correctness under any circumstance, overriding `show_results_to_students` and per-question `show_results`. |
+| FR-97 | MUST | A course owner MUST be able to grant and revoke co-instructor access to a course. A co-instructor MUST have the same access as the owner to that course's sessions, questions, and reports, and the course MUST appear in their course list. Only the owner MUST be able to archive, restore, or delete the course and manage its instructor list. |
 
 ---
 

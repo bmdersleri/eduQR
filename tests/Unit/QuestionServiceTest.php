@@ -543,11 +543,41 @@ class QuestionServiceTest extends TestCase
         $this->assertSame('Closing Q', $captured[2]['text']);
     }
 
+    // ── Co-instructor access (FR-97) ───────────────────────────────────────────
+
+    public function testCreateQuestionAllowedForCoInstructor_FR97(): void
+    {
+        $captured = [];
+        $service = $this->makeService('en', $captured, [20]);
+
+        $id = $service->create(1, 20, [
+            'question_text' => 'Co-instructor question?',
+            'question_type' => 'open_text',
+        ]);
+
+        $this->assertGreaterThan(0, $id);
+    }
+
+    public function testCreateQuestionStillForbiddenForStranger_FR97(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('forbidden');
+
+        $captured = [];
+        $service = $this->makeService('en', $captured, [20]);
+        $service->create(1, 99, [
+            'question_text' => 'Stranger question?',
+            'question_type' => 'open_text',
+        ]);
+    }
+
     // ── Stub factories ─────────────────────────────────────────────────────────
 
+    /** @param list<int> $coInstructors co-instructor user ids on course 10 (FR-97) */
     private function makeService(
         string $language = 'en',
         array  &$capturedOptions = [],
+        array  $coInstructors = [],
     ): QuestionService {
         $session = [
             'id' => 1,
@@ -615,7 +645,7 @@ class QuestionServiceTest extends TestCase
             }
         };
 
-        return $this->buildService($session, $questionRepo, $optionRepo);
+        return $this->buildService($session, $questionRepo, $optionRepo, $coInstructors);
     }
 
     private function makeServiceWithRepo(
@@ -696,10 +726,12 @@ class QuestionServiceTest extends TestCase
         };
     }
 
+    /** @param list<int> $coInstructors co-instructor user ids on course 10 (FR-97) */
     private function buildService(
         array $session,
         QuestionRepositoryInterface $questionRepo,
         OptionRepositoryInterface $optionRepo,
+        array $coInstructors = [],
     ): QuestionService {
         $sessionRepo = new class ($session) implements SessionRepositoryInterface {
             public function __construct(private array $session)
@@ -737,7 +769,10 @@ class QuestionServiceTest extends TestCase
             }
         };
 
-        $courseRepo = new class () implements CourseRepositoryInterface {
+        $courseRepo = new class ($coInstructors) implements CourseRepositoryInterface {
+            public function __construct(private array $coInstructors = [])
+            {
+            }
             public function findById(int $id): ?array
             {
                 return ['id' => 10, 'instructor_id' => 1, 'title' => 'Test', 'status' => 'active', 'default_language' => 'en'];
@@ -762,6 +797,25 @@ class QuestionServiceTest extends TestCase
             }
             public function restore(int $id): void
             {
+            }
+            public function roleFor(int $courseId, int $userId): ?string
+            {
+                if ($userId === 1) {
+                    return 'owner';
+                }
+
+                return in_array($userId, $this->coInstructors, true) ? 'co_instructor' : null;
+            }
+            public function listInstructors(int $courseId): array
+            {
+                return [];
+            }
+            public function addInstructor(int $courseId, int $userId, string $role): void
+            {
+            }
+            public function removeInstructor(int $courseId, int $userId): bool
+            {
+                return false;
             }
         };
 

@@ -16,7 +16,8 @@ use PDO;
  * POST /api/v1/answers/{id}/hide   (T-810)
  * POST /api/v1/answers/{id}/unhide (T-810)
  *
- * Only the session's owning instructor may hide/unhide answers.
+ * Only an instructor on the session's course (owner or co-instructor, FR-97)
+ * may hide/unhide answers.
  * Requires moderation_mode = 1 on the session (enforced at service layer).
  */
 final class AnswerModerationController
@@ -65,9 +66,11 @@ final class AnswerModerationController
         }
 
         $courseRepo = new CourseRepository();
-        $course = $courseRepo->findById((int) $session['course_id']);
+        $courseId = (int) $session['course_id'];
+        $course = $courseRepo->findById($courseId);
 
-        if ($course === null || (int) $course['instructor_id'] !== (int) $user['id']) {
+        // Owner or co-instructor (FR-97).
+        if ($course === null || $courseRepo->roleFor($courseId, (int) $user['id']) === null) {
             $this->error(403, 'forbidden', t('error.forbidden'));
         }
 

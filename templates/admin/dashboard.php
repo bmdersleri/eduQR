@@ -2,12 +2,13 @@
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
 use EduQR\Repositories\CourseRepository;
+use EduQR\Repositories\UserRepository;
 use EduQR\Services\CourseService;
 
 $instructor = AuthMiddleware::require();
 $csrfToken  = CsrfMiddleware::getToken();
 
-$courseService = new CourseService(new CourseRepository());
+$courseService = new CourseService(new CourseRepository(), new UserRepository());
 $coursesData   = $courseService->listMyCourses((int) $instructor['id'], 1, 3);
 $recentCourses = $coursesData['data'] ?? [];
 

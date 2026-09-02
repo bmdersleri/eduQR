@@ -90,8 +90,16 @@ class ReportServiceTest extends TestCase
         $sessions->method('findByShortCode')->willReturn($sessionRow ?? ['id' => 10, 'status' => 'active', 'course_id' => 5, 'show_results_to_students' => 1]);
         $sessions->method('listByCourse')->willReturn($sessionList ?? [$sessionRow ?? ['id' => 10, 'status' => 'active', 'course_id' => 5, 'show_results_to_students' => 1]]);
 
+        $course = $courseRow ?? ['id' => 5, 'instructor_id' => 99];
+
         $courses = $this->createMock(CourseRepositoryInterface::class);
-        $courses->method('findById')->willReturn($courseRow ?? ['id' => 5, 'instructor_id' => 99]);
+        $courses->method('findById')->willReturn($course);
+        // FR-97: the owner is the only instructor on these fixtures.
+        $courses->method('roleFor')->willReturnCallback(
+            static fn (int $courseId, int $userId): ?string => (int) $course['instructor_id'] === $userId
+                ? 'owner'
+                : null
+        );
 
         $options = $this->createMock(OptionRepositoryInterface::class);
 
@@ -613,6 +621,9 @@ class ReportServiceTest extends TestCase
 
         $courses = $this->createMock(\EduQR\Contracts\CourseRepositoryInterface::class);
         $courses->method('findById')->willReturn(['id' => 5, 'instructor_id' => 99, 'title' => 'CS']);
+        $courses->method('roleFor')->willReturnCallback(
+            static fn (int $courseId, int $userId): ?string => $userId === 99 ? 'owner' : null
+        );
 
         $options = $this->createMock(\EduQR\Contracts\OptionRepositoryInterface::class);
 
@@ -712,5 +723,80 @@ class ReportServiceTest extends TestCase
 
         $service = $this->makeService(courseRow: ['id' => 5, 'instructor_id' => 999]);
         $service->buildCourseAnalytics(5, 1);
+    }
+
+    // ── Co-instructor access (FR-97) ───────────────────────────────────────────
+
+    /** Course 5 is owned by 99; user 20 co-instructs it, user 77 is unrelated. */
+    private function makeServiceWithCoInstructor(): \EduQR\Services\ReportService
+    {
+        $sessionRow = [
+            'id' => 10,
+            'status' => 'closed',
+            'course_id' => 5,
+            'show_results_to_students' => 1,
+            'title' => 'Week 1',
+            'short_code' => 'ABCD23',
+            'language' => 'en',
+            'started_at' => '2026-05-15 10:00:00',
+            'closed_at' => '2026-05-15 11:00:00',
+            'created_at' => '2026-05-15 09:55:00',
+            'anonymized' => 0,
+            'is_quiz' => 0,
+        ];
+
+        $questions = $this->createMock(QuestionRepositoryInterface::class);
+        $questions->method('findBySession')->willReturn([]);
+
+        $sessions = $this->createMock(SessionRepositoryInterface::class);
+        $sessions->method('findById')->willReturn($sessionRow);
+        $sessions->method('listByCourse')->willReturn([$sessionRow]);
+
+        $courses = $this->createMock(CourseRepositoryInterface::class);
+        $courses->method('findById')->willReturn([
+            'id' => 5,
+            'instructor_id' => 99,
+            'title' => 'CS',
+            'status' => 'active',
+            'code' => 'CSE203',
+            'semester' => '2026-Spring',
+        ]);
+        $courses->method('roleFor')->willReturnCallback(
+            static fn (int $courseId, int $userId): ?string => match ($userId) {
+                99 => 'owner',
+                20 => 'co_instructor',
+                default => null,
+            }
+        );
+
+        $options = $this->createMock(OptionRepositoryInterface::class);
+
+        return new \EduQR\Services\ReportService($sessions, $questions, $options, $courses, $this->pdo);
+    }
+
+    public function testBuildReportAllowedForCoInstructor_FR97(): void
+    {
+        $report = $this->makeServiceWithCoInstructor()->buildReport(10, 20);
+        $this->assertSame(10, (int) $report['session']['id']);
+    }
+
+    public function testBuildReportStillForbiddenForStranger_FR97(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('forbidden');
+        $this->makeServiceWithCoInstructor()->buildReport(10, 77);
+    }
+
+    public function testBuildCourseAnalyticsAllowedForCoInstructor_FR97(): void
+    {
+        $analytics = $this->makeServiceWithCoInstructor()->buildCourseAnalytics(5, 20);
+        $this->assertSame('CS', $analytics['course']['title']);
+    }
+
+    public function testBuildCourseAnalyticsStillForbiddenForStranger_FR97(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('forbidden');
+        $this->makeServiceWithCoInstructor()->buildCourseAnalytics(5, 77);
     }
 }

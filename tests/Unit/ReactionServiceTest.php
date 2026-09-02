@@ -211,10 +211,11 @@ class ReactionServiceTest extends TestCase
         };
     }
 
-    private function makeCourseRepo(?array $course): CourseRepositoryInterface
+    /** @param list<int> $coInstructors co-instructor user ids for this course (FR-97) */
+    private function makeCourseRepo(?array $course, array $coInstructors = []): CourseRepositoryInterface
     {
-        return new class ($course) implements CourseRepositoryInterface {
-            public function __construct(private ?array $course)
+        return new class ($course, $coInstructors) implements CourseRepositoryInterface {
+            public function __construct(private ?array $course, private array $coInstructors = [])
             {
             }
 
@@ -255,6 +256,29 @@ class ReactionServiceTest extends TestCase
             public function restore(int $id): void
             {
             }
+
+            public function roleFor(int $courseId, int $userId): ?string
+            {
+                if ($this->course !== null && (int) $this->course['instructor_id'] === $userId) {
+                    return 'owner';
+                }
+
+                return in_array($userId, $this->coInstructors, true) ? 'co_instructor' : null;
+            }
+
+            public function listInstructors(int $courseId): array
+            {
+                return [];
+            }
+
+            public function addInstructor(int $courseId, int $userId, string $role): void
+            {
+            }
+
+            public function removeInstructor(int $courseId, int $userId): bool
+            {
+                return false;
+            }
         };
     }
 
@@ -271,6 +295,7 @@ class ReactionServiceTest extends TestCase
         ?array $courseRow = null,
         array  $sessionQuestions = [],
         ?ReactionRepositoryInterface $reactions = null,
+        array  $coInstructors = [],
     ): ReactionService {
         $participant = $participantRow ?? ['id' => 1, 'session_id' => 10];
         $question = $questionRow ?? [
@@ -287,7 +312,7 @@ class ReactionServiceTest extends TestCase
             $this->makeQuestionRepo($question, $sessionQuestions),
             $this->makeSessionRepo($session),
             $this->makeParticipantRepo($participant),
-            $this->makeCourseRepo($course),
+            $this->makeCourseRepo($course, $coInstructors),
         );
     }
 
@@ -469,5 +494,27 @@ class ReactionServiceTest extends TestCase
             [['question_id' => 99, 'got_it' => 0, 'lost' => 0]],
             $service->aggregatesForSession(10, 3)
         );
+    }
+
+    // ── Co-instructor access (FR-97) ───────────────────────────────────────────
+
+    public function testAggregatesAllowCoInstructor_FR97(): void
+    {
+        // Course belongs to instructor 3; instructor 4 co-instructs it.
+        $service = $this->makeService(sessionQuestions: [['id' => 99]], coInstructors: [4]);
+
+        $this->assertSame(
+            [['question_id' => 99, 'got_it' => 0, 'lost' => 0]],
+            $service->aggregatesForSession(10, 4)
+        );
+    }
+
+    public function testAggregatesStillRejectStranger_FR97(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('forbidden');
+
+        $service = $this->makeService(sessionQuestions: [['id' => 99]], coInstructors: [4]);
+        $service->aggregatesForSession(10, 5);
     }
 }

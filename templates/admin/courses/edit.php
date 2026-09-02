@@ -3,13 +3,14 @@
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
 use EduQR\Repositories\CourseRepository;
+use EduQR\Repositories\UserRepository;
 use EduQR\Services\CourseService;
 
 $instructor = AuthMiddleware::require();
 $csrfToken  = CsrfMiddleware::getToken();
 $courseId   = (int) ($p['id'] ?? 0);
 
-$service = new CourseService(new CourseRepository());
+$service = new CourseService(new CourseRepository(), new UserRepository());
 
 try {
     $course = $service->getCourse($courseId, (int) $instructor['id']);
@@ -18,6 +19,19 @@ try {
     http_response_code($status);
     include __DIR__ . '/../../../templates/errors/' . $status . '.php';
     exit;
+}
+
+// Course instructors (FR-97). The mutating controls are rendered only for the
+// owner; the API enforces the same rule regardless of what is rendered here.
+$courseInstructors = $service->listInstructors($courseId, (int) $instructor['id']);
+$isCourseOwner     = false;
+
+foreach ($courseInstructors as $courseInstructor) {
+    if ($courseInstructor['user_id'] === (int) $instructor['id']
+        && $courseInstructor['role'] === CourseService::ROLE_OWNER) {
+        $isCourseOwner = true;
+        break;
+    }
 }
 
 ob_start();
@@ -93,7 +107,78 @@ ob_start();
         </form>
     </div>
 
-    <?php if ($course['status'] === 'active'): ?>
+    <div class="eduqr-form-shell mt-4">
+        <div class="eduqr-section-head">
+            <h2 class="h4 mb-0"><?= htmlspecialchars(t('course.instructors.title'), ENT_QUOTES, 'UTF-8') ?></h2>
+        </div>
+        <p class="text-muted"><?= htmlspecialchars(t('course.instructors.subtitle'), ENT_QUOTES, 'UTF-8') ?></p>
+
+        <div id="instructor-error" class="alert alert-danger d-none mb-3" role="alert"></div>
+        <div id="instructor-success" class="alert alert-success d-none mb-3" role="status"></div>
+
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col"><?= htmlspecialchars(t('course.instructors.column.name'), ENT_QUOTES, 'UTF-8') ?></th>
+                        <th scope="col"><?= htmlspecialchars(t('course.instructors.column.role'), ENT_QUOTES, 'UTF-8') ?></th>
+                        <?php if ($isCourseOwner): ?>
+                        <th scope="col" class="text-end"><?= htmlspecialchars(t('common.actions'), ENT_QUOTES, 'UTF-8') ?></th>
+                        <?php endif; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($courseInstructors as $courseInstructor): ?>
+                    <tr>
+                        <td>
+                            <div><?= htmlspecialchars($courseInstructor['display_name'], ENT_QUOTES, 'UTF-8') ?></div>
+                            <div class="meta"><?= htmlspecialchars($courseInstructor['email'], ENT_QUOTES, 'UTF-8') ?></div>
+                        </td>
+                        <td>
+                            <span class="badge <?= $courseInstructor['role'] === CourseService::ROLE_OWNER ? 'text-bg-primary' : 'text-bg-secondary' ?>">
+                                <?= htmlspecialchars(t('course.instructors.role.' . $courseInstructor['role']), ENT_QUOTES, 'UTF-8') ?>
+                            </span>
+                        </td>
+                        <?php if ($isCourseOwner): ?>
+                        <td class="text-end">
+                            <?php if ($courseInstructor['role'] !== CourseService::ROLE_OWNER): ?>
+                            <button type="button" class="btn btn-outline-danger btn-sm instructor-remove-btn"
+                                    data-user-id="<?= (int) $courseInstructor['user_id'] ?>">
+                                <?= htmlspecialchars(t('course.instructors.remove'), ENT_QUOTES, 'UTF-8') ?>
+                            </button>
+                            <?php endif; ?>
+                        </td>
+                        <?php endif; ?>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <?php if (count($courseInstructors) < 2): ?>
+        <p class="text-muted mt-3 mb-0"><?= htmlspecialchars(t('course.instructors.empty'), ENT_QUOTES, 'UTF-8') ?></p>
+        <?php endif; ?>
+
+        <?php if ($isCourseOwner): ?>
+        <form id="instructor-form" novalidate class="eduqr-form-grid mt-4">
+            <div class="eduqr-form-field">
+                <label for="instructor_email">
+                    <?= htmlspecialchars(t('course.instructors.add.email'), ENT_QUOTES, 'UTF-8') ?>
+                </label>
+                <input type="email" id="instructor_email" name="instructor_email" class="form-control"
+                       required maxlength="190" autocomplete="off">
+                <small class="text-muted"><?= htmlspecialchars(t('course.instructors.add.hint'), ENT_QUOTES, 'UTF-8') ?></small>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <?= htmlspecialchars(t('course.instructors.add.submit'), ENT_QUOTES, 'UTF-8') ?>
+                </button>
+            </div>
+        </form>
+        <?php endif; ?>
+    </div>
+
+    <?php if ($course['status'] === 'active' && $isCourseOwner): ?>
     <div class="eduqr-danger-surface mt-4">
         <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
             <div>
@@ -161,7 +246,7 @@ document.getElementById('course-form').addEventListener('submit', async function
     }
 });
 
-<?php if ($course['status'] === 'active'): ?>
+<?php if ($course['status'] === 'active' && $isCourseOwner): ?>
 document.getElementById('archive-btn').addEventListener('click', async function () {
     if (!confirm(<?= json_encode(t('common.confirm')) ?>)) return;
 
@@ -188,6 +273,84 @@ document.getElementById('archive-btn').addEventListener('click', async function 
         errorEl.classList.remove('d-none');
         this.disabled = false;
     }
+});
+<?php endif; ?>
+
+<?php if ($isCourseOwner): ?>
+// Course instructors (FR-97) — owner-only controls.
+const MSG_INSTRUCTOR_ADDED   = <?= json_encode(t('course.instructor.added')) ?>;
+const MSG_INSTRUCTOR_REMOVED = <?= json_encode(t('course.instructor.removed')) ?>;
+const MSG_REMOVE_CONFIRM     = <?= json_encode(t('course.instructors.remove_confirm')) ?>;
+
+function instructorFeedback(message, ok) {
+    const errorEl   = document.getElementById('instructor-error');
+    const successEl = document.getElementById('instructor-success');
+    errorEl.classList.add('d-none');
+    successEl.classList.add('d-none');
+
+    const target = ok ? successEl : errorEl;
+    target.textContent = message;
+    target.classList.remove('d-none');
+}
+
+document.getElementById('instructor-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const btn = this.querySelector('[type=submit]');
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(eduqrPath('/api/v1/courses/' + COURSE_ID + '/instructors'), {
+            method:  'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': CSRF_TOKEN,
+            },
+            body: JSON.stringify({ email: this.instructor_email.value.trim() }),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            instructorFeedback(data.message || MSG_INSTRUCTOR_ADDED, true);
+            setTimeout(() => window.location.reload(), 500);
+            return;
+        }
+
+        instructorFeedback(data.error?.message || MSG_ERROR, false);
+    } catch {
+        instructorFeedback(MSG_SERVER, false);
+    } finally {
+        btn.disabled = false;
+    }
+});
+
+document.querySelectorAll('.instructor-remove-btn').forEach(function (button) {
+    button.addEventListener('click', async function () {
+        if (!confirm(MSG_REMOVE_CONFIRM)) return;
+
+        this.disabled = true;
+
+        try {
+            const url = eduqrPath('/api/v1/courses/' + COURSE_ID + '/instructors/' + this.dataset.userId);
+            const res = await fetch(url, {
+                method:  'DELETE',
+                headers: { 'X-CSRF-Token': CSRF_TOKEN },
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                instructorFeedback(data.message || MSG_INSTRUCTOR_REMOVED, true);
+                setTimeout(() => window.location.reload(), 500);
+                return;
+            }
+
+            instructorFeedback(data.error?.message || MSG_ERROR, false);
+            this.disabled = false;
+        } catch {
+            instructorFeedback(MSG_SERVER, false);
+            this.disabled = false;
+        }
+    });
 });
 <?php endif; ?>
 </script>
