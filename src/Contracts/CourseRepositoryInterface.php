@@ -26,4 +26,6 @@ interface CourseRepositoryInterface
     public function update(int $id, array $fields): void;
 
     public function archive(int $id): void;
+
+    public function restore(int $id): void;
 }

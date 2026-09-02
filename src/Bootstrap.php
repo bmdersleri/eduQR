@@ -285,6 +285,10 @@ final class Bootstrap
             (new Controllers\Api\CourseController())->archive((int) $p['id']);
         });
 
+        $router->post('/api/v1/courses/{id}/restore', function (array $p): void {
+            (new Controllers\Api\CourseController())->restore((int) $p['id']);
+        });
+
         // ── API: Sessions ─────────────────────────────────────────────────────
         $router->post('/api/v1/courses/{id}/sessions', function (array $p): void {
             (new Controllers\Api\SessionController())->create((int) $p['id']);

@@ -29,7 +29,7 @@ The MVP is complete when **all** of the following hold.
 [ ] Be redirected to login when accessing a protected route unauthenticated [NFR-23]
 [ ] Create a course (title, code, semester, description, default language)  [FR-10]
 [ ] View, edit, and archive their own courses                               [FR-11, FR-12, FR-13]
-[ ] Restore an archived course without losing its sessions or reports       [FR-16]
+[x] Restore an archived course without losing its sessions or reports       [FR-16]
 [ ] Be denied access to another instructor's course                         [FR-14]
 [ ] Start a live session under a course                                     [FR-20]
 [ ] See a generated 6-char short code and QR code                           [FR-21, FR-22]
@@ -272,7 +272,7 @@ Each phase in `TASKS.md` is gated by the checkpoint below. Do not start the next
 ```text
 [ ] Instructor can create a course with all fields                             [FR-10]
 [ ] Instructor can list, edit, and archive courses                              [FR-11, FR-12, FR-13]
-[ ] Instructor can restore an archived course they own                          [FR-16]
+[x] Instructor can restore an archived course they own                          [FR-16]
 [ ] Course ownership is enforced on every read and write                        [FR-14]
 [ ] Course UI uses translation keys                                              [FR-80]
 ```

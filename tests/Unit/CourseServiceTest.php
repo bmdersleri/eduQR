@@ -18,6 +18,7 @@ class CourseServiceTest extends TestCase
             public array $created = [];
             public array $updated = [];
             public array $archived = [];
+            public array $restored = [];
 
             private array $rows;
             private int   $nextId;
@@ -83,6 +84,11 @@ class CourseServiceTest extends TestCase
             public function archive(int $id): void
             {
                 $this->archived[] = $id;
+            }
+
+            public function restore(int $id): void
+            {
+                $this->restored[] = $id;
             }
         };
     }
@@ -208,6 +214,34 @@ class CourseServiceTest extends TestCase
         $this->expectExceptionMessage('forbidden');
         $repo = $this->makeRepo([$this->sample(1, 10)]);
         (new CourseService($repo))->archiveCourse(1, 99);
+    }
+
+    // ── Restore ────────────────────────────────────────────────────────────────
+
+    public function testRestoreCourseCallsRepositoryForArchivedCourse(): void
+    {
+        $course = array_merge($this->sample(1, 10), ['status' => 'archived']);
+        $repo = $this->makeRepo([$course]);
+        $service = new CourseService($repo);
+        $service->restoreCourse(1, 10);
+        $this->assertContains(1, $repo->restored);
+    }
+
+    public function testRestoreCourseRejectsNonArchivedCourse(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('invalid_course_state');
+        $repo = $this->makeRepo([$this->sample(1, 10)]);
+        (new CourseService($repo))->restoreCourse(1, 10);
+    }
+
+    public function testRestoreCourseEnforcesOwnership(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('forbidden');
+        $course = array_merge($this->sample(1, 10), ['status' => 'archived']);
+        $repo = $this->makeRepo([$course]);
+        (new CourseService($repo))->restoreCourse(1, 99);
     }
 
     // ── List ───────────────────────────────────────────────────────────────────

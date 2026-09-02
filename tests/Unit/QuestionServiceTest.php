@@ -704,6 +704,9 @@ class QuestionServiceTest extends TestCase
             public function archive(int $id): void
             {
             }
+            public function restore(int $id): void
+            {
+            }
         };
 
         return new QuestionService($questionRepo, $optionRepo, $sessionRepo, $courseRepo);

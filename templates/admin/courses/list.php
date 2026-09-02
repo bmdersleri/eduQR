@@ -62,9 +62,15 @@ ob_start();
             <a href="<?= htmlspecialchars(eduqr_path('/admin/courses/' . (int) $course['id']), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary btn-sm">
                 <?= eduqr_icon('chart') ?> <?= htmlspecialchars(t('common.actions'), ENT_QUOTES, 'UTF-8') ?>
             </a>
+            <?php if ($course['status'] === 'archived'): ?>
+            <button type="button" class="btn btn-primary btn-sm course-restore-btn" data-course-id="<?= (int) $course['id'] ?>">
+                <?= eduqr_icon('spark') ?> <?= htmlspecialchars(t('course.action.restore'), ENT_QUOTES, 'UTF-8') ?>
+            </button>
+            <?php else: ?>
             <a href="<?= htmlspecialchars(eduqr_path('/admin/courses/' . (int) $course['id'] . '/edit'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-primary btn-sm">
                 <?= eduqr_icon('spark') ?> <?= htmlspecialchars(t('common.edit'), ENT_QUOTES, 'UTF-8') ?>
             </a>
+            <?php endif; ?>
         </div>
     </div>
     <?php endforeach; ?>
@@ -85,6 +91,33 @@ ob_start();
 </nav>
 <?php endif; ?>
 <?php endif; ?>
+<script>
+document.querySelectorAll('.course-restore-btn').forEach((button) => {
+    button.addEventListener('click', async function () {
+        this.disabled = true;
+
+        try {
+            const res = await fetch(eduqrPath('/api/v1/courses/' + this.dataset.courseId + '/restore'), {
+                method: 'POST',
+                headers: { 'X-CSRF-Token': <?= json_encode($csrfToken, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) ?> },
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                eduqrToast(data.message || <?= json_encode(t('course.restored'), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) ?>, 'ok');
+                setTimeout(() => window.location.reload(), 500);
+                return;
+            }
+
+            eduqrToast(data.error?.message || <?= json_encode(t('common.error'), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) ?>, 'err');
+            this.disabled = false;
+        } catch {
+            eduqrToast(<?= json_encode(t('error.server_error'), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) ?>, 'err');
+            this.disabled = false;
+        }
+    });
+});
+</script>
 <?php
 $content   = ob_get_clean();
 $pageTitle = t('course.list.title') . ' — ' . t('app.name');

@@ -115,6 +115,17 @@ final class CourseService
         $this->courses->archive($id);
     }
 
+    /** @throws \RuntimeException on ownership or state failure */
+    public function restoreCourse(int $id, int $instructorId): void
+    {
+        $course = $this->getCourse($id, $instructorId);
+        if ($course['status'] !== 'archived') {
+            throw new \RuntimeException('invalid_course_state');
+        }
+
+        $this->courses->restore($id);
+    }
+
     // ── Validators ─────────────────────────────────────────────────────────────
 
     private function validateTitle(mixed $raw): string

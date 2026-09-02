@@ -134,6 +134,29 @@ final class CourseController
         ]);
     }
 
+    public function restore(int $id): void
+    {
+        $user = AuthMiddleware::require();
+        CsrfMiddleware::verify();
+
+        try {
+            $this->service->restoreCourse($id, (int) $user['id']);
+        } catch (\RuntimeException $e) {
+            $this->handleRuntimeException($e);
+        }
+
+        try {
+            $this->auditLog->write('instructor', (int) $user['id'], 'course.restore', 'course', $id);
+        } catch (\Throwable) {
+        }
+
+        $this->json(200, [
+            'success' => true,
+            'data' => null,
+            'message' => t('course.restored'),
+        ]);
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     private function coursePayload(array $course): array
@@ -157,6 +180,7 @@ final class CourseController
         match ($e->getMessage()) {
             'course_not_found' => $this->error(404, 'course_not_found', t('error.course_not_found')),
             'forbidden' => $this->error(403, 'forbidden', t('error.forbidden')),
+            'invalid_course_state' => $this->error(409, 'invalid_course_state', t('error.invalid_course_state')),
             default => $this->error(500, 'server_error', t('error.server_error')),
         };
     }

@@ -452,6 +452,10 @@ final class QuestionBankServiceTest extends TestCase
             public function archive(int $id): void
             {
             }
+
+            public function restore(int $id): void
+            {
+            }
         };
     }
 

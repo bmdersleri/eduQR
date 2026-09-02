@@ -91,4 +91,11 @@ final class CourseRepository implements CourseRepositoryInterface
             ->prepare("UPDATE courses SET status = 'archived' WHERE id = ?")
             ->execute([$id]);
     }
+
+    public function restore(int $id): void
+    {
+        $this->pdo
+            ->prepare("UPDATE courses SET status = 'active' WHERE id = ?")
+            ->execute([$id]);
+    }
 }

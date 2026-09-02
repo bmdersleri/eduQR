@@ -306,7 +306,7 @@ Not part of the MVP. Each item must be escalated to the human owner before work 
 [x] T-1117  Course-scoped question bank                                                     [FR-93, FR-95]
 [x] T-1118  LLM question generation from lecture notes                                      [FR-94]
 [x] T-1119  Admin UI: generate bank questions and copy them into sessions                   [FR-93, FR-94, FR-95]
-[ ] T-1120  Restore an archived course through API and instructor UI                         [FR-16]
+[x] T-1120  Restore an archived course through API and instructor UI                         [FR-16]
 [ ] T-1105  Light gamification (badges, streaks)                                            [FR-48]
 [x] T-1106  Question image attachments                                                      [FR-39]
 [x] T-1107  Email-based password reset                                                      [FR-06]
