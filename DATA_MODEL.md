@@ -27,6 +27,9 @@ erDiagram
     PARTICIPANTS ||--o{ ANSWERS : submits
     QUESTIONS ||--o{ ANSWERS : receives
     OPTIONS ||--o{ ANSWERS : selected_by
+    PARTICIPANTS ||--o{ QUESTION_REACTIONS : sends
+    QUESTIONS ||--o{ QUESTION_REACTIONS : receives
+    SESSIONS ||--o{ QUESTION_REACTIONS : scopes
     USERS ||--o{ LOGIN_ATTEMPTS : generates
     USERS ||--o{ PASSWORD_RESETS : requests
     USERS ||--o{ AUDIT_LOGS : performs
@@ -123,6 +126,15 @@ erDiagram
         text answer_text
         tinyint is_hidden
         datetime created_at
+    }
+    QUESTION_REACTIONS {
+        bigint id PK
+        bigint session_id FK
+        bigint question_id FK
+        bigint participant_id FK
+        string reaction
+        datetime created_at
+        datetime updated_at
     }
     AUDIT_LOGS {
         bigint id PK
@@ -421,7 +433,43 @@ Rules:
 
 > **`allow_multiple_answers` and the unique index:** When a question allows multiple answers, the `UNIQUE (question_id, participant_id)` index would block the second insert. For MVP, `allow_multiple_answers` defaults to `false` and is not exposed in the question-creation UI; the column and flag exist so the schema is forward-compatible. If/when multiple answers are enabled, a migration must drop this unique index and the service layer becomes solely responsible for any per-question answer caps. Document that change in an ADR.
 
-### 2.9 `audit_logs`
+### 2.9 `question_reactions`
+
+A student's comprehension signal for one question (`FR-48`). Not an answer and not
+correctness data: it is unaffected by `exam_mode`, `show_results_to_students` and
+per-question `show_results`, because aggregates never reach the student client.
+
+```sql
+CREATE TABLE question_reactions (
+    id              BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    session_id      BIGINT UNSIGNED NOT NULL,
+    question_id     BIGINT UNSIGNED NOT NULL,
+    participant_id  BIGINT UNSIGNED NOT NULL,
+    reaction        ENUM('got_it','lost') NOT NULL,
+    created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
+                                                 ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_question_reactions_question_participant (question_id, participant_id),
+    INDEX idx_question_reactions_session (session_id),
+    INDEX idx_question_reactions_question (question_id),
+    CONSTRAINT fk_question_reactions_session
+        FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
+    CONSTRAINT fk_question_reactions_question
+        FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE,
+    CONSTRAINT fk_question_reactions_participant
+        FOREIGN KEY (participant_id) REFERENCES participants(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+Rules:
+
+- `UNIQUE (question_id, participant_id)` enforces "at most one reaction per participant per question" (`FR-48`).
+- Re-reacting is an upsert (`INSERT ... ON DUPLICATE KEY UPDATE`) that replaces the stored value; it never adds a second row.
+- `participant_id` is the same anonymous identity used by `answers` — no new personal data is stored.
+- `session_id` is denormalized from `questions.session_id` so the instructor aggregate query is a single indexed scan.
+- Aggregates are instructor-only (`ReactionService::aggregatesForSession()`); the student endpoint returns no counts.
+
+### 2.10 `audit_logs`
 
 Records important system actions (`FR-90`).
 
@@ -445,7 +493,7 @@ Tracked actions: `session.created`, `session.closed`, `session.anonymized`, `ses
 
 Retention: 365 days.
 
-### 2.10 `login_attempts`
+### 2.11 `login_attempts`
 
 For rate-limiting failed logins (`FR-05`).
 
@@ -464,7 +512,7 @@ Rate-limit rule: ≥ 5 rows with `succeeded = 0` for the same `email` within 10 
 
 Retention: 90 days.
 
-### 2.11 `password_resets`
+### 2.12 `password_resets`
 
 Email-based password reset tokens for instructors (`FR-06`).
 
@@ -494,7 +542,7 @@ Rules:
 
 Retention: 30 days.
 
-### 2.12 `schema_migrations`
+### 2.13 `schema_migrations`
 
 Tracks applied migrations. Created by `bin/migrate.php`.
 
@@ -505,7 +553,7 @@ CREATE TABLE schema_migrations (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
-### 2.13 `locales` (metadata)
+### 2.14 `locales` (metadata)
 
 Lists supported locales for the language switcher. Translation strings themselves live in JSON files, **not** the database.
 
@@ -533,6 +581,9 @@ questions     1 ─── *  options          (question_id)
 questions     1 ─── *  answers          (question_id)
 participants  1 ─── *  answers          (participant_id)
 options       1 ─── *  answers          (selected_option_id, nullable)
+sessions      1 ─── *  question_reactions (session_id)
+questions     1 ─── *  question_reactions (question_id)
+participants  1 ─── *  question_reactions (participant_id)
 ```
 
 All foreign keys use `ON DELETE CASCADE` except `answers.selected_option_id`, which uses `ON DELETE SET NULL` so that deleting an option does not destroy the answer record (the aggregate count is recoverable from `answer_text` being NULL + question type).
@@ -558,6 +609,9 @@ All foreign keys use `ON DELETE CASCADE` except `answers.selected_option_id`, wh
 | `answers` | `(question_id, participant_id)` unique | One-answer enforcement |
 | `answers` | `question_id` | Results aggregation — hot path |
 | `answers` | `participant_id` | Per-participant history |
+| `question_reactions` | `(question_id, participant_id)` unique | One-reaction enforcement + upsert target |
+| `question_reactions` | `session_id` | Instructor comprehension-pulse aggregate |
+| `question_reactions` | `question_id` | Per-question reaction counts |
 | `login_attempts` | `(email, created_at)` | Rate-limit window scan |
 | `audit_logs` | `(action, created_at)` | Audit search |
 | `audit_logs` | `(entity_type, entity_id)` | Entity history |

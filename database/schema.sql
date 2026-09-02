@@ -194,6 +194,33 @@ CREATE TABLE answers (
 -- questions.allow_multiple_answers = 0 (the MVP default).
 
 -- ─────────────────────────────────────────────────────────────
+-- question_reactions  —  one participant's comprehension signal
+--                        for one question (FR-48)
+-- ─────────────────────────────────────────────────────────────
+CREATE TABLE question_reactions (
+    id              BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    session_id      BIGINT UNSIGNED NOT NULL,
+    question_id     BIGINT UNSIGNED NOT NULL,
+    participant_id  BIGINT UNSIGNED NOT NULL,
+    reaction        ENUM('got_it','lost') NOT NULL,
+    created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
+                                                 ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_question_reactions_question_participant (question_id, participant_id),
+    INDEX idx_question_reactions_session (session_id),
+    INDEX idx_question_reactions_question (question_id),
+    CONSTRAINT fk_question_reactions_session
+        FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
+    CONSTRAINT fk_question_reactions_question
+        FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE,
+    CONSTRAINT fk_question_reactions_participant
+        FOREIGN KEY (participant_id) REFERENCES participants(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- NOTE: the UNIQUE (question_id, participant_id) index enforces FR-48's
+-- "at most one reaction per question"; re-reacting is an upsert that
+-- replaces the stored value. Aggregates are instructor-only.
+
+-- ─────────────────────────────────────────────────────────────
 -- audit_logs  —  record of important system actions (FR-90)
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE audit_logs (

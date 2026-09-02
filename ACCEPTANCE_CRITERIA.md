@@ -63,6 +63,9 @@ The MVP is complete when **all** of the following hold.
 [ ] See the privacy notice on the join page                                  [FR-75]
 [ ] Use the student interface on a mobile browser                             [NFR-12]
 [ ] Submit one answer even with JavaScript disabled (form fallback)           [NFR-44]
+[x] Send a comprehension reaction (got it / lost) on the open question        [FR-48]
+[x] Re-react to replace the previous reaction, never adding a second one      [FR-48]
+[x] Never see the reaction totals, in any session mode                        [FR-48]
 ```
 
 ### 2.3 Internationalization
@@ -341,6 +344,8 @@ Each phase in `TASKS.md` is gated by the checkpoint below. Do not start the next
 [ ] show_results gating works                                                              [FR-53]
 [ ] Instructor can hide inappropriate open-text answers                                    [FR-55]
 [x] Instructor can enable exam_mode; students never see live results or correctness while it is on, regardless of show_results settings [FR-96]
+[x] Instructor sees live got_it / lost counts for the current question, refreshed on the existing polling cycle [FR-48]
+[x] Reaction aggregates are ownership-enforced and never returned to students [FR-48]
 ```
 
 ### 4.8 Report Module

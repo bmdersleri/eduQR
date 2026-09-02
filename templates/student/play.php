@@ -291,6 +291,33 @@ ob_start();
                     </div>
                 </form>
 
+                <!-- Comprehension reactions (FR-48) — shown for every question type.
+                     No counts are rendered; totals are instructor-only. -->
+                <div class="mt-4" id="reaction-block">
+                    <p class="text-muted small mb-2">
+                        <?= htmlspecialchars(t('student.reaction.prompt'), ENT_QUOTES, 'UTF-8') ?>
+                    </p>
+                    <div class="d-flex gap-2">
+                        <button
+                            type="button"
+                            class="btn btn-outline-secondary flex-fill eduqr-reaction"
+                            data-reaction="got_it"
+                        >
+                            <span aria-hidden="true">👍</span>
+                            <?= htmlspecialchars(t('student.reaction.got_it'), ENT_QUOTES, 'UTF-8') ?>
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-outline-secondary flex-fill eduqr-reaction"
+                            data-reaction="lost"
+                        >
+                            <span aria-hidden="true">🤔</span>
+                            <?= htmlspecialchars(t('student.reaction.lost'), ENT_QUOTES, 'UTF-8') ?>
+                        </button>
+                    </div>
+                    <div id="reaction-status" class="form-text" role="status" aria-live="polite"></div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -359,6 +386,46 @@ if (QUESTION_TYPE === 'fill_in_the_blank') {
         else submitBtn.classList.remove('eduqr-btn-glow');
     });
 }
+
+// ── Comprehension reactions (FR-48) ──────────────────────────────────────────
+// Fire-and-forget: the response carries no counts, so nothing is rendered
+// beyond the locally selected state.
+const MSG_REACTED       = <?= json_encode(t('student.reaction.recorded')) ?>;
+const reactionButtons   = document.querySelectorAll('.eduqr-reaction');
+const reactionStatusBox = document.getElementById('reaction-status');
+
+reactionButtons.forEach(btn => {
+    btn.addEventListener('click', async function () {
+        const reaction = this.dataset.reaction;
+
+        reactionButtons.forEach(b => {
+            b.classList.remove('active');
+            b.disabled = true;
+        });
+        this.classList.add('active');
+
+        try {
+            const res  = await fetch(eduqrPath('/api/v1/reactions'), {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ question_id: QUESTION_ID, reaction: reaction }),
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                reactionStatusBox.textContent = MSG_REACTED;
+            } else {
+                this.classList.remove('active');
+                reactionStatusBox.textContent = (data.error && data.error.message) ? data.error.message : MSG_SERVER;
+            }
+        } catch {
+            this.classList.remove('active');
+            reactionStatusBox.textContent = MSG_SERVER;
+        }
+
+        reactionButtons.forEach(b => { b.disabled = false; });
+    });
+});
 
 // ── Intercept form submit for JS path ─────────────────────────────────────────
 form.addEventListener('submit', async function (e) {

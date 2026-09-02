@@ -406,6 +406,16 @@ final class Bootstrap
             (new Controllers\Api\AnswerController())->submit();
         });
 
+        // ── API: Comprehension reaction — student (T-1105) ────────────────────
+        $router->post('/api/v1/reactions', function (array $p): void {
+            (new Controllers\Api\ReactionController())->submit();
+        });
+
+        // ── API: Comprehension reactions — instructor (T-1105) ────────────────
+        $router->get('/api/v1/sessions/{id}/reactions', function (array $p): void {
+            (new Controllers\Api\ReactionController())->aggregates((int) $p['id']);
+        });
+
         // ── API: Answer hide / unhide (T-810) ─────────────────────────────────
         // hide must come before unhide to avoid mis-matching
         $router->post('/api/v1/answers/{id}/hide', function (array $p): void {

@@ -1,0 +1,164 @@
+<?php
+
+declare(strict_types=1);
+
+namespace EduQR\Controllers\Api;
+
+use EduQR\Middleware\AuthMiddleware;
+use EduQR\Middleware\RateLimitMiddleware;
+use EduQR\Repositories\CourseRepository;
+use EduQR\Repositories\ParticipantRepository;
+use EduQR\Repositories\QuestionRepository;
+use EduQR\Repositories\ReactionRepository;
+use EduQR\Repositories\SessionRepository;
+use EduQR\Services\ReactionService;
+
+/**
+ * Phase 11 — Student comprehension reactions (T-1105, FR-48)
+ *
+ * POST /api/v1/reactions                 — student sends got_it / lost
+ * GET  /api/v1/sessions/{id}/reactions   — instructor reads aggregate counts
+ *
+ * Auth: the student endpoint uses the participant cookie (eduqr_participant),
+ * the instructor endpoint uses the logged-in instructor session.
+ */
+final class ReactionController
+{
+    private ReactionService $service;
+
+    public function __construct(?ReactionService $service = null)
+    {
+        $this->service = $service ?? new ReactionService(
+            new ReactionRepository(),
+            new QuestionRepository(),
+            new SessionRepository(),
+            new ParticipantRepository(),
+            new CourseRepository(),
+        );
+    }
+
+    // ── POST /api/v1/reactions ────────────────────────────────────────────────
+
+    public function submit(): void
+    {
+        // No CSRF token required for student JSON API — they are not logged-in
+        // instructors. Same treatment as POST /api/v1/answers.
+
+        // Rate limit: max 60 reactions per IP per minute (SEC §14)
+        $ipHash = hash('sha256', ($_SERVER['REMOTE_ADDR'] ?? '') . '|reaction');
+        RateLimitMiddleware::check("reaction:{$ipHash}", 60, 60);
+
+        $participantId = $this->resolveParticipant();
+        $body = $this->jsonBody();
+
+        try {
+            $reaction = $this->service->react($participantId, $body);
+        } catch (\RuntimeException $e) {
+            $this->handleRuntimeException($e);
+        } catch (\InvalidArgumentException $e) {
+            $this->handleValidationException($e);
+        }
+
+        $this->json(200, $this->buildStudentPayload($reaction));
+    }
+
+    /**
+     * Deliberately carries no aggregate counts (FR-48). Because the student
+     * never learns the totals, reacting stays allowed regardless of exam_mode,
+     * show_results_to_students and per-question show_results — a reaction is
+     * neither a result nor a correctness signal.
+     *
+     * @return array{success:bool,data:array{reaction:string},message:string}
+     */
+    private function buildStudentPayload(string $reaction): array
+    {
+        return [
+            'success' => true,
+            'data' => ['reaction' => $reaction],
+            'message' => t('student.reaction.recorded'),
+        ];
+    }
+
+    // ── GET /api/v1/sessions/{id}/reactions ───────────────────────────────────
+
+    public function aggregates(int $sessionId): void
+    {
+        $user = AuthMiddleware::require();
+
+        try {
+            $data = $this->service->aggregatesForSession($sessionId, (int) $user['id']);
+        } catch (\RuntimeException $e) {
+            $this->handleRuntimeException($e);
+        }
+
+        $this->json(200, ['success' => true, 'data' => $data]);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Resolve participant from the eduqr_participant cookie.
+     * Returns participant ID (int).
+     */
+    private function resolveParticipant(): int
+    {
+        $raw = $_COOKIE['eduqr_participant'] ?? '';
+        if ($raw === '') {
+            $this->error(401, 'not_joined', t('error.not_joined'));
+        }
+
+        $id = (int) $raw;
+        if ($id <= 0) {
+            $this->error(401, 'not_joined', t('error.not_joined'));
+        }
+
+        return $id;
+    }
+
+    private function handleRuntimeException(\RuntimeException $e): never
+    {
+        match ($e->getMessage()) {
+            'participant_not_found' => $this->error(401, 'not_joined', t('error.not_joined')),
+            'question_not_found' => $this->error(404, 'question_not_found', t('error.question_not_found')),
+            'question_not_active' => $this->error(422, 'question_closed', t('error.question_closed')),
+            'session_not_found' => $this->error(404, 'session_not_found', t('error.session_not_found')),
+            'course_not_found' => $this->error(404, 'course_not_found', t('error.course_not_found')),
+            'session_paused' => $this->error(422, 'session_paused', t('error.session_paused')),
+            'session_closed' => $this->error(422, 'session_closed', t('error.session_closed')),
+            'forbidden' => $this->error(403, 'forbidden', t('error.forbidden')),
+            default => $this->error(500, 'server_error', t('error.server_error')),
+        };
+    }
+
+    private function handleValidationException(\InvalidArgumentException $e): never
+    {
+        match ($e->getMessage()) {
+            'question_id:required' => $this->error(400, 'missing_fields', t('validation.required'), 'question_id'),
+            'reaction:required' => $this->error(400, 'missing_fields', t('validation.required'), 'reaction'),
+            'reaction:invalid' => $this->error(422, 'invalid_reaction', t('error.invalid_reaction'), 'reaction'),
+            default => $this->error(400, 'validation_error', t('common.error')),
+        };
+    }
+
+    private function jsonBody(): array
+    {
+        return json_decode((string) file_get_contents('php://input'), true) ?? [];
+    }
+
+    private function json(int $status, array $payload): never
+    {
+        http_response_code($status);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        exit;
+    }
+
+    private function error(int $status, string $code, string $message, string $field = ''): never
+    {
+        $error = ['code' => $code, 'message' => $message];
+        if ($field !== '') {
+            $error['field'] = $field;
+        }
+        $this->json($status, ['success' => false, 'error' => $error]);
+    }
+}

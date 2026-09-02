@@ -80,6 +80,22 @@ ob_start();
         <div class="label"><?= htmlspecialchars(t('common.status'), ENT_QUOTES, 'UTF-8') ?></div>
         <div class="value"><?= htmlspecialchars(t('session.status.' . $session['status']), ENT_QUOTES, 'UTF-8') ?></div>
     </div>
+    <!-- Comprehension pulse for the active question (FR-48) — instructor only -->
+    <div class="eduqr-data-card">
+        <div class="label"><?= htmlspecialchars(t('results.reactions.title'), ENT_QUOTES, 'UTF-8') ?></div>
+        <div class="value" style="font-size:1.1rem">
+            <span class="me-3">
+                <span aria-hidden="true">👍</span>
+                <?= htmlspecialchars(t('results.reactions.got_it'), ENT_QUOTES, 'UTF-8') ?>:
+                <span id="reaction-got-it">0</span>
+            </span>
+            <span>
+                <span aria-hidden="true">🤔</span>
+                <?= htmlspecialchars(t('results.reactions.lost'), ENT_QUOTES, 'UTF-8') ?>:
+                <span id="reaction-lost">0</span>
+            </span>
+        </div>
+    </div>
 </div>
 
 <div class="row g-4">
@@ -477,9 +493,44 @@ async function refreshCount() {
     } catch {}
 }
 
-refreshCount();
+// ── Comprehension pulse (FR-48) ───────────────────────────────────────────────
+// Rides the participant-count polling cycle below — no second timer.
+
+let activeQuestionId = null;
+
+async function refreshReactions() {
+    const gotItBox = document.getElementById('reaction-got-it');
+    const lostBox  = document.getElementById('reaction-lost');
+    if (!gotItBox || !lostBox) {
+        return;
+    }
+
+    if (!activeQuestionId) {
+        gotItBox.textContent = '0';
+        lostBox.textContent  = '0';
+
+        return;
+    }
+
+    try {
+        const res  = await fetch(eduqrPath('/api/v1/sessions/' + SESSION_ID + '/reactions'));
+        const data = await res.json();
+        if (data.success) {
+            const row = data.data.find(r => r.question_id === activeQuestionId);
+            gotItBox.textContent = row ? row.got_it : '0';
+            lostBox.textContent  = row ? row.lost   : '0';
+        }
+    } catch {}
+}
+
+async function refreshLive() {
+    await refreshCount();
+    await refreshReactions();
+}
+
+refreshLive();
 <?php if (!$isClosed): ?>
-setInterval(refreshCount, 5000);
+setInterval(refreshLive, 5000);
 <?php endif; ?>
 
 // ── Question manager ──────────────────────────────────────────────────────────
@@ -502,6 +553,10 @@ async function loadQuestions() {
 function renderQuestions() {
     const list  = document.getElementById('question-list');
     const empty = document.getElementById('questions-empty');
+
+    // Track the open question so the comprehension pulse (FR-48) knows what to show
+    const active = questions.find(q => q.status === 'active');
+    activeQuestionId = active ? Number(active.id) : null;
 
     if (questions.length === 0) {
         empty.classList.remove('d-none');

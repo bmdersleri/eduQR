@@ -251,6 +251,42 @@ Errors: 400 `missing_fields`, 409 `duplicate_answer`, 410 `question_closed`, 410
 
 Same shape as the instructor results endpoint (§5.5), but returns data **only** when `sessions.show_results_to_students = true` AND `questions.show_results = true`. If `sessions.exam_mode = true`, this endpoint always returns 403 `results_hidden`, regardless of `show_results_to_students` or `show_results`. Otherwise 403 `results_hidden`.
 
+### 3.5 Send a comprehension reaction
+
+`POST /api/v1/reactions`
+
+Auth: participant cookie (`eduqr_participant`), same treatment as §3.3 — no CSRF token, rate-limited per IP.
+
+Request:
+
+```json
+{ "question_id": 4001, "reaction": "got_it" }
+```
+
+Response 200:
+
+```json
+{
+  "success": true,
+  "data": { "reaction": "got_it" },
+  "message": "Your reaction has been recorded."
+}
+```
+
+Validation:
+
+- Question must exist and be `active`.
+- Question's session must be `active` (not `paused` or `closed`).
+- Participant must belong to the question's session.
+- `reaction` must be `got_it` or `lost`; any other value is rejected with 422 `invalid_reaction`.
+
+Rules:
+
+- A participant holds at most one reaction per question. Re-reacting **replaces** the previous value; it never creates a second row (`FR-48`).
+- The response carries **no aggregate counts**. Reactions are not results and not correctness, so this endpoint is unaffected by `sessions.exam_mode`, `sessions.show_results_to_students` and per-question `questions.show_results` — a student may always react. That is safe precisely because the student never learns the totals; counts are instructor-only (§5.10).
+
+Errors: 400 `missing_fields`, 401 `not_joined`, 403 `forbidden`, 404 `question_not_found`, 404 `session_not_found`, 410 `question_closed`, 410 `session_closed`, 422 `invalid_reaction`, 422 `session_paused`.
+
 ---
 
 ## 4. Instructor Authentication
@@ -875,6 +911,26 @@ Errors: 404 `question_not_found`, 403 `forbidden`, 422 `question_not_open_text`,
 }
 ```
 
+### 5.10 Comprehension reactions
+
+`GET /api/v1/sessions/{id}/reactions`
+
+Per-question `got_it` / `lost` aggregates for a session (`FR-48`). Ownership is enforced exactly as for §5.5 — the caller must own the session's course.
+
+```json
+{
+  "success": true,
+  "data": [
+    { "question_id": 4001, "got_it": 24, "lost": 6 },
+    { "question_id": 4002, "got_it": 11, "lost": 18 }
+  ]
+}
+```
+
+Questions with no reactions yet are returned with zero counts. This is the **only** endpoint that exposes reaction totals; the student endpoint (§3.5) never returns them.
+
+Errors: 401 `not_authenticated`, 403 `forbidden`, 404 `session_not_found`.
+
 ---
 
 ## 6. Admin Endpoints
@@ -931,6 +987,7 @@ Stable, machine-readable codes. Add to this table when introducing a new code.
 | `session_closed` | 410 | Session is closed |
 | `question_closed` | 410 | Question is closed |
 | `invalid_answer_shape` | 422 | Answer body does not match the question type |
+| `invalid_reaction` | 422 | Unknown comprehension reaction value |
 | `invalid_question_type` | 422 | Unknown `question_type` value |
 | `invalid_option_count` | 422 | Wrong number of options for the type |
 | `invalid_llm_response` | 422 | AI provider returned malformed question JSON |

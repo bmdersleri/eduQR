@@ -95,7 +95,7 @@ Every ID is stable for the life of the project. Do not renumber. To deprecate a 
 | FR-45 | MUST | The student client MUST poll for the next active question every 3 seconds. |
 | FR-46 | SHOULD | A `device_hash` SHOULD be derived (SHA-256 of `server_secret || persistent_cookie_id || user_agent`) for duplicate-join detection. |
 | FR-47 | MUST | A student joining a closed or paused session MUST see a clear, localized message and MUST NOT be able to answer. |
-| FR-48 | MAY  | Students MAY be able to react with simple emoji ("got it", "lost") in Phase 11. |
+| FR-48 | MUST | A student MUST be able to send a comprehension reaction (`got_it` or `lost`) for the currently open question. A student MUST hold at most one reaction per question, and re-reacting MUST replace the previous one. Reaction aggregates MUST be visible to the instructor only and MUST NOT be exposed to students. |
 | FR-49 | MUST | A returning student MUST be auto-restored into the same session via the persistent `eduqr_device` cookie when the device hash matches. |
 
 ### 3.6 Live Results
