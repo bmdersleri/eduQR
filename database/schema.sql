@@ -93,7 +93,7 @@ CREATE TABLE questions (
     session_id              BIGINT UNSIGNED NOT NULL,
     question_text           TEXT         NOT NULL,
     image_path              VARCHAR(500) NULL DEFAULT NULL,
-    question_type           ENUM('multiple_choice','open_text','yes_no','likert_5') NOT NULL,
+    question_type           ENUM('multiple_choice','open_text','yes_no','likert_5','fill_in_the_blank') NOT NULL,
     stage                   ENUM('opening','middle','closing') NOT NULL DEFAULT 'middle',
     status                  ENUM('draft','active','closed') NOT NULL DEFAULT 'draft',
     order_no                INT          NOT NULL DEFAULT 0,

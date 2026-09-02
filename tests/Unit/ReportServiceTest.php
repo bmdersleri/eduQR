@@ -112,6 +112,16 @@ class ReportServiceTest extends TestCase
         return $ids;
     }
 
+    /** Insert a single is_correct=1 option (fill_in_the_blank / quiz mode). */
+    private function seedCorrectOption(int $questionId, string $text): int
+    {
+        $this->pdo->prepare(
+            'INSERT INTO options (question_id, option_text, option_value, is_correct, order_no) VALUES (?,?,NULL,1,1)'
+        )->execute([$questionId, $text]);
+
+        return (int) $this->pdo->lastInsertId();
+    }
+
     /** Insert participant + answer rows. */
     private function seedAnswer(int $participantId, int $questionId, ?int $optionId, ?string $text = null): void
     {
@@ -394,6 +404,47 @@ class ReportServiceTest extends TestCase
         ]);
 
         $service->getStudentResults('ABCD12', null);
+    }
+
+    // ── fill_in_the_blank quiz scoring (FR-31, FR-92) ───────────────────────────
+
+    public function testFillInTheBlankQuizScoringMatchesCaseInsensitiveTrimmed(): void
+    {
+        $this->seedCorrectOption(1, 'Mitochondria');
+
+        // Participant 1 answers correctly, with different case and stray whitespace.
+        $this->seedAnswer(1, 1, null, '  mitochondria  ');
+        // Participant 2 answers incorrectly.
+        $this->seedAnswer(2, 1, null, 'Nucleus');
+
+        $service = $this->makeService(
+            questionRow: [
+                'id' => 1,
+                'session_id' => 10,
+                'question_type' => 'fill_in_the_blank',
+                'question_text' => 'The powerhouse of the cell is the ____.',
+                'status' => 'closed',
+                'show_results' => 1,
+            ],
+            sessionRow: [
+                'id' => 10, 'status' => 'closed', 'course_id' => 5,
+                'show_results_to_students' => 1, 'title' => 'Quiz',
+                'language' => 'en', 'started_at' => null, 'closed_at' => null,
+                'anonymized' => 0, 'is_quiz' => 1,
+            ],
+        );
+
+        $report = $service->buildReport(10, 99);
+
+        $this->assertArrayHasKey('scores', $report);
+
+        $byParticipant = [];
+        foreach ($report['scores'] as $row) {
+            $byParticipant[$row['participant_id']] = $row['score'];
+        }
+
+        $this->assertSame(1, $byParticipant[1]); // correct, case-insensitive trimmed match
+        $this->assertSame(0, $byParticipant[2]); // incorrect
     }
 
     // ── T-912: buildReport() — shape and counts ────────────────────────────────

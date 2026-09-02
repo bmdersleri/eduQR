@@ -605,7 +605,11 @@ final class ReportService
             'SELECT p.id AS participant_id, p.nickname, COUNT(o.id) AS score
              FROM participants p
              LEFT JOIN answers a ON a.participant_id = p.id
-             LEFT JOIN options o ON o.id = a.selected_option_id AND o.is_correct = 1
+             LEFT JOIN options o ON o.is_correct = 1 AND (
+                 o.id = a.selected_option_id
+                 OR (o.question_id = a.question_id AND a.answer_text IS NOT NULL
+                     AND LOWER(TRIM(a.answer_text)) = LOWER(TRIM(o.option_text)))
+             )
              WHERE p.session_id = ?
              GROUP BY p.id, p.nickname
              ORDER BY score DESC'

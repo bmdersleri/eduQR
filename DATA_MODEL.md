@@ -268,7 +268,7 @@ CREATE TABLE questions (
     session_id              BIGINT UNSIGNED NOT NULL,
     question_text           TEXT         NOT NULL,
     image_path              VARCHAR(500) NULL DEFAULT NULL,
-    question_type           ENUM('multiple_choice','open_text','yes_no','likert_5') NOT NULL,
+    question_type           ENUM('multiple_choice','open_text','yes_no','likert_5','fill_in_the_blank') NOT NULL,
     stage                   ENUM('opening','middle','closing') NOT NULL DEFAULT 'middle',
     status                  ENUM('draft','active','closed') NOT NULL DEFAULT 'draft',
     order_no                INT          NOT NULL DEFAULT 0,
@@ -296,6 +296,7 @@ Rules:
 - `question_text` 1–500 chars (`FR-36`). Sanitized before display.
 - `image_path` optional, relative path under `public/uploads/questions/` (`FR-39`). NULL when no image. Deleted on question delete (CASCADE) or when replaced via the image endpoint.
 - `allow_multiple_answers` default `false`; controls the `answers` uniqueness rule.
+- `fill_in_the_blank` (`FR-31`) needs no new columns: the instructor's single correct answer is stored as one `options` row (`is_correct=1`, `option_text` = correct answer) and the student's response is stored in `answers.answer_text` exactly like `open_text`. Grading compares the two case-insensitively and trimmed.
 
 ### 2.5 `question_bank_items`
 

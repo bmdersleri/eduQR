@@ -203,7 +203,21 @@ ob_start();
                     action="<?= htmlspecialchars(eduqr_path('/play/' . rawurlencode($shortCode)), ENT_QUOTES, 'UTF-8') ?>"
                     novalidate
                 >
-                <?php if ($qType === 'open_text'): ?>
+                <?php if ($qType === 'open_text' || $qType === 'fill_in_the_blank'): ?>
+                    <?php if ($qType === 'fill_in_the_blank'): ?>
+                    <!-- Fill in the blank (FR-31) -->
+                    <div class="mb-3">
+                        <input
+                            type="text"
+                            id="answer_text"
+                            name="answer_text"
+                            class="form-control eduqr-glow-focus"
+                            maxlength="200"
+                            placeholder="<?= htmlspecialchars(t('student.answer.fill_in_the_blank_placeholder'), ENT_QUOTES, 'UTF-8') ?>"
+                            required
+                        >
+                    </div>
+                    <?php else: ?>
                     <!-- Open text (T-604) -->
                     <div class="mb-3">
                         <textarea
@@ -219,6 +233,7 @@ ob_start();
                             <span id="char-count">0</span> / 2000
                         </div>
                     </div>
+                    <?php endif; ?>
 
                 <?php else: ?>
                     <!-- Option-based (multiple_choice, yes_no, likert_5) -->
@@ -264,7 +279,7 @@ ob_start();
                         type="submit"
                         id="submit-btn"
                         class="btn btn-primary btn-lg w-100 eduqr-ripple"
-                        <?= $qType !== 'open_text' ? 'disabled' : '' ?>
+                        <?= ! in_array($qType, ['open_text', 'fill_in_the_blank'], true) ? 'disabled' : '' ?>
                     >
                         <?= htmlspecialchars(t('student.answer.submit'), ENT_QUOTES, 'UTF-8') ?>
                     </button>
@@ -304,7 +319,7 @@ function clearError() {
 }
 
 // ── Option-button selection ──────────────────────────────────────────────────
-if (QUESTION_TYPE !== 'open_text') {
+if (QUESTION_TYPE !== 'open_text' && QUESTION_TYPE !== 'fill_in_the_blank') {
     const hiddenInput = document.getElementById('selected_option_id');
     const buttons     = document.querySelectorAll('.eduqr-answer-option');
 
@@ -335,6 +350,16 @@ if (QUESTION_TYPE === 'open_text') {
     });
 }
 
+// ── Enable submit for fill_in_the_blank (no char counter) ────────────────────
+if (QUESTION_TYPE === 'fill_in_the_blank') {
+    const input = document.getElementById('answer_text');
+    input.addEventListener('input', function () {
+        submitBtn.disabled = !this.value.trim();
+        if (!submitBtn.disabled) submitBtn.classList.add('eduqr-btn-glow');
+        else submitBtn.classList.remove('eduqr-btn-glow');
+    });
+}
+
 // ── Intercept form submit for JS path ─────────────────────────────────────────
 form.addEventListener('submit', async function (e) {
     e.preventDefault();
@@ -342,7 +367,7 @@ form.addEventListener('submit', async function (e) {
 
     let body = { question_id: QUESTION_ID };
 
-    if (QUESTION_TYPE === 'open_text') {
+    if (QUESTION_TYPE === 'open_text' || QUESTION_TYPE === 'fill_in_the_blank') {
         const text = document.getElementById('answer_text').value.trim();
         if (!text) {
             showError(MSG_REQUIRED);

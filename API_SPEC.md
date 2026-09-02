@@ -485,6 +485,19 @@ Create body (open text):
 
 Create body (yes/no): `question_type: "yes_no"` — options auto-generated.
 Create body (Likert): `question_type: "likert_5"` — 5 options auto-generated.
+
+Create body (fill in the blank):
+
+```json
+{
+  "question_text": "The powerhouse of the cell is the ____.",
+  "question_type": "fill_in_the_blank",
+  "correct_answer": "mitochondria"
+}
+```
+
+`fill_in_the_blank` uses a `correct_answer` string field instead of the `options` array used by `multiple_choice`. The server auto-creates a single `options` row for it (`is_correct=1`, `option_text` = the correct answer) so that grading reuses the existing option-based scoring path.
+
 Question images are attached through the separate multipart endpoint below; JSON create/update bodies MUST NOT contain `image_path`.
 
 Create response:
@@ -508,7 +521,7 @@ Activate rules:
 - The question's session must be `active`.
 - Any currently `active` question in the same session is set to `closed` in the same transaction (the one-active-question rule, `FR-33`).
 
-Errors: 404 `question_not_found`, 422 `invalid_question_type`, 422 `invalid_option_count`, 422 `session_not_active`.
+Errors: 404 `question_not_found`, 422 `invalid_question_type`, 422 `invalid_option_count`, 422 `session_not_active`, 400 `validation_error` (`correct_answer` required or too long, `fill_in_the_blank` only).
 
 #### 5.3.1 Question image attachment
 

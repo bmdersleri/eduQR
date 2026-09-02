@@ -314,6 +314,7 @@ Each phase in `TASKS.md` is gated by the checkpoint below. Do not start the next
 [ ] The student interface can retrieve the active question                           [FR-45]
 [ ] Question and option text are sanitized                                            [SEC §8]
 [ ] Draft questions are never visible to students                                     [—]
+[x] Instructor can create a fill_in_the_blank question with one correct answer; student answers are graded via case-insensitive trimmed match [FR-31]
 ```
 
 ### 4.6 Answer Module

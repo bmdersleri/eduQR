@@ -192,6 +192,62 @@ class QuestionServiceTest extends TestCase
         $this->assertCount(0, $capturedOptions);
     }
 
+    // ── fill_in_the_blank — single correct-answer option (FR-31) ──────────────────
+
+    public function testFillInTheBlankValidAnswerCreatesOneCorrectOption(): void
+    {
+        $capturedOptions = [];
+        $service = $this->makeService(capturedOptions: $capturedOptions);
+
+        $service->create(1, 1, [
+            'question_text' => 'The powerhouse of the cell is the ____.',
+            'question_type' => 'fill_in_the_blank',
+            'correct_answer' => 'Mitochondria',
+        ]);
+
+        $this->assertCount(1, $capturedOptions);
+        $this->assertSame('Mitochondria', $capturedOptions[0]['option_text']);
+        $this->assertSame(1, $capturedOptions[0]['is_correct']);
+    }
+
+    public function testFillInTheBlankEmptyAnswerThrows(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('correct_answer:required');
+
+        $service = $this->makeService();
+        $service->create(1, 1, [
+            'question_text' => 'Fill in: ____.',
+            'question_type' => 'fill_in_the_blank',
+            'correct_answer' => '   ',
+        ]);
+    }
+
+    public function testFillInTheBlankMissingAnswerThrows(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('correct_answer:required');
+
+        $service = $this->makeService();
+        $service->create(1, 1, [
+            'question_text' => 'Fill in: ____.',
+            'question_type' => 'fill_in_the_blank',
+        ]);
+    }
+
+    public function testFillInTheBlankTooLongAnswerThrows(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('correct_answer:too_long');
+
+        $service = $this->makeService();
+        $service->create(1, 1, [
+            'question_text' => 'Fill in: ____.',
+            'question_type' => 'fill_in_the_blank',
+            'correct_answer' => str_repeat('a', 201),
+        ]);
+    }
+
     // ── one-active-question rule (FR-33) ───────────────────────────────────────
 
     public function testActivateClosesOtherActiveQuestion(): void

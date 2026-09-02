@@ -349,6 +349,8 @@ final class QuestionController
             'options:invalid_count' => $this->error(422, 'invalid_option_count', t('validation.invalid_option_count'), 'options'),
             'options:empty_text' => $this->error(400, 'validation_error', t('validation.required'), 'options'),
             'options:text_too_long' => $this->error(400, 'validation_error', t('validation.text_too_long'), 'options'),
+            'correct_answer:required' => $this->error(400, 'validation_error', t('validation.required'), 'correct_answer'),
+            'correct_answer:too_long' => $this->error(400, 'validation_error', t('validation.text_too_long'), 'correct_answer'),
             'order:required' => $this->error(400, 'missing_fields', t('validation.required'), 'order'),
             'questions:required' => $this->error(400, 'missing_fields', t('validation.required'), 'questions'),
             'import:invalid_payload' => $this->error(400, 'invalid_import_payload', t('error.invalid_import_payload')),

@@ -15,7 +15,7 @@ final class QuestionService
     private const MAX_OPTION_LEN = 200;
     private const MC_MIN_OPTIONS = 2;
     private const MC_MAX_OPTIONS = 8;
-    private const ALLOWED_TYPES = ['multiple_choice', 'open_text', 'yes_no', 'likert_5'];
+    private const ALLOWED_TYPES = ['multiple_choice', 'open_text', 'yes_no', 'likert_5', 'fill_in_the_blank'];
 
     public function __construct(
         private readonly QuestionRepositoryInterface $questions,
@@ -38,7 +38,10 @@ final class QuestionService
         $allowMulti = (bool) ($body['allow_multiple_answers'] ?? false);
         $stage = $this->validateStage($body['stage'] ?? 'middle');
 
-        $opts = $this->buildOptions($type, $body['options'] ?? [], $language);
+        $rawOptions = $type === 'fill_in_the_blank'
+            ? ($body['correct_answer'] ?? '')
+            : ($body['options'] ?? []);
+        $opts = $this->buildOptions($type, $rawOptions, $language);
 
         $questionId = $this->questions->create($sessionId, $text, $type, $showResults, $allowMulti, $stage);
 
@@ -97,6 +100,12 @@ final class QuestionService
 
         if (isset($body['options']) && $question['question_type'] === 'multiple_choice') {
             $opts = $this->buildMultipleChoiceOptions((array) $body['options']);
+            $this->options->deleteByQuestion($questionId);
+            $this->options->createBulk($questionId, $opts);
+        }
+
+        if (isset($body['correct_answer']) && $question['question_type'] === 'fill_in_the_blank') {
+            $opts = $this->buildFillInTheBlankOptions((string) $body['correct_answer']);
             $this->options->deleteByQuestion($questionId);
             $this->options->createBulk($questionId, $opts);
         }
@@ -319,6 +328,7 @@ final class QuestionService
             'multiple_choice' => $this->buildMultipleChoiceOptions((array) $rawOptions),
             'yes_no' => $this->buildYesNoOptions($language),
             'likert_5' => $this->buildLikertOptions($language),
+            'fill_in_the_blank' => $this->buildFillInTheBlankOptions((string) $rawOptions),
             default => [], // open_text
         };
     }
@@ -395,6 +405,21 @@ final class QuestionService
         }
 
         return $result;
+    }
+
+    private function buildFillInTheBlankOptions(string $correctAnswer): array
+    {
+        $text = trim($correctAnswer);
+        if ($text === '') {
+            throw new \InvalidArgumentException('correct_answer:required');
+        }
+        if (mb_strlen($text, 'UTF-8') > self::MAX_OPTION_LEN) {
+            throw new \InvalidArgumentException('correct_answer:too_long');
+        }
+
+        return [
+            ['option_text' => $text, 'option_value' => null, 'is_correct' => 1, 'order_no' => 1],
+        ];
     }
 
     private function questionPayload(array $question, array $options): array

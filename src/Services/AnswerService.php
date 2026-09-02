@@ -139,7 +139,7 @@ final class AnswerService
             return $this->validateOptionAnswer($question, $body);
         }
 
-        if ($type === 'open_text') {
+        if ($type === 'open_text' || $type === 'fill_in_the_blank') {
             return $this->validateOpenTextAnswer($body);
         }
 

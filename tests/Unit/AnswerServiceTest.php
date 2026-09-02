@@ -221,6 +221,42 @@ class AnswerServiceTest extends TestCase
         ]);
     }
 
+    // ── fill_in_the_blank — validateAnswerShape mirrors open_text (FR-31) ────────
+
+    public function testFillInTheBlankAnswerReturnsText(): void
+    {
+        $service = $this->makeService();
+
+        $question = ['id' => 99, 'question_type' => 'fill_in_the_blank', 'session_id' => 10, 'status' => 'active'];
+        [$optId, $text] = $service->validateAnswerShape($question, ['answer_text' => '  Mitochondria  ']);
+
+        $this->assertNull($optId);
+        $this->assertSame('Mitochondria', $text); // trimmed
+    }
+
+    public function testFillInTheBlankEmptyAnswerThrows(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('answer_text:required');
+
+        $service = $this->makeService();
+        $question = ['id' => 99, 'question_type' => 'fill_in_the_blank', 'session_id' => 10, 'status' => 'active'];
+        $service->validateAnswerShape($question, ['answer_text' => '   ']);
+    }
+
+    public function testSuccessfulFillInTheBlankSubmitReturnsId(): void
+    {
+        $service = $this->makeService(questionRow: [
+            'id' => 99,
+            'session_id' => 10,
+            'question_type' => 'fill_in_the_blank',
+            'status' => 'active',
+        ]);
+
+        $answerId = $service->submit(1, ['question_id' => 99, 'answer_text' => 'Mitochondria']);
+        $this->assertSame(42, $answerId);
+    }
+
     // ── T-704: participant belongs to session ─────────────────────────────────
 
     public function testParticipantFromWrongSessionThrows(): void

@@ -73,7 +73,7 @@ Every ID is stable for the life of the project. Do not renumber. To deprecate a 
 | ID | Priority | Requirement |
 | --- | --- | --- |
 | FR-30 | MUST | An instructor MUST be able to add questions to a session in advance (as `draft`) or on the fly. |
-| FR-31 | MUST | The system MUST support these question types: `multiple_choice`, `open_text`, `yes_no`, `likert_5`. |
+| FR-31 | MUST | The system MUST support these question types: `multiple_choice`, `open_text`, `yes_no`, `likert_5`, `fill_in_the_blank`. |
 | FR-32 | MUST | A `multiple_choice` question MUST allow 2–8 options. `is_correct` is optional and not required for polling. |
 | FR-33 | MUST | At most one question per session MUST be `active` at any time (the one-active-question rule). |
 | FR-34 | MUST | An instructor MUST be able to activate (publish) and close a question. |

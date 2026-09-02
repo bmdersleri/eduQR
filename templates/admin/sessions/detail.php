@@ -191,6 +191,7 @@ ob_start();
                             <option value="open_text"><?= htmlspecialchars(t('question.type.open_text'), ENT_QUOTES, 'UTF-8') ?></option>
                             <option value="yes_no"><?= htmlspecialchars(t('question.type.yes_no'), ENT_QUOTES, 'UTF-8') ?></option>
                             <option value="likert_5"><?= htmlspecialchars(t('question.type.likert_5'), ENT_QUOTES, 'UTF-8') ?></option>
+                            <option value="fill_in_the_blank"><?= htmlspecialchars(t('question.type.fill_in_the_blank'), ENT_QUOTES, 'UTF-8') ?></option>
                         </select>
                     </div>
                     <div id="options-section" class="eduqr-form-field">
@@ -199,6 +200,10 @@ ob_start();
                         <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="btn-add-option">
                             <?= eduqr_icon('check') ?> <?= htmlspecialchars(t('question.action.add_option'), ENT_QUOTES, 'UTF-8') ?>
                         </button>
+                    </div>
+                    <div id="correct-answer-section" class="eduqr-form-field" style="display:none">
+                        <label for="q-correct-answer"><?= htmlspecialchars(t('question.field.correct_answer'), ENT_QUOTES, 'UTF-8') ?></label>
+                        <input type="text" id="q-correct-answer" class="form-control" maxlength="200">
                     </div>
                     <div class="eduqr-form-field">
                         <label for="q-image"><?= htmlspecialchars(t('question.field.image'), ENT_QUOTES, 'UTF-8') ?></label>
@@ -339,6 +344,7 @@ const L = {
         open_text:       <?= json_encode(t('question.type.open_text')) ?>,
         yes_no:          <?= json_encode(t('question.type.yes_no')) ?>,
         likert_5:        <?= json_encode(t('question.type.likert_5')) ?>,
+        fill_in_the_blank: <?= json_encode(t('question.type.fill_in_the_blank')) ?>,
     },
 };
 
@@ -1061,6 +1067,8 @@ document.getElementById('btn-add-option')?.addEventListener('click', () => {
 document.getElementById('q-type')?.addEventListener('change', function () {
     const section = document.getElementById('options-section');
     section.style.display = this.value === 'multiple_choice' ? '' : 'none';
+    const correctAnswerSection = document.getElementById('correct-answer-section');
+    correctAnswerSection.style.display = this.value === 'fill_in_the_blank' ? '' : 'none';
 });
 
 document.getElementById('btn-create-question')?.addEventListener('click', async function () {
@@ -1085,6 +1093,10 @@ document.getElementById('btn-create-question')?.addEventListener('click', async 
         } else {
             body.options = Array.from(inputs).map(i => ({ option_text: i.value.trim() }));
         }
+    }
+
+    if (type === 'fill_in_the_blank') {
+        body.correct_answer = document.getElementById('q-correct-answer').value.trim();
     }
 
     btn.disabled = true;
@@ -1117,6 +1129,8 @@ document.getElementById('btn-create-question')?.addEventListener('click', async 
             document.getElementById('q-show-results').checked = false;
             document.getElementById('q-type').value = 'multiple_choice';
             document.getElementById('options-section').style.display = '';
+            document.getElementById('q-correct-answer').value = '';
+            document.getElementById('correct-answer-section').style.display = 'none';
             document.getElementById('q-image').value = '';
             document.getElementById('q-image-preview').classList.add('d-none');
             initOptions();
