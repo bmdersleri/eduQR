@@ -1,0 +1,47 @@
+# eduQR — build context exclusions [NFR-75]
+
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Secrets — configuration is injected at runtime, never baked in
+.env
+.env.*
+
+# Dependencies (installed during the build)
+vendor/
+node_modules/
+
+# Runtime output
+logs/
+*.log
+public/uploads/*
+!public/uploads/.gitkeep
+
+# Test / lint artifacts
+coverage/
+.phpunit.cache/
+.phpunit.result.cache
+.php-cs-fixer.cache
+
+# Specification and generated documentation
+docs/
+
+# Editor / tooling
+.idea/
+.vscode/
+.claude/
+*.swp
+*.swo
+
+# Archives and dumps
+*.zip
+*.phar
+*.sql.gz
+*.sqlite
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+docker-compose.yml

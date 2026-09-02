@@ -371,6 +371,19 @@ Each phase in `TASKS.md` is gated by the checkpoint below. Do not start the next
 [ ] Locale resolution follows the documented order                                                [I18N §6]
 ```
 
+### 4.10 Local Container Stack
+
+```text
+[x] docker compose config validates the stack (app + MySQL, no obsolete version key)          [NFR-75]
+[x] One command (docker compose up -d) starts the app and the database                        [NFR-75]
+[x] No host-level PHP or MySQL installation is required                                       [NFR-75]
+[x] The app waits for the database healthcheck before it starts                               [NFR-75]
+[x] Schema is applied by bin/migrate.php in the container, not by a duplicated SQL dump       [NFR-53, NFR-75]
+[x] Every credential comes from the ignored .env.docker; none is baked into the image         [NFR-74, NFR-75]
+[x] Stack verified end-to-end: http://localhost:8080 serves and /api/v1/health reports ok     [NFR-72, NFR-75]
+[x] composer test and composer lint pass inside the app container                             [NFR-75]
+```
+
 ---
 
 ## 5. Classroom Pilot Acceptance

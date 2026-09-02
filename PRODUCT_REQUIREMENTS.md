@@ -243,6 +243,7 @@ See `I18N_SPEC.md` for the implementation contract.
 | NFR-72 | MAY  | A health-check endpoint `GET /api/v1/health` MAY be added in Phase 11. |
 | NFR-73 | MUST | Logs MUST NOT contain passwords, full cookies, raw answer bodies, or device hashes. |
 | NFR-74 | MUST | The repository MUST NOT contain passwords, API keys, database credentials, or other live secrets. Operational access notes MUST use an ignored local file; any committed secret MUST be rotated and removed from reachable Git history. |
+| NFR-75 | MUST | The app MUST run as a reproducible local container stack (PHP + MySQL) started with a single command, with no host-level PHP or MySQL installation required. Container configuration MUST NOT contain baked-in secrets; every credential comes from an ignored env file. |
 
 ---
 

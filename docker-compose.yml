@@ -1,0 +1,49 @@
+# eduQR — local development stack (PHP + MySQL) [NFR-75]
+#
+#   cp .env.docker.example .env.docker   # fill in local values
+#   docker compose up -d                 # app on http://localhost:8080
+#
+# Every credential comes from .env.docker, which is git-ignored.
+
+services:
+  db:
+    image: mysql:8.4
+    command: >-
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    env_file:
+      - .env.docker
+    volumes:
+      - db-data:/var/lib/mysql
+    ports:
+      # Loopback only, non-default host port to avoid clashing with a local MySQL.
+      - "127.0.0.1:3307:3306"
+    healthcheck:
+      # $$ is escaped for Compose; the shell inside the container expands it.
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  app:
+    build:
+      context: .
+    env_file:
+      - .env.docker
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    volumes:
+      # Live source for local development.
+      - ./:/var/www/html
+      # Keep the vendor/ installed at build time (rebuild deps: down -v, then up --build).
+      - vendor:/var/www/html/vendor
+      # Container configuration, independent of any host .env.
+      - ./.env.docker:/var/www/html/.env:ro
+
+volumes:
+  db-data:
+  vendor:

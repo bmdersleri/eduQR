@@ -121,6 +121,40 @@ php bin/wizard.php --skip-nginx --skip-admin --skip-verify
 
 ---
 
+## Run with Docker (local development)
+
+The container stack runs PHP and MySQL for you; no host PHP or MySQL install is needed (NFR-75).
+
+```bash
+# 1. Create the local container configuration
+cp .env.docker.example .env.docker
+# Edit .env.docker: DB_PASS and MYSQL_PASSWORD (same value), MYSQL_ROOT_PASSWORD, APP_SECRET
+
+# 2. Start the stack — builds the image, starts MySQL, applies migrations
+docker compose up -d
+```
+
+Open `http://localhost:8080`. Health check: `http://localhost:8080/api/v1/health`.
+
+| Task | Command |
+| --- | --- |
+| Migrations (also applied automatically on start) | `docker compose exec app php bin/migrate.php` |
+| Seed demo data | `docker compose exec app php bin/seed.php demo` |
+| Create an account | `docker compose exec app php bin/user-add.php --email=you@example.org --name="Your Name" --password=...` |
+| Tests | `docker compose exec app composer test` |
+| Lint | `docker compose exec app composer lint` |
+| Application logs | `docker compose logs -f app` |
+| Stop | `docker compose down` (add `-v` to drop the database and vendor volumes) |
+
+`.env.docker` holds every credential and is git-ignored — never commit it. It is mounted as the
+container's `.env`, so a host `.env` never leaks into the stack. The source tree is bind-mounted,
+so edits are live. After changing `composer.json`, rebuild with
+`docker compose down -v && docker compose up -d --build`.
+
+Rationale for the Apache image and the migration bootstrap: [`docs/adr/0006-local-container-stack.md`](docs/adr/0006-local-container-stack.md).
+
+---
+
 ## Locked Decisions (Read Before Coding)
 
 These choices are **not up for debate during MVP implementation**. They are restated in each spec document but are listed here so an agent reading only the README still gets them right.
@@ -327,7 +361,10 @@ eduqr/
 │           cpanel-notes.md}
 ├── docs/adr/                # architecture decision records
 ├── .env.example
+├── .env.docker.example      # local Docker stack configuration template
 ├── .gitignore
+├── Dockerfile               # local dev image: PHP 8.3 + Apache
+├── docker-compose.yml       # app + MySQL stack
 ├── composer.json
 └── README.md
 ```
