@@ -52,6 +52,7 @@ Every ID is stable for the life of the project. Do not renumber. To deprecate a 
 | FR-13 | MUST | An instructor MUST be able to archive a course (`status = 'archived'`) without losing its sessions. |
 | FR-14 | MUST | Course ownership MUST be enforced — an instructor MUST NOT read or modify another instructor's course. |
 | FR-15 | MAY  | Admins MAY view and manage all courses across the institution. |
+| FR-16 | SHOULD | An instructor SHOULD be able to restore an archived course they own to `active` status without altering its sessions or reports. Restoring an already-active course MUST be rejected. |
 
 ### 3.3 Session Management
 

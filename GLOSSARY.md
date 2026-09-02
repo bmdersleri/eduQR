@@ -20,7 +20,7 @@ A single row in the `answers` table. Belongs to exactly one **participant** and 
 
 ### archived (course)
 
-A `courses` row whose `status` is `'archived'`. Hidden from default list views but data preserved.
+A `courses` row whose `status` is `'archived'`. Its sessions and reports remain intact, and its owner can restore it to `active`.
 
 ### classroom session
 

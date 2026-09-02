@@ -314,6 +314,7 @@ Require an `eduqr_session` cookie tied to a `users` row with `role IN ('instruct
 | GET | `/api/v1/courses/{id}/analytics` | Cross-session analytics for one course |
 | PATCH | `/api/v1/courses/{id}` | Update |
 | DELETE | `/api/v1/courses/{id}` | Archive |
+| POST | `/api/v1/courses/{id}/restore` | Restore an archived course |
 
 Create / update body:
 
@@ -338,6 +339,18 @@ Create response:
 ```
 
 Ownership: an instructor only sees and modifies their own courses (`FR-14`). Accessing another instructor's course returns 403 `forbidden`.
+
+Restore response (`POST /api/v1/courses/{id}/restore`):
+
+```json
+{
+  "success": true,
+  "data": null,
+  "message": "Course restored."
+}
+```
+
+The endpoint requires instructor authentication and a valid CSRF token. It changes only `courses.status` from `archived` to `active`; sessions and reports are preserved. Errors: 403 `forbidden`, 404 `course_not_found`, 409 `invalid_course_state`.
 
 Course analytics response:
 
