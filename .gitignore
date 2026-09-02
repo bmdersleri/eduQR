@@ -6,6 +6,7 @@
 .env
 .env.*
 !.env.example
+/ERISIM_BILGILERI.local.md
 local.config.php
 
 # Logs

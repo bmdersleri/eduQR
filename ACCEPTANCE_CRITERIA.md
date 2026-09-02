@@ -109,6 +109,7 @@ The MVP is complete when **all** of the following hold.
 [ ] Closed questions reject new answers                                            [FR-44]
 [ ] Students are never required to provide personal data beyond a nickname         [NFR-32]
 [ ] Logs never contain passwords, cookies, raw answers, or device hashes           [NFR-73]
+[ ] Repository and reachable Git history contain no live credentials or secrets    [NFR-74]
 ```
 
 ---

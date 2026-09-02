@@ -240,6 +240,7 @@ See `I18N_SPEC.md` for the implementation contract.
 | NFR-71 | SHOULD | Each request SHOULD record route, status code, duration, and a correlation ID. |
 | NFR-72 | MAY  | A health-check endpoint `GET /api/v1/health` MAY be added in Phase 11. |
 | NFR-73 | MUST | Logs MUST NOT contain passwords, full cookies, raw answer bodies, or device hashes. |
+| NFR-74 | MUST | The repository MUST NOT contain passwords, API keys, database credentials, or other live secrets. Operational access notes MUST use an ignored local file; any committed secret MUST be rotated and removed from reachable Git history. |
 
 ---
 
