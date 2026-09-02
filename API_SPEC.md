@@ -934,6 +934,48 @@ JSON report shape:
 
 When `anonymize=true`, nicknames are replaced with `Participant 1`, `Participant 2`, … in the order they appear. Device hashes never appear in any variant (`FR-73`).
 
+### 5.7.1 LMS exports (`FR-98`)
+
+Two file downloads that an instructor uploads to Moodle or Canvas by hand. eduQR never talks to an LMS: there is no API call, no OAuth, no LTI, and no student data leaves the server except through the downloaded file.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/api/v1/sessions/{id}/questions.gift.txt` | Moodle GIFT question export |
+| GET | `/api/v1/sessions/{id}/gradebook.csv?anonymize=true\|false` | Gradebook CSV of quiz scores |
+
+Both require instructor authentication and the same course access as §5.7 — owner or co-instructor (`FR-97`). `exam_mode` (`FR-96`) restricts students only and never blocks these exports.
+
+**`questions.gift.txt`** — `Content-Type: text/plain; charset=utf-8`, `Content-Disposition: attachment; filename="session-{id}-questions.gift.txt"`. UTF-8, no BOM (GIFT is read as UTF-8 text). Contains no participant data at all. Every question is emitted with a `::title::` prefix, so question text can never be mistaken for a `//` comment line. The characters `\ ~ = # { } :` are backslash-escaped and newlines become the GIFT `\n` escape, keeping one question per block.
+
+| eduQR type | GIFT form |
+| --- | --- |
+| `multiple_choice` (one correct) | multiple choice, `=` correct / `~` wrong |
+| `multiple_choice` (several correct) | weighted multiple choice, `~%p%` credit split across the correct options |
+| `yes_no` (correct option maps to yes/no) | true/false, `{T}` or `{F}` |
+| `fill_in_the_blank` | short answer, `{=answer}` from the single correct option |
+| `open_text` | essay, `{}` |
+| `likert_5` | essay, `{}`, with the five scale options preserved as visible text |
+
+A question whose GIFT form needs a correct answer but has none marked (a poll-style `multiple_choice` or `yes_no`) is **not** skipped and **not** emitted as broken GIFT: it is downgraded to a valid essay item with its options preserved as visible text and a `//` comment above it recording the downgrade. Nothing is silently lost and the file always imports.
+
+```text
+// eduQR — Moodle GIFT export, session 42
+::Q1:: Which of these is a stack operation? {
+=push
+~append
+}
+
+::Q2:: How confident are you?\n- Strongly disagree\n- Disagree\n- Neutral\n- Agree\n- Strongly agree {}
+```
+
+**`gradebook.csv`** — `Content-Type: text/csv; charset=utf-8`, `Content-Disposition: attachment; filename="session-{id}-gradebook[-anonymized].csv"`, UTF-8 BOM, comma-delimited, exactly as §5.7's `report.csv`. One header row plus one row per participant, ordered by score descending. Columns: nickname, score, maximum score, percentage. The nickname column is the same participant identifier `report.csv` already emits; no other identifying field is added. Cells starting with `=`, `+`, `-`, `@` are prefixed with `'` against spreadsheet formula injection.
+
+The maximum score is the number of questions in the session that have at least one `is_correct` option (`FR-92`). A session with no scorable questions yields a maximum of `0` and a percentage of `0`. A session with no participants yields the header row alone.
+
+`anonymize=true` replaces nicknames with `Participant 1`, `Participant 2`, … exactly as §5.7. A session already anonymized through `POST /api/v1/sessions/{id}/anonymize` (`FR-70`) is anonymous in both exports regardless of the flag, because the nicknames were rewritten in storage.
+
+Errors for both: 401 `not_authenticated`, 403 `forbidden`, 404 `session_not_found`, 404 `course_not_found`.
+
 ### 5.8 Open-text theme extraction
 
 `GET /api/v1/questions/{id}/themes`

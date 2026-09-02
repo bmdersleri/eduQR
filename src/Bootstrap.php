@@ -457,6 +457,15 @@ final class Bootstrap
             (new Controllers\Api\ReportController())->json((int) $p['id']);
         });
 
+        // ── API: LMS exports — Moodle GIFT + gradebook CSV (T-1113) ───────────
+        $router->get('/api/v1/sessions/{id}/questions.gift.txt', function (array $p): void {
+            (new Controllers\Api\ReportController())->gift((int) $p['id']);
+        });
+
+        $router->get('/api/v1/sessions/{id}/gradebook.csv', function (array $p): void {
+            (new Controllers\Api\ReportController())->gradebook((int) $p['id']);
+        });
+
         // ── API: Session anonymize + delete (T-906, T-907) ────────────────────
         $router->post('/api/v1/sessions/{id}/anonymize', function (array $p): void {
             (new Controllers\Api\SessionController())->anonymize((int) $p['id']);

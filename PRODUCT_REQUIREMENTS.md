@@ -160,6 +160,7 @@ See `I18N_SPEC.md` for the implementation contract.
 | FR-95 | MUST | An instructor MUST be able to review generated bank questions and publish selected entries into a session as draft questions. |
 | FR-96 | MUST | An instructor MUST be able to enable exam_mode on a session. While exam_mode is enabled, students MUST NOT see live results or answer correctness under any circumstance, overriding `show_results_to_students` and per-question `show_results`. |
 | FR-97 | MUST | A course owner MUST be able to grant and revoke co-instructor access to a course. A co-instructor MUST have the same access as the owner to that course's sessions, questions, and reports, and the course MUST appear in their course list. Only the owner MUST be able to archive, restore, or delete the course and manage its instructor list. |
+| FR-98 | MUST | An instructor MUST be able to export a session's questions in Moodle GIFT format and its quiz scores as a gradebook CSV, both as file downloads. Both exports MUST enforce the same ownership and privacy rules as the existing report exports. The system MUST NOT send session data to any LMS itself. |
 
 ---
 

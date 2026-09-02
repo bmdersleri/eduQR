@@ -350,5 +350,13 @@
     "question.correct_answer": "Doğru Cevap",
     "report.quiz_scores": "Sınav Puanları",
     "report.quiz_rank": "Sıra",
-    "report.quiz_score": "Puan"
+    "report.quiz_score": "Puan",
+    "report.export_gift": "GIFT Dışa Aktar (Moodle)",
+    "report.export_gradebook": "Not Çizelgesi CSV Dışa Aktar",
+    "report.gift.file_header": "eduQR soru dışa aktarımı, oturum {session}, Moodle GIFT biçimi. Bu dosyayı öğrenme yönetim sisteminizin soru bankasına aktarın.",
+    "report.gift.question_title": "Soru {number}",
+    "report.gift.no_correct_answer": "Bu soru için doğru cevap işaretlenmediğinden açık uçlu soru olarak dışa aktarıldı.",
+    "report.gradebook.header.score": "Puan",
+    "report.gradebook.header.max_score": "En Yüksek Puan",
+    "report.gradebook.header.percentage": "Yüzde"
 }

@@ -600,7 +600,7 @@
 [ ] T-1110  WebSocket / Socket.IO real-time (replaces polling)                           [NFR-02]
 [x] T-1111  Health-check endpoint /api/v1/health                                         [NFR-72]
 [x] T-1112  Admin audit-log viewer UI                                                    [FR-91]
-[ ] T-1113  LMS integration (Moodle / Canvas export)                                    [—]
+[x] T-1113  LMS integration (Moodle / Canvas export)                                    [FR-98]
 [x] T-1114  Multi-instructor course ownership                                            [FR-97]
 [x] T-1115  Containerize (docker-compose: PHP + MySQL [+ Node later])                   [NFR-75]
 [x] T-1116  Question import V2 supporting legacy format and staged flow with metadata   [FR-31]
@@ -612,6 +612,8 @@
 - Genel `PATCH /api/v1/questions/{id}` artık `image_path` yazmaz; görsel yolu yalnızca upload/delete endpointleri üzerinden servis katmanında doğrulanarak güncellenir.
 - T-1116: POST `/api/v1/sessions/{id}/questions/import` endpointi hem legacy `{questions:[...]}` hem de yeni staged flow `{course_name, topic_name, sections:{opening:[], middle:[], closing:[]}}` yapısını destekleyecek şekilde güncellendi.
 - Sorular veritabanına `stage` kolonu/metadata bilgisiyle kaydedilir ve staged flow'da `opening -> middle -> closing` sırasında içe aktarım yapılır. Geçersiz formatlar için stable `invalid_import_payload` hata kodu döndürülür.
+- T-1113: GET `/api/v1/sessions/{id}/questions.gift.txt` (Moodle GIFT) ve GET `/api/v1/sessions/{id}/gradebook.csv` endpointleri eklendi. Yalnızca dosya indirmesi yapılır; eduQR hiçbir LMS ile bağlantı kurmaz, öğretmen dosyayı kendi sistemine elle yükler.
+- Doğru cevabı işaretlenmemiş sorular bozuk GIFT üretmek yerine geçerli açık uçlu soruya dönüştürülür ve seçenekleri metin olarak korunur. Her iki dışa aktarım da mevcut rapor dışa aktarımlarıyla aynı ders sahipliği ve anonimleştirme kurallarına tabidir.
 
 ---
 

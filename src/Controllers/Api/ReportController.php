@@ -192,6 +192,76 @@ final class ReportController
         exit;
     }
 
+    // ── GET /api/v1/sessions/{id}/questions.gift.txt (T-1113) ────────────────
+
+    /**
+     * Moodle GIFT question export. A plain file download — eduQR never talks to
+     * an LMS, the instructor uploads the file themselves (FR-98).
+     */
+    public function gift(int $sessionId): void
+    {
+        $user = AuthMiddleware::require();
+
+        try {
+            $data = $this->report->buildGiftExport($sessionId, (int) $user['id']);
+        } catch (\RuntimeException $e) {
+            $this->handleError($e);
+        }
+
+        $filename = 'session-' . $sessionId . '-questions.gift.txt';
+
+        header('Content-Type: text/plain; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: no-cache, no-store');
+
+        echo $data['gift'];
+        exit;
+    }
+
+    // ── GET /api/v1/sessions/{id}/gradebook.csv (T-1113) ─────────────────────
+
+    public function gradebook(int $sessionId): void
+    {
+        $user = AuthMiddleware::require();
+        $anonymize = filter_var($_GET['anonymize'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        try {
+            $data = $this->report->buildGradebook($sessionId, (int) $user['id'], $anonymize);
+        } catch (\RuntimeException $e) {
+            $this->handleError($e);
+        }
+
+        $filename = 'session-' . $sessionId . '-gradebook' . ($anonymize ? '-anonymized' : '') . '.csv';
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: no-cache, no-store');
+
+        // UTF-8 BOM for Excel compatibility
+        echo "\xEF\xBB\xBF";
+
+        $out = fopen('php://output', 'w');
+
+        fputcsv($out, [
+            t('report.csv.header.nickname'),
+            t('report.gradebook.header.score'),
+            t('report.gradebook.header.max_score'),
+            t('report.gradebook.header.percentage'),
+        ]);
+
+        foreach ($data['rows'] as $row) {
+            fputcsv($out, [
+                self::csvCell((string) $row['nickname']),
+                (string) $row['score'],
+                (string) $row['max_score'],
+                number_format((float) $row['percentage'], 1, '.', ''),
+            ]);
+        }
+
+        fclose($out);
+        exit;
+    }
+
     // ── GET /api/v1/sessions/{id}/report.html ─────────────────────────────────
 
     public function html(int $sessionId): void

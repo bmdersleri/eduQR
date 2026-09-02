@@ -317,7 +317,7 @@ Not part of the MVP. Each item must be escalated to the human owner before work 
 [ ] T-1110  WebSocket / Socket.IO real-time (replaces polling)                              [NFR-02]
 [x] T-1111  Health-check endpoint /api/v1/health                                            [NFR-72]
 [x] T-1112  Admin audit-log viewer UI                                                       [FR-91]
-[ ] T-1113  LMS integration (Moodle / Canvas export)                                        [—]
+[x] T-1113  LMS integration (Moodle / Canvas export)                                        [FR-98]
 [x] T-1114  Multi-instructor course ownership                                               [FR-97]
 [x] T-1115  Containerize (docker-compose: PHP + MySQL [+ Node later])                       [NFR-75]
 [x] T-1116  Question import V2 (legacy questions[] and staged sections opening->middle->closing, processing order, metadata, error: invalid_import_payload) [FR-31]

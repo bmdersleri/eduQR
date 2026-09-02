@@ -65,6 +65,14 @@ ob_start();
            class="btn btn-outline-secondary btn-sm">
             <?= htmlspecialchars(t('report.export_html'), ENT_QUOTES, 'UTF-8') ?>
         </a>
+        <a href="<?= htmlspecialchars(eduqr_path('/api/v1/sessions/' . $sessionId . '/questions.gift.txt'), ENT_QUOTES, 'UTF-8') ?>"
+           class="btn btn-outline-success btn-sm">
+            <?= htmlspecialchars(t('report.export_gift'), ENT_QUOTES, 'UTF-8') ?>
+        </a>
+        <a href="<?= htmlspecialchars(eduqr_path('/api/v1/sessions/' . $sessionId . '/gradebook.csv'), ENT_QUOTES, 'UTF-8') ?>"
+           class="btn btn-outline-success btn-sm">
+            <?= htmlspecialchars(t('report.export_gradebook'), ENT_QUOTES, 'UTF-8') ?>
+        </a>
     </div>
 </div>
 

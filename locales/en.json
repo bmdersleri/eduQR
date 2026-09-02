@@ -350,5 +350,13 @@
     "question.correct_answer": "Correct Answer",
     "report.quiz_scores": "Quiz Scores",
     "report.quiz_rank": "Rank",
-    "report.quiz_score": "Score"
+    "report.quiz_score": "Score",
+    "report.export_gift": "Export GIFT (Moodle)",
+    "report.export_gradebook": "Export Gradebook CSV",
+    "report.gift.file_header": "eduQR question export for session {session}, Moodle GIFT format. Import this file into your LMS question bank.",
+    "report.gift.question_title": "Question {number}",
+    "report.gift.no_correct_answer": "No correct answer is marked for this question, so it is exported as an essay question.",
+    "report.gradebook.header.score": "Score",
+    "report.gradebook.header.max_score": "Maximum Score",
+    "report.gradebook.header.percentage": "Percentage"
 }

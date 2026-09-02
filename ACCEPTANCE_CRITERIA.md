@@ -47,6 +47,8 @@ The MVP is complete when **all** of the following hold.
 [ ] Close a session                                                         [FR-24]
 [ ] View a session report                                                   [FR-60]
 [ ] Export the report as CSV                                                [FR-62]
+[x] Download the session questions as a Moodle GIFT file                    [FR-98]
+[x] Download the session quiz scores as a gradebook CSV                     [FR-98]
 [ ] Anonymize a closed session                                              [FR-70]
 [ ] Use the entire interface in English or Turkish                          [FR-81]
 ```
@@ -367,6 +369,10 @@ Each phase in `TASKS.md` is gated by the checkpoint below. Do not start the next
 [ ] Anonymized export hides nicknames                                                         [FR-70]
 [ ] Device hashes and IPs never appear                                                        [FR-72, FR-73]
 [ ] Reports require instructor authentication                                                  [FR-74]
+[x] GIFT export maps every question type and escapes ~ = # { } : and multi-line text            [FR-98]
+[x] Questions with no correct answer are exported as valid essay items, never as broken GIFT     [FR-98]
+[x] Gradebook CSV lists one row per participant with score, max score, and percentage             [FR-98]
+[x] Both LMS exports are ownership-enforced, honour anonymization, and make no outbound calls       [FR-98]
 ```
 
 ### 4.9 Internationalization Module
