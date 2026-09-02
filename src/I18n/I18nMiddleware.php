@@ -4,20 +4,23 @@ declare(strict_types=1);
 
 namespace EduQR\I18n;
 
+use EduQR\Config;
 use EduQR\Support\Url;
 
 final class I18nMiddleware
 {
     private const SUPPORTED = ['en', 'tr'];
-    private const COOKIE = 'locale';
+    private const COOKIE = 'eduqr_locale';
     private const COOKIE_TTL = 365 * 24 * 3600; // 1 year
 
     /**
      * Determine locale for this request, init I18nService, and set/refresh the locale cookie.
      *
      * Priority: URL prefix → ?lang= query → locale cookie → Accept-Language header → 'en'
+     *
+     * @param null|callable(string, string, array<string, bool|int|string>): bool $cookieWriter
      */
-    public static function resolve(string $localesPath): string
+    public static function resolve(string $localesPath, ?callable $cookieWriter = null): string
     {
         $locale = self::fromUri()
             ?? self::fromQuery()
@@ -26,13 +29,19 @@ final class I18nMiddleware
             ?? 'en';
 
         if (! headers_sent()) {
-            setcookie(self::COOKIE, $locale, [
+            $options = [
                 'expires' => time() + self::COOKIE_TTL,
                 'path' => '/',
-                'httponly' => true,
+                'httponly' => false,
                 'samesite' => 'Lax',
-                'secure' => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
-            ]);
+                'secure' => Config::bool('COOKIE_SECURE', true),
+            ];
+
+            if ($cookieWriter === null) {
+                setcookie(self::COOKIE, $locale, $options);
+            } else {
+                $cookieWriter(self::COOKIE, $locale, $options);
+            }
         }
 
         I18nService::init($localesPath, $locale);
