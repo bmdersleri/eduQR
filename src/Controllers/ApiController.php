@@ -67,6 +67,15 @@ abstract class ApiController
         'too_many_attempts' => 'auth.login.error.locked',
         'invalid_credentials' => 'auth.login.error.invalid',
         'invalid_reset_token' => 'auth.reset.error.invalid_token',
+
+        // Input validation codes (NFR-83). These name a *reason* — the offending
+        // field travels separately in `getField()` — so one message serves many
+        // codes and many fields: `required` is thrown for `title`, `email`,
+        // `question_id` and a dozen more. `error.*` is reserved for sentences
+        // that describe a whole failure, which is why none of these use it.
+        'required' => 'validation.required',
+        'text_too_long' => 'validation.text_too_long',
+        'invalid_language' => 'validation.invalid_language',
     ];
 
     // ── Success envelope ──────────────────────────────────────────────────────

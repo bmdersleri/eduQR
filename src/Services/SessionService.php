@@ -227,10 +227,10 @@ final class SessionService
     {
         $title = trim((string) $raw);
         if ($title === '') {
-            throw new \InvalidArgumentException('title:required');
+            throw new ValidationException('required', 400, 'validation_error', 'title');
         }
         if (mb_strlen($title) > self::MAX_TITLE_LEN) {
-            throw new \InvalidArgumentException('title:too_long');
+            throw new ValidationException('text_too_long', 400, 'validation_error', 'title');
         }
 
         return $title;
@@ -240,7 +240,7 @@ final class SessionService
     {
         $lang = (string) $raw;
         if (! in_array($lang, self::ALLOWED_LANGS, true)) {
-            throw new \InvalidArgumentException('language:invalid');
+            throw new ValidationException('invalid_language', 400, 'validation_error', 'language');
         }
 
         return $lang;

@@ -40,8 +40,6 @@ final class SessionController extends ApiController
             $result = $this->service->createSession($courseId, (int) $user['id'], $body);
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);
-        } catch (\InvalidArgumentException $e) {
-            $this->handleValidationException($e);
         }
 
         // Audit: FR-90
@@ -90,8 +88,6 @@ final class SessionController extends ApiController
             $this->service->updateSession($id, (int) $user['id'], $body);
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);
-        } catch (\InvalidArgumentException $e) {
-            $this->handleValidationException($e);
         }
 
         $this->json(200, [
@@ -290,22 +286,5 @@ final class SessionController extends ApiController
             'closed_at' => $session['closed_at'],
             'created_at' => $session['created_at'],
         ];
-    }
-
-    private function handleValidationException(\InvalidArgumentException $e): never
-    {
-        $parts = explode(':', $e->getMessage(), 2);
-        $field = $parts[0];
-        $key = $parts[1] ?? 'validation_error';
-        $message = match ($key) {
-            'required' => t('validation.required'),
-            'too_long' => t('validation.text_too_long'),
-            'invalid' => t('validation.invalid_language'),
-            default => t('common.error'),
-        };
-        $this->json(400, [
-            'success' => false,
-            'error' => ['code' => 'validation_error', 'message' => $message, 'field' => $field],
-        ]);
     }
 }

@@ -7,6 +7,7 @@ namespace EduQR\Tests\Unit;
 use EduQR\Config;
 use EduQR\Contracts\CourseRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
+use EduQR\Exceptions\ValidationException;
 use EduQR\Services\SessionService;
 use EduQR\Support\ShortCode;
 use EduQR\Support\Url;
@@ -327,10 +328,17 @@ class SessionServiceTest extends TestCase
 
     public function testCreateSessionRequiresTitle(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('title:required');
         $service = $this->makeService([], [$this->sampleCourse(1, 10)]);
-        $service->createSession(1, 10, ['title' => '']);
+
+        try {
+            $service->createSession(1, 10, ['title' => '']);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('required', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('validation_error', $e->getPublicCode());
+            $this->assertSame('title', $e->getField());
+        }
     }
 
     // ── getSession ─────────────────────────────────────────────────────────────
