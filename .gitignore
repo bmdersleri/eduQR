@@ -58,6 +58,9 @@ composer.phar
 /tr.json
 /schema.sql
 
+# verify-migrations.sh DUMP_ONLY=1 output [NFR-86]
+/schema-from-migrations.sql
+
 # agykit local config
 .agykit.conf
 /.playwright-mcp/

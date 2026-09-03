@@ -23,7 +23,7 @@ cleanup() {
     docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
     rm -rf "$WORK"
 }
-trap cleanup EXIT
+trap cleanup EXIT INT TERM
 
 if docker ps -a --format '{{.Names}}' | grep -qx "$CONTAINER"; then
     echo "Removing a leftover $CONTAINER container."
