@@ -6,9 +6,11 @@ namespace EduQR\Controllers\Public;
 
 use EduQR\Container;
 use EduQR\Contracts\OptionRepositoryInterface;
+use EduQR\Contracts\ParticipantRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Controllers\HtmlController;
+use EduQR\Services\ParticipantService;
 
 /**
  * The screens a student sees on their own phone (NFR-81).
@@ -32,12 +34,16 @@ final class StudentController extends HtmlController
     private SessionRepositoryInterface $sessions;
     private QuestionRepositoryInterface $questions;
     private OptionRepositoryInterface $options;
+    private ParticipantRepositoryInterface $participants;
+    private ParticipantService $participantService;
 
     public function __construct()
     {
         $this->sessions = Container::sessionRepository();
         $this->questions = Container::questionRepository();
         $this->options = Container::optionRepository();
+        $this->participants = Container::participantRepository();
+        $this->participantService = Container::participantService();
     }
 
     // ── GET /join/{short_code}/wait ───────────────────────────────────────────
@@ -149,6 +155,80 @@ final class StudentController extends HtmlController
         );
     }
 
+    // ── GET /join/{short_code} ────────────────────────────────────────────────
+
+    /**
+     * The nickname form, and the four answers that are not it.
+     *
+     * The template used to include the public layout in the middle of itself
+     * and `exit`, once for the closed session and once for the paused one. Each
+     * of those bodies is now a template of its own under `student/join/`, and
+     * this method chooses between them. They are kept apart from the play
+     * page's equivalents, which say the same thing in different markup;
+     * unifying them would change rendered bytes.
+     */
+    public function join(string $shortCode): void
+    {
+        $session = $this->sessions->findByShortCode($shortCode);
+
+        if ($session === null) {
+            $this->renderError(404);
+
+            return;
+        }
+
+        // A closed session answers 410 here and 200 when paused. Both statuses
+        // are what the template sent; neither is reconsidered by this move.
+        if ($session['status'] === 'closed') {
+            $this->render('student/join/closed.php', [], t('app.name'), self::LAYOUT_PUBLIC, 410);
+
+            return;
+        }
+
+        if ($session['status'] === 'paused') {
+            $this->render('student/join/paused.php', [], t('app.name'), self::LAYOUT_PUBLIC);
+
+            return;
+        }
+
+        $participantId = (int) ($_COOKIE['eduqr_participant'] ?? 0);
+
+        if ($participantId > 0) {
+            $participant = $this->participants->findById($participantId);
+
+            // A cookie from another session is ignored rather than cleared, and
+            // falls through to the form below.
+            if ($participant !== null && (int) $participant['session_id'] === (int) $session['id']) {
+                $this->setParticipantCookie($participantId);
+                $this->redirect(eduqr_path('/play/' . rawurlencode($shortCode)), 302);
+            }
+        }
+
+        // Returning on the same device after clearing the participant cookie.
+        $deviceCookieId = $_COOKIE['eduqr_device'] ?? '';
+        $returningParticipant = $this->participantService->restore(
+            $shortCode,
+            \is_string($deviceCookieId) && $deviceCookieId !== '' ? $deviceCookieId : null,
+            $_SERVER['HTTP_USER_AGENT'] ?? '',
+        );
+
+        if ($returningParticipant !== null) {
+            $this->setParticipantCookie((int) $returningParticipant['id']);
+            $this->redirect(eduqr_path('/play/' . rawurlencode($shortCode)), 302);
+        }
+
+        $this->render(
+            'student/join.php',
+            [
+                'session' => $session,
+                'shortCode' => $shortCode,
+            ],
+            // Escaped here and again by the layout, as above.
+            self::titleWithAppName(htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8')),
+            self::LAYOUT_PUBLIC,
+        );
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /**
@@ -178,6 +258,26 @@ final class StudentController extends HtmlController
         }
 
         return $questions;
+    }
+
+    /**
+     * Write the participant id back to its cookie.
+     *
+     * Setting a cookie is a decision about the response, not about the markup,
+     * so it belongs here; the template held it in a closure. The options are
+     * the template's, verbatim: a session cookie (`expires 0`), site-wide,
+     * secure only where the request already was, unreadable from JavaScript,
+     * and `SameSite=Lax` so it survives arriving from a scanned QR code.
+     */
+    private function setParticipantCookie(int $participantId): void
+    {
+        setcookie('eduqr_participant', (string) $participantId, [
+            'expires' => 0,
+            'path' => '/',
+            'secure' => (bool) ($_SERVER['HTTPS'] ?? false),
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
     }
 
     /**

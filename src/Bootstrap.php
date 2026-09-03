@@ -210,8 +210,7 @@ final class Bootstrap
         });
 
         $router->get('/join/{short_code}', function (array $p): void {
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/student/join.php';
+            (new Controllers\Public\StudentController())->join($p['short_code']);
         });
 
         // ── Student answer page (T-709) ───────────────────────────────────────
