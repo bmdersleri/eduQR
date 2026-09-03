@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace EduQR\Controllers;
 
 use EduQR\Exceptions\DomainException;
+use EduQR\Middleware\AuthMiddleware;
+use EduQR\Middleware\CsrfMiddleware;
 
 /**
  * The one way an HTML route reaches a template (NFR-81).
@@ -45,6 +47,20 @@ use EduQR\Exceptions\DomainException;
  * overwrite a variable the renderer already holds — including the path it is
  * about to include.
  *
+ * ## The layout's own variables
+ *
+ * `layouts/admin.php` renders more than `$content` and `$pageTitle`: its navbar
+ * shows the signed-in user's name, hides the audit-log link from non-admins,
+ * and carries a logout form with a CSRF field. Those two variables used to
+ * reach it by scope leakage — the template authenticated, assigned
+ * `$instructor` and `$csrfToken`, and then included the layout from its own
+ * scope. Once the layout is included by this class instead, that leak is gone,
+ * and without a replacement every admin page would silently lose its navbar
+ * chrome. {@see self::requireUser()} is that replacement: it records the two
+ * variables when it authenticates, and {@see self::render()} passes them to the
+ * frame. A page that never authenticates has no chrome and passes none, which
+ * is exactly what the public and projector layouts want.
+ *
  * ## Error pages
  *
  * `templates/errors/` holds pages for 403, 404 and 500 only. For any other
@@ -68,6 +84,74 @@ abstract class HtmlController
 
     /** The statuses that have a page of their own under `templates/errors/`. */
     private const ERROR_PAGES = [403, 404, 500];
+
+    /**
+     * What the layout needs beyond `$content` and `$pageTitle`, filled in by
+     * {@see self::requireUser()}. Empty until the request is authenticated.
+     *
+     * @var array<string, mixed>
+     */
+    private array $layoutChrome = [];
+
+    // ── Authentication ────────────────────────────────────────────────────────
+
+    /**
+     * Authenticate the request and return the current user.
+     *
+     * Eleven admin templates opened with `AuthMiddleware::require()`. This is
+     * where that line went, once, rather than into eleven controllers.
+     *
+     * **It returns the user; it does not throw.** Turning a missing session into
+     * an `AuthenticationException` for {@see self::renderDomainError()} to catch
+     * was the alternative, and it would have changed what the eleven routes
+     * answer. `AuthMiddleware` does not merely report the failure — it answers
+     * it, and the answer is not an error page: an HTML caller with no session is
+     * sent `302 Location: /login`, and one whose role is wrong gets the 403 page
+     * directly. A 401 error page in place of that redirect would be a worse
+     * page and a broken sign-in flow. The typed exceptions describe failures a
+     * *service* reports back to its caller; this failure is already resolved by
+     * the time control could reach a `catch`.
+     *
+     * The content type goes out first because that is where the router closures
+     * being replaced sent it — before the template ran, therefore before the
+     * template authenticated. Both of `AuthMiddleware`'s HTML answers were
+     * emitted under that header and neither sets one of its own, so sending it
+     * here keeps those two responses byte-for-byte what they were.
+     *
+     * @param string ...$roles roles allowed through; none means any signed-in user
+     *
+     * @return array<string, mixed> id, email, role, display_name
+     */
+    protected function requireUser(string ...$roles): array
+    {
+        header('Content-Type: text/html; charset=utf-8');
+
+        $user = $this->authenticateRequest(...$roles);
+
+        $this->layoutChrome = [
+            'instructor' => $user,
+            'csrfToken' => CsrfMiddleware::getToken(),
+        ];
+
+        return $user;
+    }
+
+    /**
+     * The middleware call by itself.
+     *
+     * Separated for the same reason {@see self::templateRoot()} is overridable:
+     * so that the contract above it can be exercised without the real thing
+     * underneath — here, rendering an authenticated page without starting a PHP
+     * session. Nothing under `src/` overrides it.
+     *
+     * @return array<string, mixed>
+     */
+    protected function authenticateRequest(string ...$roles): array
+    {
+        return $roles === []
+            ? AuthMiddleware::require()
+            : AuthMiddleware::requireRole(...$roles);
+    }
 
     // ── Rendering ─────────────────────────────────────────────────────────────
 
@@ -104,10 +188,12 @@ abstract class HtmlController
 
         $this->sendHtmlHeaders($status);
 
+        // The union is written this way round so that the chrome can only add to
+        // the frame's scope, never redefine the two variables it exists to frame.
         self::emit($frame, [
             'content' => self::capture($body, $data),
             'pageTitle' => $pageTitle,
-        ]);
+        ] + $this->layoutChrome);
     }
 
     // ── Error pages ───────────────────────────────────────────────────────────
