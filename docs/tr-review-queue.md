@@ -38,15 +38,24 @@ değerlerin doğru olduğunu değil.
 | LMS dışa aktarımı (Moodle GIFT + not çizelgesi) | `8a1f59a` | FR-98 | 9 |
 | **Toplam** | | | **40** |
 
-## Öncelikli maddeler
+## Öncelikli maddeler — karara bağlandı
 
-Aşağıdakiler yalnızca üslup meselesi değil; bunları ilk sırada değerlendirin.
+Aşağıdaki üç madde yalnızca üslup meselesi değildi ve proje yöneticisinin kararıyla çözüldü.
+Yine de nihai söz insan gözden geçiricide: aşağıdaki seçimlerden biri yanlışsa değiştirin.
 
-1. `session.exam_mode` ile `session.quiz_mode` **aynı Türkçe karşılığa** sahip ("Sınav Modu")
-   ama iki farklı özelliği adlandırıyorlar ve aynı ekranda yan yana duruyorlar.
-2. `course.instructors.role.co_instructor` — "Yardımcı Eğitmen" rolün yetkisini olduğundan
-   dar gösteriyor.
-3. Ürün genelinde "instructor" için iki ayrı terim kullanılıyor: "Eğitmen" ve "Öğretim Elemanı".
+1. ~~`session.exam_mode` ile `session.quiz_mode` aynı karşılığa ("Sınav Modu") sahipti~~
+   → **Çözüldü.** `session.quiz_mode` artık **"Puanlama Modu"**. İki özellik farklı işler
+   yapıyor (quiz modu = `is_correct` üzerinden puanlama, FR-92; sınav modu = sonuçları
+   öğrenciden gizleme, FR-96) ve aynı oturum formunda yan yana duruyorlardı. "Puanlama Modu"
+   işlevi doğrudan anlatıyor ve "Sınav Modu" ile karışmıyor.
+2. ~~`course.instructors.role.co_instructor` = "Yardımcı Eğitmen"~~
+   → **Çözüldü.** Artık **"Ortak Eğitmen"**. İngilizce karşılığı "Co-instructor"; "yardımcı"
+   ast bir rol çağrıştırıyordu. Not: bu rolün yetkisi ders sahibiyle *tamamen* eşit değil —
+   ders arşivleme/geri yükleme ve eğitmen listesi yönetimi yalnızca sahibe ait (FR-97) —
+   ama öğretim işlerinde eşit, dolayısıyla "ortak" doğru karşılık.
+3. ~~"instructor" için iki terim: "Eğitmen" ve "Öğretim Elemanı"~~
+   → **Çözüldü.** **"Eğitmen"** standart. `tr.json` içinde "Eğitmen" 7 yerde, "Öğretim Elemanı"
+   yalnızca `instructor.dashboard.title` içinde geçiyordu; o anahtar "Eğitmen Paneli" oldu.
 
 ## Boşluk doldurma soru tipi
 
