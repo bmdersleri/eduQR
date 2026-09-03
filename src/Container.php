@@ -17,6 +17,7 @@ use EduQR\Contracts\QuestionBankRepositoryInterface;
 use EduQR\Contracts\QuestionGenerationServiceInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\ReactionRepositoryInterface;
+use EduQR\Contracts\ReportBuilderInterface;
 use EduQR\Contracts\ScoringServiceInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Contracts\UserRepositoryInterface;
@@ -43,6 +44,7 @@ use EduQR\Services\QuestionBankService;
 use EduQR\Services\QuestionGenerationService;
 use EduQR\Services\QuestionService;
 use EduQR\Services\ReactionService;
+use EduQR\Services\ReportBuilder;
 use EduQR\Services\ReportService;
 use EduQR\Services\ScoringService;
 use EduQR\Services\SessionService;
@@ -288,6 +290,23 @@ final class Container
             self::sessionRepository(),
             self::participantRepository(),
             self::courseRepository(),
+        );
+    }
+
+    /**
+     * Post-session report assembly (NFR-82). Like the scoring and export units
+     * it holds the shared connection rather than reaching for one per query,
+     * because every report it can build counts rows.
+     */
+    public static function reportBuilder(): ReportBuilderInterface
+    {
+        /** @var ReportBuilderInterface */
+        return self::$instances['reportBuilder'] ??= new ReportBuilder(
+            self::sessionRepository(),
+            self::questionRepository(),
+            self::courseRepository(),
+            Database::connection(),
+            self::scoringService(),
         );
     }
 
