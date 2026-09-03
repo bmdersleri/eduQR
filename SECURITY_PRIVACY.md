@@ -108,6 +108,10 @@ It is a **friction reducer, not a security control.** A determined student can c
 - The same `ip_hash` exceeding 60 login attempts per hour → temporary block.
 - Implementation: count `login_attempts` rows where `succeeded = 0` and `created_at > NOW() - INTERVAL 10 MINUTE`. Pure SQL, no Redis needed for MVP.
 
+### 5.4 Session revalidation (NFR-87)
+
+Every authenticated request resolves the caller's identity, role and `is_active` flag from the `users` row, not from values copied into the session at sign-in. Deactivating, deleting or demoting an account takes effect on the account's next request without waiting for logout or cookie expiry. A request whose user row is missing or whose `is_active` is `0` is answered exactly as an unauthenticated request is — `401 not_authenticated` with the shared JSON envelope, or a redirect to the login form — and the session is destroyed; the response does not confirm that the account exists. This ensures that withdrawing an instructor's access immediately ends their active session, including if the cookie's remaining lifetime would otherwise keep it open.
+
 ---
 
 ## 6. Authorization

@@ -202,7 +202,8 @@ Rules:
 - `email` is unique and used for login.
 - `password_hash` never stores plain text. Always `password_hash($pw, PASSWORD_BCRYPT, ['cost' => 12])`.
 - `preferred_language` must be one of the active locales; defaults to `en`.
-- `is_active = 0` disables login without deleting the row.
+- `is_active = 0` disables login without deleting the row, and ends any session the account
+  already has: every authenticated request re-reads this flag (NFR-87).
 
 ### 2.2 `courses`
 

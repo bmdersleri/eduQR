@@ -38,7 +38,7 @@ interface CourseRepositoryInterface
      * user has no access. This is the single authorization primitive; every
      * course-derived permission check in the application goes through it.
      *
-     * A user whose users.role is 'admin' resolves to 'co_instructor' on every
+     * A user whose users.role is 'admin' and whose account is active resolves to 'co_instructor' on every
      * course they are not listed on, so an admin can read and author everywhere
      * but never passes an owner-only check (FR-99).
      */
