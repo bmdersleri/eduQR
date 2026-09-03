@@ -1,28 +1,3 @@
-<?php
-/**
- * Answer confirmation screen — /play/{short_code}/answered  (T-711)
- *
- * Shown after a student successfully submits an answer.
- * Polls for the next active question every 3 seconds (like wait.php does).
- */
-
-use EduQR\Container;
-
-$shortCode = $p['short_code'] ?? '';
-
-$sessionRepo  = Container::sessionRepository();
-$session      = $sessionRepo->findByShortCode($shortCode);
-
-if ($session === null) {
-    http_response_code(404);
-    include __DIR__ . '/../../templates/errors/404.php';
-    exit;
-}
-
-$answeredQuestionId = (int) ($_GET['answered_q'] ?? 0);
-
-ob_start();
-?>
 <div class="eduqr-confetti" aria-hidden="true" id="confetti">
     <span></span><span></span><span></span><span></span>
     <span></span><span></span><span></span><span></span>
@@ -103,7 +78,3 @@ async function pollForNextQuestion() {
 pollForNextQuestion();
 setInterval(pollForNextQuestion, 3000);
 </script>
-<?php
-$content   = ob_get_clean();
-$pageTitle = htmlspecialchars(t('student.answer.submitted'), ENT_QUOTES, 'UTF-8') . ' — ' . t('app.name');
-include __DIR__ . '/../layouts/public.php';

@@ -1,20 +1,3 @@
-<?php
-
-use EduQR\Container;
-
-$shortCode = $p['short_code'] ?? '';
-
-$sessionRepo = Container::sessionRepository();
-$session     = $sessionRepo->findByShortCode($shortCode);
-
-if ($session === null || $session['status'] === 'closed') {
-    http_response_code(404);
-    include __DIR__ . '/../../templates/errors/404.php';
-    exit;
-}
-
-ob_start();
-?>
 <div class="eduqr-student-screen">
 <div class="row justify-content-center w-100 g-0">
     <div class="col-12 col-lg-8 col-xl-7">
@@ -93,7 +76,3 @@ async function pollActiveQuestion() {
 pollActiveQuestion();
 setInterval(pollActiveQuestion, 3000);
 </script>
-<?php
-$content   = ob_get_clean();
-$pageTitle = htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') . ' — ' . t('app.name');
-include __DIR__ . '/../layouts/public.php';

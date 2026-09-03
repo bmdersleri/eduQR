@@ -1,43 +1,4 @@
-<?php
-
-declare(strict_types=1);
-
-use EduQR\Container;
-
-$shortCode = $p['short_code'] ?? '';
-$sessionRepo = Container::sessionRepository();
-$session = $sessionRepo->findByShortCode($shortCode);
-
-if ($session === null || $session['status'] === 'closed') {
-    http_response_code(404);
-    include __DIR__ . '/../../templates/errors/404.php';
-    exit;
-}
-
-$participantId = (int) ($_COOKIE['eduqr_participant'] ?? 0);
-if ($participantId <= 0) {
-    header('Location: ' . eduqr_path('/join/' . rawurlencode($shortCode)));
-    exit;
-}
-
-$qRepo = Container::questionRepository();
-$oRepo = Container::optionRepository();
-$all = $qRepo->findBySession((int) $session['id']);
-$questions = [];
-foreach ($all as $q) {
-    if (($q['status'] ?? '') === 'closed') {
-        continue;
-    }
-    $q['options'] = $oRepo->findByQuestion((int) $q['id']);
-    $questions[] = $q;
-    if (count($questions) >= 4) {
-        break;
-    }
-}
-
-ob_start();
-$totalQ = count($questions);
-?>
+<?php declare(strict_types=1); ?>
 <div class="eduqr-student-screen">
 <div class="row justify-content-center w-100 g-0">
   <div class="col-12 col-xl-9 col-lg-10">
@@ -189,7 +150,3 @@ if (form) {
   });
 }
 </script>
-<?php
-$content = ob_get_clean();
-$pageTitle = t('student.batch.title') . ' — ' . t('app.name');
-include __DIR__ . '/../layouts/public.php';

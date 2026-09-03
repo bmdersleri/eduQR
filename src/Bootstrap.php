@@ -206,8 +206,7 @@ final class Bootstrap
         // ── Public / Student ──────────────────────────────────────────────────
         // /wait must come before /{short_code} so it is matched first
         $router->get('/join/{short_code}/wait', function (array $p): void {
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/student/wait.php';
+            (new Controllers\Public\StudentController())->wait($p['short_code']);
         });
 
         $router->get('/join/{short_code}', function (array $p): void {
@@ -218,8 +217,7 @@ final class Bootstrap
         // ── Student answer page (T-709) ───────────────────────────────────────
         // answered must come before /{short_code} so it is matched first
         $router->get('/play/{short_code}/answered', function (array $p): void {
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/student/answered.php';
+            (new Controllers\Public\StudentController())->answered($p['short_code']);
         });
 
         $router->get('/play/{short_code}', function (array $p): void {
@@ -229,8 +227,7 @@ final class Bootstrap
 
         // ── Student batch answer page ─────────────────────────────────────────
         $router->get('/play/{short_code}/batch', function (array $p): void {
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/student/batch.php';
+            (new Controllers\Public\StudentController())->batch($p['short_code']);
         });
 
         // No-JS fallback: form POST to /play/{short_code} (T-710)
