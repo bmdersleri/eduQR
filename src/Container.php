@@ -16,6 +16,7 @@ use EduQR\Contracts\QuestionBankRepositoryInterface;
 use EduQR\Contracts\QuestionGenerationServiceInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\ReactionRepositoryInterface;
+use EduQR\Contracts\ScoringServiceInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Contracts\UserRepositoryInterface;
 use EduQR\Repositories\AnswerRepository;
@@ -41,7 +42,9 @@ use EduQR\Services\QuestionGenerationService;
 use EduQR\Services\QuestionService;
 use EduQR\Services\ReactionService;
 use EduQR\Services\ReportService;
+use EduQR\Services\ScoringService;
 use EduQR\Services\SessionService;
+use EduQR\Support\Database;
 
 /**
  * The composition root: the one place a service or a repository is constructed.
@@ -283,6 +286,22 @@ final class Container
             self::questionRepository(),
             self::optionRepository(),
             self::courseRepository(),
+            self::scoringService(),
+        );
+    }
+
+    /**
+     * Quiz scoring (NFR-82). Unlike the repositories, this one is handed the
+     * shared connection rather than reaching for it per query, so resolving it
+     * opens the connection. That is not a new cost: nothing asks for a score
+     * without also reading the answers it scores.
+     */
+    public static function scoringService(): ScoringServiceInterface
+    {
+        /** @var ScoringServiceInterface */
+        return self::$instances['scoringService'] ??= new ScoringService(
+            self::questionRepository(),
+            Database::connection(),
         );
     }
 

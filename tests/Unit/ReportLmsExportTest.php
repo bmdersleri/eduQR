@@ -10,6 +10,7 @@ use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\I18n\I18nService;
 use EduQR\Services\ReportService;
+use EduQR\Services\ScoringService;
 use PDO;
 use PHPUnit\Framework\TestCase;
 
@@ -106,6 +107,7 @@ class ReportLmsExportTest extends TestCase
             $questions,
             $this->createMock(OptionRepositoryInterface::class),
             $courses,
+            new ScoringService($questions, $this->pdo),
             $this->pdo,
         );
     }

@@ -10,6 +10,7 @@ use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Services\ReportService;
+use EduQR\Services\ScoringService;
 use PDO;
 use PHPUnit\Framework\TestCase;
 
@@ -103,7 +104,15 @@ class ReportServiceTest extends TestCase
 
         $options = $this->createMock(OptionRepositoryInterface::class);
 
-        return new ReportService($sessions, $questions, $options, $courses, $this->pdo, $themeExtractor);
+        return new ReportService(
+            $sessions,
+            $questions,
+            $options,
+            $courses,
+            new ScoringService($questions, $this->pdo),
+            $this->pdo,
+            $themeExtractor,
+        );
     }
 
     /** Insert option rows directly into the SQLite DB. */
@@ -772,7 +781,14 @@ class ReportServiceTest extends TestCase
 
         $options = $this->createMock(\EduQR\Contracts\OptionRepositoryInterface::class);
 
-        $service = new \EduQR\Services\ReportService($sessions, $questions, $options, $courses, $this->pdo);
+        $service = new \EduQR\Services\ReportService(
+            $sessions,
+            $questions,
+            $options,
+            $courses,
+            new ScoringService($questions, $this->pdo),
+            $this->pdo,
+        );
         $report = $service->buildReport(10, 99, anonymize: true);
 
         $nick1 = $report['questions'][0]['answers'][0]['nickname'];
@@ -804,7 +820,14 @@ class ReportServiceTest extends TestCase
         $courses = $this->createMock(\EduQR\Contracts\CourseRepositoryInterface::class);
         $options = $this->createMock(\EduQR\Contracts\OptionRepositoryInterface::class);
 
-        $service = new \EduQR\Services\ReportService($sessions, $questions, $options, $courses, $this->pdo);
+        $service = new \EduQR\Services\ReportService(
+            $sessions,
+            $questions,
+            $options,
+            $courses,
+            new ScoringService($questions, $this->pdo),
+            $this->pdo,
+        );
         $service->buildReport(99, 1);
     }
 
@@ -916,7 +939,14 @@ class ReportServiceTest extends TestCase
 
         $options = $this->createMock(OptionRepositoryInterface::class);
 
-        return new \EduQR\Services\ReportService($sessions, $questions, $options, $courses, $this->pdo);
+        return new \EduQR\Services\ReportService(
+            $sessions,
+            $questions,
+            $options,
+            $courses,
+            new ScoringService($questions, $this->pdo),
+            $this->pdo,
+        );
     }
 
     public function testBuildReportAllowedForCoInstructor_FR97(): void
