@@ -50,6 +50,7 @@ final class UserRepositoryTest extends TestCase
         $this->assertSame('active@example.edu', $row['email']);
         $this->assertSame('instructor', $row['role']);
         $this->assertSame('Active Instructor', $row['display_name']);
+        $this->assertSame(1, (int) $row['is_active']);
     }
 
     public function test_find_by_id_on_an_inactive_user_still_returns_the_row_NFR87(): void
@@ -57,6 +58,8 @@ final class UserRepositoryTest extends TestCase
         $row = $this->repo->findById(2);
 
         $this->assertNotNull($row);
+        $this->assertArrayHasKey('is_active', $row);
+        $this->assertSame(0, (int) $row['is_active']);
         $this->assertFalse((bool) $row['is_active']);
     }
 

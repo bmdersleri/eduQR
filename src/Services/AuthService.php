@@ -164,6 +164,17 @@ final class AuthService
         );
     }
 
+    /**
+     * The session's copies of role and display name, as written at sign-in.
+     *
+     * This is NOT an authorization check: it never reads the `users` row, so
+     * a deactivated or deleted account still passes here until the session
+     * ends. {@see self::authenticatedUser()} is what authorizes a request.
+     * This exists for the few readers that only need the sign-in-time copy —
+     * the logout audit entry among them.
+     *
+     * @return array{id:int,email:string,role:string,display_name:string}|null
+     */
     public static function currentUser(): ?array
     {
         self::ensureSessionStarted();

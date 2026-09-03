@@ -1157,7 +1157,7 @@ Stable, machine-readable codes. Add to this table when introducing a new code.
 | `nickname_invalid_chars` | 400 | Nickname contains characters outside the allowed set |
 | `profane_nickname` | 400 | Nickname failed the profanity check |
 | `invalid_credentials` | 401 | Bad email or password |
-| `not_authenticated` | 401 | Instructor cookie missing or expired |
+| `not_authenticated` | 401 | Instructor cookie missing or expired, or the account behind it was deactivated or deleted — the three cases are deliberately indistinguishable to the caller (NFR-87) |
 | `not_joined` | 401 | Participant cookie missing or expired |
 | `forbidden` | 403 | Authenticated but not allowed |
 | `results_hidden` | 403 | Student requested results while toggle is off |

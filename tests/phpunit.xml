@@ -4,6 +4,7 @@
          bootstrap="bootstrap.php"
          colors="true"
          stopOnFailure="false"
+         failOnWarning="true"
          cacheDirectory=".phpunit.cache">
 
     <testsuites>
