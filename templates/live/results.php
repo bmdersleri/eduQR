@@ -1,36 +1,3 @@
-<?php
-/**
- * Projector live results view — /live/{short_code}/results  (T-807)
- *
- * Large-type display of current question results for classroom projection.
- * Polls results every 3 seconds and renders a horizontal bar chart with
- * plain Bootstrap markup so it works without external JS assets.
- * No authentication required — uses the public short_code.
- *
- * When session.show_results_to_students = 0, the projector still shows
- * results (instructor-controlled display, not student-facing).
- */
-
-use EduQR\Container;
-
-$shortCode = strtoupper(trim($p['short_code'] ?? ''));
-
-$sessionRepo  = Container::sessionRepository();
-$session      = $sessionRepo->findByShortCode($shortCode);
-
-if ($session === null) {
-    http_response_code(404);
-    include __DIR__ . '/../../templates/errors/404.php';
-    exit;
-}
-
-$sessionId    = (int) $session['id'];
-$questionRepo = Container::questionRepository();
-$activeQ      = $questionRepo->findActiveBySessionCode($shortCode);
-$activeQId    = $activeQ !== null ? (int) $activeQ['id'] : 0;
-
-ob_start();
-?>
 <div class="eduqr-live-surface p-3 p-lg-4" style="min-height:90vh">
     <div class="eduqr-projector-header">
         <div class="eduqr-projector-title">
@@ -293,7 +260,3 @@ function escHtml(s) {
 pollResults();
 setInterval(pollResults, 3000);
 </script>
-<?php
-$content   = ob_get_clean();
-$pageTitle = htmlspecialchars(t('results.title'), ENT_QUOTES, 'UTF-8') . ' — ' . t('app.name');
-include __DIR__ . '/../../templates/layouts/projector.php';

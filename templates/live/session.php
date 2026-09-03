@@ -1,29 +1,3 @@
-<?php
-
-use EduQR\Container;
-
-$shortCode = strtoupper(trim($p['short_code'] ?? ''));
-
-$service = Container::sessionService();
-
-try {
-    $sessionData = $service->resolveByShortCode($shortCode);
-} catch (\RuntimeException) {
-    http_response_code(404);
-    include __DIR__ . '/../../templates/errors/404.php';
-    exit;
-}
-
-$joinUrl = eduqr_url('/join/' . $sessionData['short_code']);
-
-// Need session id for the QR endpoint — look up directly for the QR url
-$repo      = Container::sessionRepository();
-$rawSession = $repo->findByShortCode($shortCode);
-$sessionId  = $rawSession ? (int) $rawSession['id'] : 0;
-$qrUrl      = eduqr_path('/api/v1/sessions/' . $sessionId . '/qr.png?size=600');
-
-ob_start();
-?>
 <div class="row align-items-center" style="min-height:90vh">
     <div class="col-md-6 text-center mb-4 mb-md-0">
         <?php if ($sessionId > 0): ?>
@@ -70,7 +44,3 @@ ob_start();
         <?php endif; ?>
     </div>
 </div>
-<?php
-$content   = ob_get_clean();
-$pageTitle = htmlspecialchars($sessionData['title'], ENT_QUOTES, 'UTF-8') . ' — ' . t('app.name');
-include __DIR__ . '/../../templates/layouts/projector.php';

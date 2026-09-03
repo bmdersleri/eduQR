@@ -200,8 +200,7 @@ final class Bootstrap
 
         // ── Public: Projector view ────────────────────────────────────────────
         $router->get('/live/{short_code}', function (array $p): void {
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/live/session.php';
+            (new Controllers\Public\ProjectorController())->session($p['short_code']);
         });
 
         // ── Public / Student ──────────────────────────────────────────────────
@@ -497,8 +496,7 @@ final class Bootstrap
 
         // ── Projector: Live results (T-807) ──────────────────────────────────
         $router->get('/live/{short_code}/results', function (array $p): void {
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/live/results.php';
+            (new Controllers\Public\ProjectorController())->results($p['short_code']);
         });
 
         $router->post('/api/v1/auth/login', function (array $p): void {
