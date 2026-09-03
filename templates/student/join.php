@@ -1,14 +1,12 @@
 <?php
 
-use EduQR\Repositories\SessionRepository;
-use EduQR\Repositories\ParticipantRepository;
-use EduQR\Services\ParticipantService;
+use EduQR\Container;
 
 $shortCode = $p['short_code'] ?? '';
 
-$sessionRepo = new SessionRepository();
-$participantRepo = new ParticipantRepository();
-$participantService = new ParticipantService($participantRepo, $sessionRepo);
+$sessionRepo = Container::sessionRepository();
+$participantRepo = Container::participantRepository();
+$participantService = Container::participantService();
 $session     = $sessionRepo->findByShortCode($shortCode);
 
 if ($session === null) {

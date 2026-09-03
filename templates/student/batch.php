@@ -2,12 +2,10 @@
 
 declare(strict_types=1);
 
-use EduQR\Repositories\OptionRepository;
-use EduQR\Repositories\QuestionRepository;
-use EduQR\Repositories\SessionRepository;
+use EduQR\Container;
 
 $shortCode = $p['short_code'] ?? '';
-$sessionRepo = new SessionRepository();
+$sessionRepo = Container::sessionRepository();
 $session = $sessionRepo->findByShortCode($shortCode);
 
 if ($session === null || $session['status'] === 'closed') {
@@ -22,8 +20,8 @@ if ($participantId <= 0) {
     exit;
 }
 
-$qRepo = new QuestionRepository();
-$oRepo = new OptionRepository();
+$qRepo = Container::questionRepository();
+$oRepo = Container::optionRepository();
 $all = $qRepo->findBySession((int) $session['id']);
 $questions = [];
 foreach ($all as $q) {

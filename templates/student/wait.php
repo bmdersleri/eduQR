@@ -1,10 +1,10 @@
 <?php
 
-use EduQR\Repositories\SessionRepository;
+use EduQR\Container;
 
 $shortCode = $p['short_code'] ?? '';
 
-$sessionRepo = new SessionRepository();
+$sessionRepo = Container::sessionRepository();
 $session     = $sessionRepo->findByShortCode($shortCode);
 
 if ($session === null || $session['status'] === 'closed') {

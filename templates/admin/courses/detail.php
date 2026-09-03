@@ -1,17 +1,14 @@
 <?php
 
+use EduQR\Container;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
-use EduQR\Repositories\CourseRepository;
-use EduQR\Repositories\SessionRepository;
-use EduQR\Repositories\UserRepository;
-use EduQR\Services\CourseService;
 
 $instructor = AuthMiddleware::require();
 $csrfToken  = CsrfMiddleware::getToken();
 $courseId   = (int) ($p['id'] ?? 0);
 
-$service = new CourseService(new CourseRepository(), new UserRepository());
+$service = Container::courseService();
 
 try {
     $course = $service->getCourse($courseId, (int) $instructor['id']);
@@ -22,7 +19,7 @@ try {
     exit;
 }
 
-$sessionRepo = new SessionRepository();
+$sessionRepo = Container::sessionRepository();
 $sessions    = $sessionRepo->listByCourse($courseId);
 
 // Owner-only controls (FR-97). The API enforces the same rule server-side.

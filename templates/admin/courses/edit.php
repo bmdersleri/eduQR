@@ -1,16 +1,14 @@
 <?php
 
+use EduQR\Container;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
-use EduQR\Repositories\CourseRepository;
-use EduQR\Repositories\UserRepository;
-use EduQR\Services\CourseService;
 
 $instructor = AuthMiddleware::require();
 $csrfToken  = CsrfMiddleware::getToken();
 $courseId   = (int) ($p['id'] ?? 0);
 
-$service = new CourseService(new CourseRepository(), new UserRepository());
+$service = Container::courseService();
 
 try {
     $course = $service->getCourse($courseId, (int) $instructor['id']);

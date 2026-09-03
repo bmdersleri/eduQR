@@ -1,12 +1,10 @@
 <?php
 
-use EduQR\Repositories\CourseRepository;
-use EduQR\Repositories\SessionRepository;
-use EduQR\Services\SessionService;
+use EduQR\Container;
 
 $shortCode = strtoupper(trim($p['short_code'] ?? ''));
 
-$service = new SessionService(new SessionRepository(), new CourseRepository());
+$service = Container::sessionService();
 
 try {
     $sessionData = $service->resolveByShortCode($shortCode);
@@ -19,7 +17,7 @@ try {
 $joinUrl = eduqr_url('/join/' . $sessionData['short_code']);
 
 // Need session id for the QR endpoint — look up directly for the QR url
-$repo      = new SessionRepository();
+$repo      = Container::sessionRepository();
 $rawSession = $repo->findByShortCode($shortCode);
 $sessionId  = $rawSession ? (int) $rawSession['id'] : 0;
 $qrUrl      = eduqr_path('/api/v1/sessions/' . $sessionId . '/qr.png?size=600');

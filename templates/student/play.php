@@ -5,18 +5,13 @@
  * T-710: no-JS fallback via plain HTML form POST
  */
 
+use EduQR\Container;
 use EduQR\Exceptions\DuplicateAnswerException;
-use EduQR\Repositories\AnswerRepository;
-use EduQR\Repositories\OptionRepository;
-use EduQR\Repositories\ParticipantRepository;
-use EduQR\Repositories\QuestionRepository;
-use EduQR\Repositories\SessionRepository;
-use EduQR\Services\AnswerService;
 
 $shortCode = $p['short_code'] ?? '';
 
 // ── 1. Resolve session ────────────────────────────────────────────────────────
-$sessionRepo = new SessionRepository();
+$sessionRepo = Container::sessionRepository();
 $session     = $sessionRepo->findByShortCode($shortCode);
 
 if ($session === null) {
@@ -79,7 +74,7 @@ if ($participantId <= 0) {
 }
 
 // ── 4. Load active question ───────────────────────────────────────────────────
-$questionRepo = new QuestionRepository();
+$questionRepo = Container::questionRepository();
 $question     = $questionRepo->findActiveBySessionCode($shortCode);
 
 if ($question === null) {
@@ -90,11 +85,11 @@ if ($question === null) {
 }
 
 // ── 5. Load options ───────────────────────────────────────────────────────────
-$optionRepo = new OptionRepository();
+$optionRepo = Container::optionRepository();
 $options    = $optionRepo->findByQuestion((int) $question['id']);
 
 // ── 6. Check if already answered ─────────────────────────────────────────────
-$answerRepo  = new AnswerRepository();
+$answerRepo  = Container::answerRepository();
 $alreadyDone = $answerRepo->existsByParticipantAndQuestion($participantId, (int) $question['id']);
 
 if ($alreadyDone) {
@@ -107,13 +102,7 @@ if ($alreadyDone) {
 // ── 7. No-JS form POST handler (T-710) ───────────────────────────────────────
 $noJsError = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $service = new AnswerService(
-        new AnswerRepository(),
-        $questionRepo,
-        $sessionRepo,
-        new ParticipantRepository(),
-        $optionRepo,
-    );
+    $service = Container::answerService();
 
     $body = [
         'question_id'        => (int) $question['id'],

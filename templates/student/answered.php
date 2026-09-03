@@ -6,12 +6,11 @@
  * Polls for the next active question every 3 seconds (like wait.php does).
  */
 
-use EduQR\Repositories\QuestionRepository;
-use EduQR\Repositories\SessionRepository;
+use EduQR\Container;
 
 $shortCode = $p['short_code'] ?? '';
 
-$sessionRepo  = new SessionRepository();
+$sessionRepo  = Container::sessionRepository();
 $session      = $sessionRepo->findByShortCode($shortCode);
 
 if ($session === null) {

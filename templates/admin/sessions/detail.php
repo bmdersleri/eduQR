@@ -1,17 +1,15 @@
 <?php
 
 use EduQR\Config;
+use EduQR\Container;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
-use EduQR\Repositories\CourseRepository;
-use EduQR\Repositories\SessionRepository;
-use EduQR\Services\SessionService;
 
 $instructor = AuthMiddleware::require();
 $csrfToken  = CsrfMiddleware::getToken();
 $sessionId  = (int) ($p['id'] ?? 0);
 
-$service = new SessionService(new SessionRepository(), new CourseRepository());
+$service = Container::sessionService();
 
 try {
     $session = $service->getSession($sessionId, (int) $instructor['id']);
@@ -22,7 +20,7 @@ try {
     exit;
 }
 
-$courseRepo = new CourseRepository();
+$courseRepo = Container::courseRepository();
 $course     = $courseRepo->findById((int) $session['course_id']);
 
 $appUrl  = rtrim(Config::get('APP_URL', ''), '/');

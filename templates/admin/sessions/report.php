@@ -7,24 +7,15 @@
  * Provides anonymize and delete controls (T-906, T-907).
  */
 
+use EduQR\Container;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
-use EduQR\Repositories\CourseRepository;
-use EduQR\Repositories\OptionRepository;
-use EduQR\Repositories\QuestionRepository;
-use EduQR\Repositories\SessionRepository;
-use EduQR\Services\ReportService;
 
 $instructor = AuthMiddleware::require();
 $csrfToken  = CsrfMiddleware::getToken();
 $sessionId  = (int) ($p['id'] ?? 0);
 
-$reportService = new ReportService(
-    new SessionRepository(),
-    new QuestionRepository(),
-    new OptionRepository(),
-    new CourseRepository(),
-);
+$reportService = Container::reportService();
 
 try {
     $report = $reportService->buildReport($sessionId, (int) $instructor['id'], false);

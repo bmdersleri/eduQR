@@ -11,12 +11,11 @@
  * results (instructor-controlled display, not student-facing).
  */
 
-use EduQR\Repositories\QuestionRepository;
-use EduQR\Repositories\SessionRepository;
+use EduQR\Container;
 
 $shortCode = strtoupper(trim($p['short_code'] ?? ''));
 
-$sessionRepo  = new SessionRepository();
+$sessionRepo  = Container::sessionRepository();
 $session      = $sessionRepo->findByShortCode($shortCode);
 
 if ($session === null) {
@@ -26,7 +25,7 @@ if ($session === null) {
 }
 
 $sessionId    = (int) $session['id'];
-$questionRepo = new QuestionRepository();
+$questionRepo = Container::questionRepository();
 $activeQ      = $questionRepo->findActiveBySessionCode($shortCode);
 $activeQId    = $activeQ !== null ? (int) $activeQ['id'] : 0;
 

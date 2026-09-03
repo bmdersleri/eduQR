@@ -8,18 +8,15 @@
  * Also surfaces hide/unhide controls for open-text in moderation_mode (T-809).
  */
 
+use EduQR\Container;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
-use EduQR\Repositories\CourseRepository;
-use EduQR\Repositories\QuestionRepository;
-use EduQR\Repositories\SessionRepository;
-use EduQR\Services\SessionService;
 
 $instructor = AuthMiddleware::require();
 $csrfToken  = CsrfMiddleware::getToken();
 $sessionId  = (int) ($p['id'] ?? 0);
 
-$sessionService = new SessionService(new SessionRepository(), new CourseRepository());
+$sessionService = Container::sessionService();
 
 try {
     $session = $sessionService->getSession($sessionId, (int) $instructor['id']);
@@ -31,7 +28,7 @@ try {
 }
 
 // Load all questions for the sidebar list
-$questionRepo = new QuestionRepository();
+$questionRepo = Container::questionRepository();
 $questions    = $questionRepo->findBySession($sessionId);
 
 ob_start();
