@@ -13,7 +13,7 @@ $queryParams = $_GET;
 unset($queryParams['lang']);
 $baseQuery   = $queryParams ? '?' . http_build_query($queryParams) . '&' : '?';
 ?>
-<div class="eduqr-lang-switch" role="group" aria-label="Language">
+<div class="eduqr-lang-switch" role="group" aria-label="<?= htmlspecialchars(t('common.language'), ENT_QUOTES, 'UTF-8') ?>">
     <?php foreach ($locales as $code => $label): ?>
         <a class="eduqr-lang-opt<?= $code === $currentLocale ? ' is-active' : '' ?>"
            href="<?= htmlspecialchars($currentUri . $baseQuery . 'lang=' . $code, ENT_QUOTES, 'UTF-8') ?>"

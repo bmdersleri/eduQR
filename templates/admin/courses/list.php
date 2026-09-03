@@ -55,8 +55,8 @@ ob_start();
             <div class="d-flex flex-wrap gap-2 meta">
                 <span class="eduqr-chip"><code><?= htmlspecialchars($course['code'] ?? '', ENT_QUOTES, 'UTF-8') ?></code></span>
                 <span class="eduqr-chip"><?= htmlspecialchars($course['semester'] ?? '', ENT_QUOTES, 'UTF-8') ?></span>
-                <span class="eduqr-chip"><?= htmlspecialchars($course['status'], ENT_QUOTES, 'UTF-8') ?></span>
-                <span class="eduqr-chip"><?= htmlspecialchars(substr($course['created_at'], 0, 10), ENT_QUOTES, 'UTF-8') ?></span>
+                <span class="eduqr-chip"><?= htmlspecialchars(t('course.status.' . $course['status']), ENT_QUOTES, 'UTF-8') ?></span>
+                <span class="eduqr-chip"><?= htmlspecialchars(fmt_date($course['created_at']), ENT_QUOTES, 'UTF-8') ?></span><?php /* FR-85 */ ?>
             </div>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
@@ -79,7 +79,7 @@ ob_start();
 </div>
 
 <?php if ($meta['total'] > $meta['per_page']): ?>
-<nav aria-label="Course pagination">
+<nav aria-label="<?= htmlspecialchars(t('common.pagination'), ENT_QUOTES, 'UTF-8') ?>">
     <ul class="pagination">
         <?php
         $totalPages = (int) ceil($meta['total'] / $meta['per_page']);

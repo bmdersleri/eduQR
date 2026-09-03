@@ -88,7 +88,7 @@ ob_start();
 
     <div class="eduqr-data-card">
         <div class="label"><?= htmlspecialchars(t('common.created_at'), ENT_QUOTES, 'UTF-8') ?></div>
-        <div class="value"><?= htmlspecialchars(substr($course['created_at'], 0, 10), ENT_QUOTES, 'UTF-8') ?></div>
+        <div class="value"><?= htmlspecialchars(fmt_date($course['created_at']), ENT_QUOTES, 'UTF-8') /* FR-85 */ ?></div>
     </div>
 </div>
 
@@ -127,7 +127,7 @@ ob_start();
                 </div>
                 <div class="d-flex flex-wrap gap-2 meta">
                     <span class="eduqr-chip"><code><?= htmlspecialchars($s['short_code'], ENT_QUOTES, 'UTF-8') ?></code></span>
-                    <span class="eduqr-chip"><?= htmlspecialchars(substr($s['created_at'], 0, 10), ENT_QUOTES, 'UTF-8') ?></span>
+                    <span class="eduqr-chip"><?= htmlspecialchars(fmt_date($s['created_at']), ENT_QUOTES, 'UTF-8') /* FR-85 */ ?></span>
                 </div>
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">

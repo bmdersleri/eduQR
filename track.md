@@ -40,7 +40,7 @@
 | 8 | Canlı Sonuçlar | 🟢 | 13 / 13 | 2026-05-15 | 2026-05-15 |
 | 9 | Raporlama & Dışa Aktarma | 🟢 | 13 / 13 | 2026-05-15 | 2026-05-15 |
 | 10 | Güvenlik & Kalite Sertleştirme | 🟢 | 17 / 17 | 2026-05-15 | 2026-05-15 |
-| 11 | Gelecek İyileştirmeler (post-MVP) | ⏸ | 8 / 17 | — | — |
+| 11 | Gelecek İyileştirmeler (post-MVP) | ⏸ | 12 / 19 | — | — |
 
 **MVP Toplam (Faz 0–10):** 157 / 157 görev tamamlandı (%100) 🎉
 
@@ -577,7 +577,7 @@
 
 ---
 
-## Faz 11 — Gelecek İyileştirmeler (post-MVP) 🔄 (6/17)
+## Faz 11 — Gelecek İyileştirmeler (post-MVP) 🔄 (12/19)
 
 **Hedef:** MVP sonrası geliştirmeler — her görev başlamadan önce proje sahibi onayı gerektirir.
 **Başlangıç:** 2026-05-15 | **Bitiş:** —
@@ -605,6 +605,7 @@
 [x] T-1115  Containerize (docker-compose: PHP + MySQL [+ Node later])                   [NFR-75]
 [x] T-1116  Question import V2 supporting legacy format and staged flow with metadata   [FR-31]
 [ ] T-1123  Bounded-cost live polling (ETag/304, configurable intervals)                 [NFR-76]
+[x] T-1124  Türkçe doğruluk geçişi: noktalı/noktasız I katlaması, sabit metin taraması   [NFR-77, FR-80, FR-85]
 ```
 
 ### Notlar
@@ -616,6 +617,12 @@
 - T-1113: GET `/api/v1/sessions/{id}/questions.gift.txt` (Moodle GIFT) ve GET `/api/v1/sessions/{id}/gradebook.csv` endpointleri eklendi. Yalnızca dosya indirmesi yapılır; eduQR hiçbir LMS ile bağlantı kurmaz, öğretmen dosyayı kendi sistemine elle yükler.
 - T-1110 kapatıldı (`[-]`): WebSocket'e geçiş gecikmeyi değil sunucu yükünü azaltır, NFR-02 (≤ 5 sn) mevcut polling ile zaten karşılanıyor. Socket.IO/Ratchet/Swoole farketmeksizin öğrenci başına açık soket tutan uzun ömürlü bir süreç gerekir; bu da PHP-FPM ile mümkün değil ve "herhangi bir PHP hostingde çalışır" özelliğini (ADR-0001, ADR-0002) bitirir. Gerekçe ADR-0002'ye yazıldı.
 - T-1123: Polling maliyetini mimariye dokunmadan düşürür — durum değişmediyse `304 Not Modified`, öğrenci `wait`/`answered` için tam rapor kurmayan ucuz bir aktif-soru endpointi, ve aralıkların `.env`'den okunması. Şu an `.env.example` içindeki `POLL_INTERVAL_INSTRUCTOR_MS` / `POLL_INTERVAL_STUDENT_MS` değerlerini hiçbir kod okumuyor; aralıklar şablonlara gömülü.
+- T-1124: `mb_strtolower('İ')` sonuca `i` + U+0307 (birleşen üst nokta) yazar, SQLite `LOWER()` ise yalnızca ASCII katlar. Bu yüzden `fill_in_the_blank` puanlaması "İstanbul" yazan öğrenciyi, doğru cevap "istanbul" iken **yanlış** sayıyordu. Ortak `src/Support/TextFold.php` yardımcısı eklendi: bütün i harfleri (`i`, `I`, `ı`, `İ` ve artık kalan U+0307) tek bir `i`'ye katlanır. Kural yerel ayardan bağımsızdır — İngilizce `I`/`i` eşleşmesi bozulmaz ve aynı cevap raporu kim açarsa açsın aynı puanı alır.
+- Puanlama karşılaştırması SQL `LOWER(TRIM(...))` yerine PHP tarafına alındı: SQL katlaması veritabanı motoruna göre değişiyor (MySQL ile SQLite farklı sonuç veriyor) ve testlerin gerçek üretim yolunu sınamasını engelliyordu. Yazma sırasında normalleştirme tercih edilmedi; eğitmen doğru cevabı değiştirdiğinde saklanan değerin bayatlaması riski var ve göç gerektirirdi.
+- Aynı katlama takma ad tekrar denetiminde (`ParticipantService::normalize`), kelime bulutu gruplamasında, GIFT evet/hayır eşlemesinde ve küfür filtresinde de kullanılıyor. Karşılaştırmanın **iki tarafı** da katlanır; sabit sözcük listeleri (`hayır`, `doğru`) dahil.
+- FR-80 taraması: `error.rate_limited`, `error.csrf_invalid`, `course.status.*`, `common.pagination`, `session.qr.alt`, `instructor.dashboard.live_badge` anahtarları eklendi; ham durum/soru-türü enum'ları artık çeviriden geçiyor; `templates/errors/403.php` eklendi (önceden düz `Forbidden.` yazıyordu).
+- FR-85: `fmt_date` / `fmt_percent` yardımcıları vardı ama hiçbir yerde çağrılmıyordu. Rapor, ders listesi/detayı ve analiz ekranlarındaki tarih ve yüzdeler bu yardımcılara bağlandı.
+- `docs/tr-review-queue.md`: son beş özellik dalgasında dil modeliyle üretilmiş, insan onayından geçmemiş 40 `tr.json` anahtarı incelenmek üzere listelendi. Bu kuyruk kapanmadan Türkçe yayına hazır sayılmaz.
 - Doğru cevabı işaretlenmemiş sorular bozuk GIFT üretmek yerine geçerli açık uçlu soruya dönüştürülür ve seçenekleri metin olarak korunur. Her iki dışa aktarım da mevcut rapor dışa aktarımlarıyla aynı ders sahipliği ve anonimleştirme kurallarına tabidir.
 
 ---

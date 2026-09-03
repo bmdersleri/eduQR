@@ -384,6 +384,18 @@ Each phase in `TASKS.md` is gated by the checkpoint below. Do not start the next
 [ ] Language switcher works on every page with UI                                                [FR-88]
 [ ] No major user-facing page contains a hardcoded label                                          [FR-80]
 [ ] Locale resolution follows the documented order                                                [I18N §6]
+[x] A Turkish fill-in-the-blank answer differing only in dotted/dotless I casing scores correct    [NFR-77, FR-31, FR-92]
+[x] An English answer differing only in i-casing still scores correct                              [NFR-77]
+[x] A genuinely different answer still scores wrong                                                [NFR-77]
+[x] The fold is locale-independent — the same answer scores the same in en and tr                  [NFR-77]
+[x] Nickname duplicate detection treats "Ismail" and "ismail" as one nickname                      [NFR-77, FR-42]
+[x] Open-text word-cloud grouping folds Turkish i-casing variants into one term                    [NFR-77, FR-66]
+[x] Every case-insensitive comparison of user text folds both sides via one shared helper           [NFR-77]
+[x] Rate-limit and CSRF error messages are translated, not hardcoded English                        [FR-80, FR-87]
+[x] Course status and question type render translated labels, not raw DB enum values                [FR-80]
+[x] A 403 response renders a localized page, not a bare "Forbidden."                                [FR-80]
+[x] Report dates and percentages render through fmt_date / fmt_percent for the active locale         [FR-85]
+[x] LLM-authored, unreviewed tr.json keys are listed for human review in docs/tr-review-queue.md      [I18N §14]
 ```
 
 ### 4.10 Local Container Stack

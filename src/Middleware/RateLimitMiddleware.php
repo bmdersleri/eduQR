@@ -58,7 +58,8 @@ final class RateLimitMiddleware
             'success' => false,
             'error' => [
                 'code' => 'rate_limited',
-                'message' => 'Too many requests. Please wait and try again.',
+                // FR-87: the stable code goes to logs, the localized text to the user.
+                'message' => function_exists('t') ? t('error.rate_limited') : 'Too many requests.',
             ],
         ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         exit;

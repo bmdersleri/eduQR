@@ -106,7 +106,7 @@ ob_start();
         <div class="card text-center">
             <div class="card-body py-3">
                 <div class="fs-2 fw-bold text-warning">
-                    <?= number_format($summary['participation_rate'] * 100, 1) ?>%
+                    <?php /* FR-85 */ ?><?= htmlspecialchars(fmt_percent((float) $summary['participation_rate'] * 100), ENT_QUOTES, 'UTF-8') ?>
                 </div>
                 <div class="text-muted small"><?= htmlspecialchars(str_replace('{rate}','', t('report.participation_rate')), ENT_QUOTES, 'UTF-8') ?></div>
             </div>
@@ -212,7 +212,7 @@ ob_start();
             <div class="mb-2">
                 <div class="d-flex justify-content-between mb-1">
                     <span class="small"><?= htmlspecialchars($opt['option_text'], ENT_QUOTES, 'UTF-8') ?></span>
-                    <span class="small text-muted"><?= $opt['count'] ?> (<?= number_format($pct, 1) ?>%)</span>
+                    <span class="small text-muted"><?= $opt['count'] ?> (<?= htmlspecialchars(fmt_percent($pct), ENT_QUOTES, 'UTF-8') ?>)</span><?php /* FR-85 */ ?>
                 </div>
                 <div class="progress" style="height:20px">
                     <div class="progress-bar" role="progressbar"

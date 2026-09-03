@@ -304,7 +304,8 @@ final class ReportController
         echo '<span><strong>' . $e(t('report.participant_count')) . ':</strong> ' . $sm['participant_count'] . '</span>';
         echo '<span><strong>' . $e(t('report.question_count')) . ':</strong> ' . $sm['question_count'] . '</span>';
         echo '<span><strong>' . $e(t('report.answer_count')) . ':</strong> ' . $sm['answer_count'] . '</span>';
-        $rateFormatted = number_format($sm['participation_rate'] * 100, 1) . '%';
+        // FR-85: locale-aware percent, so tr renders "%83,4" not "83.4%".
+        $rateFormatted = fmt_percent((float) $sm['participation_rate'] * 100);
         echo '<span>' . $e(str_replace('{rate}', $rateFormatted, t('report.participation_rate'))) . '</span>';
         if ($s['anonymized'] || $anonymize) {
             echo '<span><em>' . $e(t('report.anonymize')) . '</em></span>';
@@ -312,7 +313,8 @@ final class ReportController
         echo '</div>';
 
         foreach ($data['questions'] as $q) {
-            echo '<h2>' . $e($q['text']) . ' <small style="color:#6c757d">(' . $e($q['type']) . ')</small></h2>';
+            // FR-80: the enum is the stable identifier, the label is translated.
+            echo '<h2>' . $e($q['text']) . ' <small style="color:#6c757d">(' . $e(t('question.type.' . $q['type'])) . ')</small></h2>';
 
             if ($q['type'] === 'open_text') {
                 if (empty($q['answers'])) {
@@ -348,7 +350,7 @@ final class ReportController
                 foreach ($q['distribution'] as $opt) {
                     echo '<tr><td>' . $e($opt['option_text']) . '</td>';
                     echo '<td>' . $opt['count'] . '</td>';
-                    echo '<td>' . number_format((float) $opt['percentage'], 1) . '%</td></tr>';
+                    echo '<td>' . $e(fmt_percent((float) $opt['percentage'])) . '</td></tr>'; // FR-85
                 }
                 echo '</table>';
             }

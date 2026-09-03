@@ -86,7 +86,11 @@ final class CsrfMiddleware
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode([
             'success' => false,
-            'error' => ['code' => 'csrf_invalid', 'message' => 'CSRF token mismatch.'],
+            // FR-87: the stable code goes to logs, the localized text to the user.
+            'error' => [
+                'code' => 'csrf_invalid',
+                'message' => function_exists('t') ? t('error.csrf_invalid') : 'CSRF token mismatch.',
+            ],
         ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         exit;
     }

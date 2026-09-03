@@ -30,7 +30,7 @@ ob_start();
     <div class="col-md-6 text-center mb-4 mb-md-0">
         <?php if ($sessionId > 0): ?>
         <img src="<?= htmlspecialchars($qrUrl, ENT_QUOTES, 'UTF-8') ?>"
-             alt="QR Code"
+             alt="<?= htmlspecialchars(t('session.qr.alt'), ENT_QUOTES, 'UTF-8') ?>"
              class="img-fluid"
              style="max-width:500px;background:#fff;padding:1rem;border-radius:1.5rem;box-shadow:0 24px 60px rgba(0,0,0,.24)">
         <?php endif; ?>

@@ -38,8 +38,9 @@ $questionTypeBreakdown = array_filter(
     static fn (array $row): bool => (int) $row['count'] > 0
 );
 
+// FR-85: locale-aware percent — tr renders "%83,4", en renders "83.4%".
 $formatRate = static function (float $rate): string {
-    return number_format($rate * 100, 1) . '%';
+    return fmt_percent($rate * 100);
 };
 
 ob_start();
@@ -102,7 +103,12 @@ ob_start();
                 <h2 class="h5 mb-0"><?= htmlspecialchars(t('course.analytics.last_session_at'), ENT_QUOTES, 'UTF-8') ?></h2>
             </div>
             <div class="display-6 mb-0">
-                <?= htmlspecialchars($summary['last_session_at'] ?? t('course.analytics.no_last_session'), ENT_QUOTES, 'UTF-8') ?>
+                <?php /* FR-85: locale-aware date, not the raw SQL timestamp. */ ?>
+                <?= htmlspecialchars(
+                    isset($summary['last_session_at']) ? fmt_date($summary['last_session_at']) : t('course.analytics.no_last_session'),
+                    ENT_QUOTES,
+                    'UTF-8'
+                ) ?>
             </div>
         </div>
     </div>
@@ -160,7 +166,7 @@ ob_start();
             </div>
             <div class="d-flex flex-wrap gap-2 meta mb-3">
                 <span class="eduqr-chip"><code><?= htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8') ?></code></span>
-                <span class="eduqr-chip"><?= htmlspecialchars($session['started_at'] ?: t('course.analytics.no_last_session'), ENT_QUOTES, 'UTF-8') ?></span>
+                <span class="eduqr-chip"><?= htmlspecialchars($session['started_at'] ? fmt_date($session['started_at']) : t('course.analytics.no_last_session'), ENT_QUOTES, 'UTF-8') ?></span>
             </div>
             <div class="eduqr-admin-grid">
                 <div class="eduqr-data-card">

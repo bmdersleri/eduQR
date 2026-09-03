@@ -41,7 +41,7 @@ ob_start();
     </div>
     <div class="eduqr-data-card">
         <div class="label"><?= htmlspecialchars(t('results.title'), ENT_QUOTES, 'UTF-8') ?></div>
-        <div class="value">Live</div>
+        <div class="value"><?= htmlspecialchars(t('instructor.dashboard.live_badge'), ENT_QUOTES, 'UTF-8') ?></div>
         <div class="hint"><?= htmlspecialchars(t('instructor.dashboard.results_hint'), ENT_QUOTES, 'UTF-8') ?></div>
     </div>
 </div>
@@ -70,7 +70,7 @@ ob_start();
             </div>
             <div class="d-flex flex-wrap gap-2 meta">
                 <span class="eduqr-chip"><code><?= htmlspecialchars($course['code'] ?? '', ENT_QUOTES, 'UTF-8') ?></code></span>
-                <span class="eduqr-chip"><?= htmlspecialchars($course['status'], ENT_QUOTES, 'UTF-8') ?></span>
+                <span class="eduqr-chip"><?= htmlspecialchars(t('course.status.' . $course['status']), ENT_QUOTES, 'UTF-8') ?></span>
             </div>
         </div>
         <div class="d-flex gap-2">
