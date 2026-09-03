@@ -6,6 +6,7 @@ namespace EduQR\Tests\Unit;
 
 use EduQR\Contracts\CourseRepositoryInterface;
 use EduQR\Contracts\UserRepositoryInterface;
+use EduQR\Exceptions\ValidationException;
 use EduQR\Services\CourseService;
 use PHPUnit\Framework\TestCase;
 
@@ -233,29 +234,47 @@ class CourseServiceTest extends TestCase
 
     public function testCreateCourseRequiresTitle(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('title:required');
-        $this->makeService($this->makeRepo())->createCourse(10, ['title' => '', 'default_language' => 'en']);
+        try {
+            $this->makeService($this->makeRepo())->createCourse(10, ['title' => '', 'default_language' => 'en']);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('required', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('validation_error', $e->getPublicCode());
+            $this->assertSame('title', $e->getField());
+        }
     }
 
     public function testCreateCourseTitleTooLongIsRejected(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('title:too_long');
-        $this->makeService($this->makeRepo())->createCourse(
-            10,
-            ['title' => str_repeat('x', 201), 'default_language' => 'en']
-        );
+        try {
+            $this->makeService($this->makeRepo())->createCourse(
+                10,
+                ['title' => str_repeat('x', 201), 'default_language' => 'en']
+            );
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('text_too_long', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('validation_error', $e->getPublicCode());
+            $this->assertSame('title', $e->getField());
+        }
     }
 
     public function testCreateCourseRejectsUnsupportedLanguage(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('default_language:invalid');
-        $this->makeService($this->makeRepo())->createCourse(
-            10,
-            ['title' => 'Course', 'default_language' => 'de']
-        );
+        try {
+            $this->makeService($this->makeRepo())->createCourse(
+                10,
+                ['title' => 'Course', 'default_language' => 'de']
+            );
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('invalid_language', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('validation_error', $e->getPublicCode());
+            $this->assertSame('default_language', $e->getField());
+        }
     }
 
     // ── Get ────────────────────────────────────────────────────────────────────
@@ -564,18 +583,32 @@ class CourseServiceTest extends TestCase
 
     public function testAddInstructorRequiresEmail_FR97(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('email:required');
         $repo = $this->makeRepo([$this->sample(1, 10)]);
-        $this->makeService($repo)->addInstructor(1, 10, []);
+
+        try {
+            $this->makeService($repo)->addInstructor(1, 10, []);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('required', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('validation_error', $e->getPublicCode());
+            $this->assertSame('email', $e->getField());
+        }
     }
 
     public function testAddInstructorRejectsMalformedEmail_FR97(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('email:invalid');
         $repo = $this->makeRepo([$this->sample(1, 10)]);
-        $this->makeService($repo)->addInstructor(1, 10, ['email' => 'not-an-email']);
+
+        try {
+            $this->makeService($repo)->addInstructor(1, 10, ['email' => 'not-an-email']);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('invalid_email', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('validation_error', $e->getPublicCode());
+            $this->assertSame('email', $e->getField());
+        }
     }
 
     public function testAddInstructorRejectsMissingCourse_FR97(): void

@@ -7,6 +7,7 @@ namespace EduQR\Controllers\Api;
 use EduQR\Container;
 use EduQR\Contracts\AuditLogRepositoryInterface;
 use EduQR\Controllers\ApiController;
+use EduQR\Exceptions\DomainException;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
 use EduQR\Services\CourseService;
@@ -50,8 +51,8 @@ final class CourseController extends ApiController
 
         try {
             $id = $this->service->createCourse((int) $user['id'], $body);
-        } catch (\InvalidArgumentException $e) {
-            $this->handleValidationException($e);
+        } catch (DomainException $e) {
+            $this->failFromDomain($e);
         }
 
         // Audit: FR-90
@@ -98,8 +99,6 @@ final class CourseController extends ApiController
             $this->service->updateCourse($id, (int) $user['id'], $body);
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);
-        } catch (\InvalidArgumentException $e) {
-            $this->handleValidationException($e);
         }
 
         $this->json(200, [
@@ -191,8 +190,6 @@ final class CourseController extends ApiController
             $added = $this->service->addInstructor($id, (int) $user['id'], $body);
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);
-        } catch (\InvalidArgumentException $e) {
-            $this->handleValidationException($e);
         }
 
         // Audit: FR-90
@@ -267,21 +264,4 @@ final class CourseController extends ApiController
         ];
     }
 
-    private function handleValidationException(\InvalidArgumentException $e): never
-    {
-        $parts = explode(':', $e->getMessage(), 2);
-        $field = $parts[0];
-        $key = $parts[1] ?? 'validation_error';
-        $message = match (true) {
-            $key === 'required' => t('validation.required'),
-            $key === 'too_long' => t('validation.text_too_long'),
-            $key === 'invalid' && $field === 'email' => t('validation.invalid_email'),
-            $key === 'invalid' => t('validation.invalid_language'),
-            default => t('common.error'),
-        };
-        $this->json(400, [
-            'success' => false,
-            'error' => ['code' => 'validation_error', 'message' => $message, 'field' => $field],
-        ]);
-    }
 }

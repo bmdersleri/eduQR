@@ -10,6 +10,7 @@ use EduQR\Exceptions\ConflictException;
 use EduQR\Exceptions\DomainException;
 use EduQR\Exceptions\ForbiddenException;
 use EduQR\Exceptions\NotFoundException;
+use EduQR\Exceptions\ValidationException;
 
 /**
  * Business logic for course management.
@@ -23,9 +24,10 @@ use EduQR\Exceptions\NotFoundException;
  * Both throw NotFoundException('course_not_found') when no such course exists
  * and ForbiddenException('forbidden') when the caller lacks the needed role.
  *
- * Validation failures throw \InvalidArgumentException with message format
- * "field:error_key" (e.g. "title:required") so the controller can build a
- * structured error response with field and message.
+ * Validation failures throw ValidationException carrying the status, the
+ * published code and the offending field (NFR-83). Every one of them answers
+ * 400 validation_error; what differs between them is the field and the reason
+ * code that selects the message.
  */
 final class CourseService
 {
@@ -116,7 +118,7 @@ final class CourseService
 
     // ── Write ──────────────────────────────────────────────────────────────────
 
-    /** @throws \InvalidArgumentException on validation failure */
+    /** @throws ValidationException on validation failure */
     public function createCourse(int $instructorId, array $data): int
     {
         $title = $this->validateTitle($data['title'] ?? '');
@@ -130,7 +132,7 @@ final class CourseService
         return $this->courses->create($instructorId, $title, $code, $semester, $description, $lang);
     }
 
-    /** @throws DomainException on access failure; \InvalidArgumentException on validation */
+    /** @throws DomainException on access or validation failure */
     public function updateCourse(int $id, int $instructorId, array $data): void
     {
         $this->getCourse($id, $instructorId);
@@ -215,8 +217,7 @@ final class CourseService
      *
      * @return array{user_id:int,role:string}
      *
-     * @throws \InvalidArgumentException email:required | email:invalid
-     * @throws DomainException course_not_found | forbidden
+     * @throws DomainException required | invalid_email | course_not_found | forbidden
      *                           | instructor_not_found | already_course_instructor
      */
     public function addInstructor(int $courseId, int $ownerId, array $data): array
@@ -280,10 +281,10 @@ final class CourseService
     {
         $title = trim((string) $raw);
         if ($title === '') {
-            throw new \InvalidArgumentException('title:required');
+            throw new ValidationException('required', 400, 'validation_error', 'title');
         }
         if (mb_strlen($title) > self::MAX_TITLE_LEN) {
-            throw new \InvalidArgumentException('title:too_long');
+            throw new ValidationException('text_too_long', 400, 'validation_error', 'title');
         }
 
         return $title;
@@ -299,7 +300,7 @@ final class CourseService
             return null;
         }
         if (mb_strlen($val) > $maxLen) {
-            throw new \InvalidArgumentException("{$field}:too_long");
+            throw new ValidationException('text_too_long', 400, 'validation_error', $field);
         }
 
         return $val;
@@ -309,7 +310,7 @@ final class CourseService
     {
         $lang = (string) $raw;
         if (! in_array($lang, self::ALLOWED_LANGS, true)) {
-            throw new \InvalidArgumentException('default_language:invalid');
+            throw new ValidationException('invalid_language', 400, 'validation_error', 'default_language');
         }
 
         return $lang;
@@ -318,16 +319,16 @@ final class CourseService
     private function validateEmail(mixed $raw): string
     {
         if (! is_string($raw)) {
-            throw new \InvalidArgumentException('email:required');
+            throw new ValidationException('required', 400, 'validation_error', 'email');
         }
 
         $email = mb_strtolower(trim($raw));
 
         if ($email === '') {
-            throw new \InvalidArgumentException('email:required');
+            throw new ValidationException('required', 400, 'validation_error', 'email');
         }
         if (mb_strlen($email) > self::MAX_EMAIL_LEN || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new \InvalidArgumentException('email:invalid');
+            throw new ValidationException('invalid_email', 400, 'validation_error', 'email');
         }
 
         return $email;

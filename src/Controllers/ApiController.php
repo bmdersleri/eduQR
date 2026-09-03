@@ -81,6 +81,7 @@ abstract class ApiController
         'nickname_invalid_chars' => 'student.join.error.invalid',
         'password_too_short' => 'validation.password_too_short',
         'password_too_weak' => 'validation.password_too_weak',
+        'invalid_email' => 'validation.invalid_email',
     ];
 
     // ── Success envelope ──────────────────────────────────────────────────────
