@@ -22,7 +22,21 @@ if (! $isCli) {
 
 require_once $projectRoot . '/vendor/autoload.php';
 
-\EduQR\Config::load($projectRoot . '/.env');
+// Optional --env=<path> so a verification run can point the runner at a
+// throwaway database without touching the developer's .env [NFR-86].
+$envPath = $projectRoot . '/.env';
+foreach (array_slice($argv, 1) as $arg) {
+    if (str_starts_with($arg, '--env=')) {
+        $envPath = substr($arg, 6);
+    }
+}
+
+if (! file_exists($envPath)) {
+    fwrite(STDERR, "Config file not found: {$envPath}\n");
+    exit(1);
+}
+
+\EduQR\Config::load($envPath);
 
 $pdo = \EduQR\Support\Database::connection();
 
