@@ -43,6 +43,7 @@ use EduQR\Services\ExportService;
 use EduQR\Services\OpenTextThemeExtractionService;
 use EduQR\Services\ParticipantService;
 use EduQR\Services\PasswordResetService;
+use EduQR\Services\PollVersionService;
 use EduQR\Services\QuestionBankService;
 use EduQR\Services\QuestionGenerationService;
 use EduQR\Services\QuestionService;
@@ -257,6 +258,16 @@ final class Container
         return self::$instances['passwordResetService'] ??= new PasswordResetService(
             self::userRepository(),
             self::passwordResetRepository(),
+        );
+    }
+
+    /** The version queries behind the conditional answers to a poll (NFR-76). */
+    public static function pollVersionService(): PollVersionService
+    {
+        /** @var PollVersionService */
+        return self::$instances['pollVersionService'] ??= new PollVersionService(
+            self::sessionRepository(),
+            self::questionRepository(),
         );
     }
 
