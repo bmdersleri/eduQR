@@ -8,6 +8,7 @@ use EduQR\Contracts\CourseRepositoryInterface;
 use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
+use EduQR\Exceptions\ValidationException;
 use EduQR\Services\QuestionService;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -18,14 +19,20 @@ class QuestionServiceTest extends TestCase
 
     public function testInvalidTypeThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('question_type:invalid');
-
         $service = $this->makeService();
-        $service->create(1, 1, [
-            'question_text' => 'Test?',
-            'question_type' => 'unknown_type',
-        ]);
+
+        try {
+            $service->create(1, 1, [
+                'question_text' => 'Test?',
+                'question_type' => 'unknown_type',
+            ]);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('invalid_question_type', $e->getErrorCode());
+            $this->assertSame(422, $e->getStatus());
+            $this->assertSame('invalid_question_type', $e->getPublicCode());
+            $this->assertSame('question_type', $e->getField());
+        }
     }
 
     #[DataProvider('validTypeProvider')]
@@ -59,55 +66,79 @@ class QuestionServiceTest extends TestCase
 
     public function testEmptyTextThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('question_text:required');
-
         $service = $this->makeService();
-        $service->create(1, 1, [
-            'question_text' => '   ',
-            'question_type' => 'open_text',
-        ]);
+
+        try {
+            $service->create(1, 1, [
+                'question_text' => '   ',
+                'question_type' => 'open_text',
+            ]);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('required', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('missing_fields', $e->getPublicCode());
+            $this->assertSame('question_text', $e->getField());
+        }
     }
 
     public function testTextTooLongThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('question_text:too_long');
-
         $service = $this->makeService();
-        $service->create(1, 1, [
-            'question_text' => str_repeat('a', 501),
-            'question_type' => 'open_text',
-        ]);
+
+        try {
+            $service->create(1, 1, [
+                'question_text' => str_repeat('a', 501),
+                'question_type' => 'open_text',
+            ]);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('text_too_long', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('validation_error', $e->getPublicCode());
+            $this->assertSame('question_text', $e->getField());
+        }
     }
 
     // ── multiple_choice option count ───────────────────────────────────────────
 
     public function testMultipleChoiceTooFewOptionsThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('options:invalid_count');
-
         $service = $this->makeService();
-        $service->create(1, 1, [
-            'question_text' => 'Pick one?',
-            'question_type' => 'multiple_choice',
-            'options' => [['option_text' => 'Only one']],
-        ]);
+
+        try {
+            $service->create(1, 1, [
+                'question_text' => 'Pick one?',
+                'question_type' => 'multiple_choice',
+                'options' => [['option_text' => 'Only one']],
+            ]);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('invalid_option_count', $e->getErrorCode());
+            $this->assertSame(422, $e->getStatus());
+            $this->assertSame('invalid_option_count', $e->getPublicCode());
+            $this->assertSame('options', $e->getField());
+        }
     }
 
     public function testMultipleChoiceTooManyOptionsThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('options:invalid_count');
-
         $service = $this->makeService();
         $options = array_fill(0, 9, ['option_text' => 'Option']);
-        $service->create(1, 1, [
-            'question_text' => 'Pick one?',
-            'question_type' => 'multiple_choice',
-            'options' => $options,
-        ]);
+
+        try {
+            $service->create(1, 1, [
+                'question_text' => 'Pick one?',
+                'question_type' => 'multiple_choice',
+                'options' => $options,
+            ]);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('invalid_option_count', $e->getErrorCode());
+            $this->assertSame(422, $e->getStatus());
+            $this->assertSame('invalid_option_count', $e->getPublicCode());
+            $this->assertSame('options', $e->getField());
+        }
     }
 
     public function testMultipleChoiceValidOptionsAccepted(): void
@@ -212,40 +243,58 @@ class QuestionServiceTest extends TestCase
 
     public function testFillInTheBlankEmptyAnswerThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('correct_answer:required');
-
         $service = $this->makeService();
-        $service->create(1, 1, [
-            'question_text' => 'Fill in: ____.',
-            'question_type' => 'fill_in_the_blank',
-            'correct_answer' => '   ',
-        ]);
+
+        try {
+            $service->create(1, 1, [
+                'question_text' => 'Fill in: ____.',
+                'question_type' => 'fill_in_the_blank',
+                'correct_answer' => '   ',
+            ]);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('required', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('validation_error', $e->getPublicCode());
+            $this->assertSame('correct_answer', $e->getField());
+        }
     }
 
     public function testFillInTheBlankMissingAnswerThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('correct_answer:required');
-
         $service = $this->makeService();
-        $service->create(1, 1, [
-            'question_text' => 'Fill in: ____.',
-            'question_type' => 'fill_in_the_blank',
-        ]);
+
+        try {
+            $service->create(1, 1, [
+                'question_text' => 'Fill in: ____.',
+                'question_type' => 'fill_in_the_blank',
+            ]);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('required', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('validation_error', $e->getPublicCode());
+            $this->assertSame('correct_answer', $e->getField());
+        }
     }
 
     public function testFillInTheBlankTooLongAnswerThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('correct_answer:too_long');
-
         $service = $this->makeService();
-        $service->create(1, 1, [
-            'question_text' => 'Fill in: ____.',
-            'question_type' => 'fill_in_the_blank',
-            'correct_answer' => str_repeat('a', 201),
-        ]);
+
+        try {
+            $service->create(1, 1, [
+                'question_text' => 'Fill in: ____.',
+                'question_type' => 'fill_in_the_blank',
+                'correct_answer' => str_repeat('a', 201),
+            ]);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('text_too_long', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('validation_error', $e->getPublicCode());
+            $this->assertSame('correct_answer', $e->getField());
+        }
     }
 
     // ── one-active-question rule (FR-33) ───────────────────────────────────────
@@ -451,14 +500,19 @@ class QuestionServiceTest extends TestCase
 
     public function testSetImagePathRejectsUnsafeRelativePath_FR39(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('image_path:invalid');
-
         $updatedFields = [];
         $questionRepo = $this->questionRepoForDraft($updatedFields);
         $service = $this->makeServiceWithRepo($questionRepo);
 
-        $service->setImagePath(1, 1, '../app.log');
+        try {
+            $service->setImagePath(1, 1, '../app.log');
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('invalid_image_path', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('validation_error', $e->getPublicCode());
+            $this->assertNull($e->getField());
+        }
     }
 
     public function testGenericUpdateIgnoresImagePath_FR39(): void

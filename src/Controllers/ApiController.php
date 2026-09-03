@@ -82,6 +82,15 @@ abstract class ApiController
         'password_too_short' => 'validation.password_too_short',
         'password_too_weak' => 'validation.password_too_weak',
         'invalid_email' => 'validation.invalid_email',
+        'invalid_option_count' => 'validation.invalid_option_count',
+
+        // These three named a whole failure the old tables answered with the
+        // generic "something went wrong" sentence, and there is no `error.*`
+        // string that says more. Keeping `common.error` preserves the response
+        // byte for byte; the useful detail travels in the code and the field.
+        'invalid_question_type' => 'common.error',
+        'invalid_stage' => 'common.error',
+        'invalid_image_path' => 'common.error',
     ];
 
     // ── Success envelope ──────────────────────────────────────────────────────

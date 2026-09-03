@@ -64,7 +64,7 @@ final class QuestionService
     public function createMany(int $sessionId, int $userId, array $items): array
     {
         if (count($items) < 1) {
-            throw new \InvalidArgumentException('questions:required');
+            throw new ValidationException('required', 400, 'missing_fields', 'questions');
         }
 
         $ids = [];
@@ -204,7 +204,7 @@ final class QuestionService
         $this->requireSession($sessionId, $userId);
 
         if (empty($orderedIds)) {
-            throw new \InvalidArgumentException('order:required');
+            throw new ValidationException('required', 400, 'missing_fields', 'order');
         }
 
         $this->questions->reorder($sessionId, array_map('intval', $orderedIds));
@@ -278,10 +278,10 @@ final class QuestionService
     {
         $text = trim((string) $raw);
         if ($text === '') {
-            throw new \InvalidArgumentException('question_text:required');
+            throw new ValidationException('required', 400, 'missing_fields', 'question_text');
         }
         if (mb_strlen($text, 'UTF-8') > self::MAX_TEXT_LEN) {
-            throw new \InvalidArgumentException('question_text:too_long');
+            throw new ValidationException('text_too_long', 400, 'validation_error', 'question_text');
         }
 
         return $text;
@@ -291,7 +291,7 @@ final class QuestionService
     {
         $type = (string) $raw;
         if (! in_array($type, self::ALLOWED_TYPES, true)) {
-            throw new \InvalidArgumentException('question_type:invalid');
+            throw new ValidationException('invalid_question_type', 422, 'invalid_question_type', 'question_type');
         }
 
         return $type;
@@ -303,7 +303,7 @@ final class QuestionService
             return 'middle';
         }
         if (! in_array($stage, ['opening', 'middle', 'closing'], true)) {
-            throw new \InvalidArgumentException('stage:invalid');
+            throw new ValidationException('invalid_stage', 422, 'invalid_stage', 'stage');
         }
 
         return $stage;
@@ -316,7 +316,7 @@ final class QuestionService
         }
 
         if (! $this->isManagedImagePath($imagePath)) {
-            throw new \InvalidArgumentException('image_path:invalid');
+            throw new ValidationException('invalid_image_path', 400, 'validation_error');
         }
 
         return $imagePath;
@@ -342,17 +342,17 @@ final class QuestionService
     {
         $count = count($rawOptions);
         if ($count < self::MC_MIN_OPTIONS || $count > self::MC_MAX_OPTIONS) {
-            throw new \InvalidArgumentException('options:invalid_count');
+            throw new ValidationException('invalid_option_count', 422, 'invalid_option_count', 'options');
         }
 
         $result = [];
         foreach ($rawOptions as $i => $opt) {
             $text = trim((string) ($opt['option_text'] ?? ''));
             if ($text === '') {
-                throw new \InvalidArgumentException('options:empty_text');
+                throw new ValidationException('required', 400, 'validation_error', 'options');
             }
             if (mb_strlen($text, 'UTF-8') > self::MAX_OPTION_LEN) {
-                throw new \InvalidArgumentException('options:text_too_long');
+                throw new ValidationException('text_too_long', 400, 'validation_error', 'options');
             }
             $result[] = [
                 'option_text' => $text,
@@ -416,10 +416,10 @@ final class QuestionService
     {
         $text = trim($correctAnswer);
         if ($text === '') {
-            throw new \InvalidArgumentException('correct_answer:required');
+            throw new ValidationException('required', 400, 'validation_error', 'correct_answer');
         }
         if (mb_strlen($text, 'UTF-8') > self::MAX_OPTION_LEN) {
-            throw new \InvalidArgumentException('correct_answer:too_long');
+            throw new ValidationException('text_too_long', 400, 'validation_error', 'correct_answer');
         }
 
         return [

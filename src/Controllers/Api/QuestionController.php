@@ -52,8 +52,6 @@ final class QuestionController extends ApiController
             $id = $this->service->create($sessionId, (int) $user['id'], $body);
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);
-        } catch (\InvalidArgumentException $e) {
-            $this->handleValidationException($e);
         }
 
         $this->json(201, [
@@ -77,8 +75,6 @@ final class QuestionController extends ApiController
             $ids = $this->service->createMany($sessionId, (int) $user['id'], $items);
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);
-        } catch (\InvalidArgumentException $e) {
-            $this->handleValidationException($e);
         }
 
         $this->json(201, [
@@ -228,8 +224,6 @@ final class QuestionController extends ApiController
             $this->service->update($questionId, (int) $user['id'], $body);
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);
-        } catch (\InvalidArgumentException $e) {
-            $this->handleValidationException($e);
         }
 
         $this->json(200, ['success' => true, 'data' => null, 'message' => t('common.success')]);
@@ -310,31 +304,9 @@ final class QuestionController extends ApiController
             $this->service->reorder($sessionId, (int) $user['id'], $body['order'] ?? []);
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);
-        } catch (\InvalidArgumentException $e) {
-            $this->handleValidationException($e);
         }
 
         $this->json(200, ['success' => true, 'data' => null]);
     }
 
-    // ── Helpers ────────────────────────────────────────────────────────────────
-
-    private function handleValidationException(\InvalidArgumentException $e): never
-    {
-        match ($e->getMessage()) {
-            'question_text:required' => $this->error(400, 'missing_fields', t('validation.required'), 'question_text'),
-            'question_text:too_long' => $this->error(400, 'validation_error', t('validation.text_too_long'), 'question_text'),
-            'question_type:invalid' => $this->error(422, 'invalid_question_type', t('common.error')),
-            'options:invalid_count' => $this->error(422, 'invalid_option_count', t('validation.invalid_option_count'), 'options'),
-            'options:empty_text' => $this->error(400, 'validation_error', t('validation.required'), 'options'),
-            'options:text_too_long' => $this->error(400, 'validation_error', t('validation.text_too_long'), 'options'),
-            'correct_answer:required' => $this->error(400, 'validation_error', t('validation.required'), 'correct_answer'),
-            'correct_answer:too_long' => $this->error(400, 'validation_error', t('validation.text_too_long'), 'correct_answer'),
-            'order:required' => $this->error(400, 'missing_fields', t('validation.required'), 'order'),
-            'questions:required' => $this->error(400, 'missing_fields', t('validation.required'), 'questions'),
-            'import:invalid_payload' => $this->error(400, 'invalid_import_payload', t('error.invalid_import_payload')),
-            'stage:invalid' => $this->error(422, 'invalid_stage', t('common.error')),
-            default => $this->error(400, 'validation_error', t('common.error')),
-        };
-    }
 }
