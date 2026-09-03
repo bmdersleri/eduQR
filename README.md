@@ -32,6 +32,8 @@ Implementation plans for larger work items live under `docs/superpowers/plans/`.
 
 The documents below are **all binding**. Each one is the single source of truth for its area. If two documents contradict each other, that is a bug in the spec — file an issue.
 
+For a task-oriented Turkish introduction, start with the **[eduQR Wiki](./docs/wiki/README.md)**. It links installation, classroom use, development, and technical-reference guides while preserving the binding documents below as the source of truth.
+
 | # | File | Purpose |
 | --- | --- | --- |
 | 1 | [AGENTS.md](./AGENTS.md) | First-read for every AI agent. Rules, workflow, definition of done. |
