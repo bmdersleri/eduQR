@@ -172,3 +172,11 @@ convention, and this is the one page with a reason not to follow it.
 
 Recording them here means the next person to read this file does not have to
 rediscover them to know they were seen.
+
+The composition root's envelope now also answers failures that never reach a
+controller. `Bootstrap`'s global exception and shutdown handlers route through
+`FailureResponse` and emit the same envelope for any `/api/v1/` path — a
+`DomainException` keeps its own status and code, anything else is
+`500 server_error`. That response never carries a stack trace, file path, or
+class name, even when `APP_DEBUG=true` — only `logs/app.log` gets the detail,
+on both the normal and the fatal-error path. (NFR-85)

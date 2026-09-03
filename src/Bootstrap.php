@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace EduQR;
 
+use EduQR\Http\FailureResponse;
 use EduQR\Support\Url;
 
 /**
@@ -105,16 +106,63 @@ final class Bootstrap
             );
             error_log($msg, 3, rtrim($logPath, '/') . '/app.log');
 
-            if (! headers_sent()) {
-                http_response_code(500);
-                header('Content-Type: text/html; charset=utf-8');
+            if (headers_sent()) {
+                return;
             }
+
+            if (FailureResponse::wantsJson($_SERVER['REQUEST_URI'] ?? null)) {
+                $payload = FailureResponse::payloadFor($e);
+                http_response_code($payload['status']);
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode($payload['body'], JSON_UNESCAPED_UNICODE);
+
+                return;
+            }
+
+            http_response_code(500);
+            header('Content-Type: text/html; charset=utf-8');
 
             if ($debug) {
                 echo '<pre>' . htmlspecialchars($msg, ENT_QUOTES, 'UTF-8') . '</pre>';
             } else {
                 include __DIR__ . '/../templates/errors/500.php';
             }
+        });
+
+        // A fatal (E_ERROR, memory exhaustion, parse error) never reaches the
+        // exception handler, and PHP's own output is an empty body for an API
+        // client. Answer it in the caller's format. [NFR-85]
+        register_shutdown_function(function () use ($logPath): void {
+            $last = error_get_last();
+
+            if (! FailureResponse::isFatal($last)) {
+                return;
+            }
+
+            $msg = sprintf(
+                '[eduQR][fatal] %s in %s:%d',
+                $last['message'],
+                $last['file'],
+                $last['line']
+            );
+            error_log($msg, 3, rtrim($logPath, '/') . '/app.log');
+
+            if (headers_sent()) {
+                return;
+            }
+
+            if (FailureResponse::wantsJson($_SERVER['REQUEST_URI'] ?? null)) {
+                $payload = FailureResponse::payloadFor(new \RuntimeException('fatal'));
+                http_response_code($payload['status']);
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode($payload['body'], JSON_UNESCAPED_UNICODE);
+
+                return;
+            }
+
+            http_response_code(500);
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/../templates/errors/500.php';
         });
     }
 

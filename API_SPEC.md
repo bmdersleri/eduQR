@@ -61,6 +61,15 @@ State-changing instructor endpoints (POST, PATCH, DELETE) MUST present a matchin
 
 `code` is stable and machine-readable. `message` is always localized. `field` is optional and present for validation errors.
 
+A failure that escapes every controller — an uncaught exception or a fatal
+error (`E_ERROR`, memory exhaustion, a parse error) — is answered the same
+way: the global handler in `Bootstrap` recognises `/api/v1/` paths and emits
+this same envelope shape. A `DomainException` reaching the handler keeps its
+own status and published code; anything else, including a fatal, is
+`500 server_error`. The response never carries a stack trace, file path, or
+class name, regardless of `APP_DEBUG`; the detail goes to `logs/app.log`
+only. (NFR-85)
+
 ### 1.6 HTTP status codes
 
 | Code | When |

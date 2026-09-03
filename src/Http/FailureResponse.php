@@ -30,6 +30,19 @@ final class FailureResponse
         return is_string($path) && str_starts_with($path, self::API_PREFIX);
     }
 
+    private const FATAL_TYPES = [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR];
+
+    /**
+     * True when error_get_last() describes a failure that killed the request
+     * before the exception handler could run.
+     *
+     * @param array{type:int,message:string,file:string,line:int}|null $lastError
+     */
+    public static function isFatal(?array $lastError): bool
+    {
+        return $lastError !== null && in_array($lastError['type'], self::FATAL_TYPES, true);
+    }
+
     /**
      * The envelope for a throwable. A DomainException keeps its published status
      * and code; anything else is a 500 with no detail — the detail belongs in

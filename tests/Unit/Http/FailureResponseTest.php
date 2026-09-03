@@ -67,4 +67,12 @@ final class FailureResponseTest extends TestCase
         $this->assertSame(500, $payload['status']);
         $this->assertSame('server_error', $payload['body']['error']['code']);
     }
+
+    public function test_fatal_error_types_are_recognised_NFR85(): void
+    {
+        $this->assertTrue(FailureResponse::isFatal(['type' => E_ERROR, 'message' => 'x', 'file' => 'f', 'line' => 1]));
+        $this->assertTrue(FailureResponse::isFatal(['type' => E_PARSE, 'message' => 'x', 'file' => 'f', 'line' => 1]));
+        $this->assertFalse(FailureResponse::isFatal(['type' => E_WARNING, 'message' => 'x', 'file' => 'f', 'line' => 1]));
+        $this->assertFalse(FailureResponse::isFatal(null));
+    }
 }
