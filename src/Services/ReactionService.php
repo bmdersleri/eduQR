@@ -9,6 +9,7 @@ use EduQR\Contracts\ParticipantRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\ReactionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
+use EduQR\Exceptions\AuthenticationException;
 use EduQR\Exceptions\DomainException;
 use EduQR\Exceptions\ForbiddenException;
 use EduQR\Exceptions\NotFoundException;
@@ -63,7 +64,7 @@ final class ReactionService
         // ── 1. Resolve and validate participant ───────────────────────────────
         $participant = $this->participants->findById($participantId);
         if ($participant === null) {
-            throw new NotFoundException('participant_not_found', 401, 'not_joined');
+            throw new AuthenticationException('participant_not_found', 401, 'not_joined');
         }
 
         // ── 2. Resolve and validate question ──────────────────────────────────

@@ -6,7 +6,7 @@ namespace EduQR\Services;
 
 use EduQR\Config;
 use EduQR\Contracts\OpenTextThemeExtractionServiceInterface;
-use EduQR\Exceptions\ValidationException;
+use EduQR\Exceptions\UpstreamServiceException;
 
 final class OpenTextThemeExtractionService implements OpenTextThemeExtractionServiceInterface
 {
@@ -50,9 +50,8 @@ final class OpenTextThemeExtractionService implements OpenTextThemeExtractionSer
     public function extractThemes(string $questionText, array $answers, string $language): array
     {
         if (trim($this->apiUrl) === '') {
-            // Infrastructure failure, not a domain one (NFR-78): the provider is
-            // unreachable or unconfigured. Published as 503.
-            throw new \RuntimeException('llm_unavailable');
+            // The provider is unreachable or unconfigured. Published as 503.
+            throw new UpstreamServiceException('llm_unavailable');
         }
 
         $normalizedAnswers = $this->normalizeAnswers($answers);
@@ -77,19 +76,18 @@ final class OpenTextThemeExtractionService implements OpenTextThemeExtractionSer
 
         $response = $this->sendRequest($this->apiUrl, $payload);
         if (($response['status'] ?? 0) < 200 || ($response['status'] ?? 0) >= 300) {
-            // Infrastructure failure, not a domain one (NFR-78): the provider is
-            // unreachable or unconfigured. Published as 503.
-            throw new \RuntimeException('llm_unavailable');
+            // The provider is unreachable or unconfigured. Published as 503.
+            throw new UpstreamServiceException('llm_unavailable');
         }
 
         $decoded = json_decode((string) ($response['body'] ?? ''), true);
         if (! is_array($decoded)) {
-            throw new ValidationException('invalid_llm_response');
+            throw new UpstreamServiceException('invalid_llm_response', 422);
         }
 
         if (array_key_exists('themes', $decoded)) {
             if (! is_array($decoded['themes'])) {
-                throw new ValidationException('invalid_llm_response');
+                throw new UpstreamServiceException('invalid_llm_response', 422);
             }
 
             return $this->normalizeThemeRows($decoded['themes']);
@@ -248,7 +246,7 @@ TXT;
 
         $decoded = json_decode($content, true);
         if (! is_array($decoded) || ! isset($decoded['themes']) || ! is_array($decoded['themes'])) {
-            throw new ValidationException('invalid_llm_response');
+            throw new UpstreamServiceException('invalid_llm_response', 422);
         }
 
         return $this->normalizeThemeRows($decoded['themes']);
@@ -263,7 +261,7 @@ TXT;
         $themes = [];
         foreach ($rows as $row) {
             if (! is_array($row)) {
-                throw new ValidationException('invalid_llm_response');
+                throw new UpstreamServiceException('invalid_llm_response', 422);
             }
             $themes[] = $this->normalizeTheme($row);
         }
@@ -281,36 +279,36 @@ TXT;
         $summary = trim((string) ($row['summary'] ?? ''));
 
         if ($title === '' || mb_strlen($title, 'UTF-8') > self::MAX_THEME_TITLE_LEN) {
-            throw new ValidationException('invalid_llm_response');
+            throw new UpstreamServiceException('invalid_llm_response', 422);
         }
         if ($summary === '' || mb_strlen($summary, 'UTF-8') > self::MAX_THEME_SUMMARY_LEN) {
-            throw new ValidationException('invalid_llm_response');
+            throw new UpstreamServiceException('invalid_llm_response', 422);
         }
 
         $keywordsRaw = $row['keywords'] ?? [];
         if (! is_array($keywordsRaw) || $keywordsRaw === []) {
-            throw new ValidationException('invalid_llm_response');
+            throw new UpstreamServiceException('invalid_llm_response', 422);
         }
 
         $keywords = [];
         foreach ($keywordsRaw as $keyword) {
             $value = trim((string) $keyword);
             if ($value === '' || mb_strlen($value, 'UTF-8') > self::MAX_KEYWORD_LEN) {
-                throw new ValidationException('invalid_llm_response');
+                throw new UpstreamServiceException('invalid_llm_response', 422);
             }
             $keywords[] = $value;
         }
 
         $examplesRaw = $row['example_answers'] ?? [];
         if (! is_array($examplesRaw)) {
-            throw new ValidationException('invalid_llm_response');
+            throw new UpstreamServiceException('invalid_llm_response', 422);
         }
 
         $exampleAnswers = [];
         foreach ($examplesRaw as $example) {
             $value = trim((string) $example);
             if ($value === '' || mb_strlen($value, 'UTF-8') > self::MAX_EXAMPLE_LEN) {
-                throw new ValidationException('invalid_llm_response');
+                throw new UpstreamServiceException('invalid_llm_response', 422);
             }
             $exampleAnswers[] = $value;
         }

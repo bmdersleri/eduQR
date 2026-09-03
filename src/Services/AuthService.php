@@ -7,8 +7,8 @@ namespace EduQR\Services;
 use EduQR\Config;
 use EduQR\Contracts\LoginAttemptRepositoryInterface;
 use EduQR\Contracts\UserRepositoryInterface;
+use EduQR\Exceptions\AuthenticationException;
 use EduQR\Exceptions\ForbiddenException;
-use EduQR\Exceptions\NotFoundException;
 
 final class AuthService
 {
@@ -53,7 +53,7 @@ final class AuthService
         if (! $valid || $user === null || ! (bool) $user['is_active']) {
             $this->attempts->record($email, $this->ipHash(), false);
 
-            throw new NotFoundException('invalid_credentials', 401);
+            throw new AuthenticationException('invalid_credentials');
         }
 
         if (password_needs_rehash($user['password_hash'], PASSWORD_BCRYPT, ['cost' => self::BCRYPT_COST])) {

@@ -9,6 +9,7 @@ use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\ParticipantRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
+use EduQR\Exceptions\AuthenticationException;
 use EduQR\Exceptions\DomainException;
 use EduQR\Exceptions\ForbiddenException;
 use EduQR\Exceptions\NotFoundException;
@@ -60,7 +61,7 @@ final class AnswerService
         // ── 1. Resolve and validate participant (T-704) ────────────────────────
         $participant = $this->participants->findById($participantId);
         if ($participant === null) {
-            throw new NotFoundException('participant_not_found', 401, 'not_joined');
+            throw new AuthenticationException('participant_not_found', 401, 'not_joined');
         }
 
         // ── 2. Resolve and validate question (T-705) ──────────────────────────

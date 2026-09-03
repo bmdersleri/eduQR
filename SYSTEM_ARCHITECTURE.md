@@ -474,16 +474,32 @@ Production MUST NOT commit `.env`. `composer install` should fail loud if `.env`
 
 ### 9.1 Domain Exception Types
 
-All four extend `EduQR\Exceptions\DomainException` and carry the machine-readable
+All six extend `EduQR\Exceptions\DomainException` and carry the machine-readable
 error code published in `API_SPEC.md` §12 — never a human-readable sentence, which
 belongs in `locales/` and is resolved at the HTTP boundary.
 
 | Type | HTTP | Meaning | Example code |
 | --- | --- | --- | --- |
 | `NotFoundException` | 404 | The addressed entity does not exist, or the caller may not know that it does | `course_not_found` |
+| `AuthenticationException` | 401 | The caller has not proved who they are | `invalid_credentials` |
 | `ForbiddenException` | 403 | The entity exists and the caller is known, but is not permitted | `course_owner_only` |
 | `ValidationException` | 422 | The request was understood and rejected on its contents; carries per-field detail | `validation_failed` |
 | `ConflictException` | 409 | The request conflicts with current state | `already_answered` |
+| `UpstreamServiceException` | 503 | A service we depend on is down or answered unusably | `llm_unavailable` |
+
+The last two rows exist because the first four are all statements about the
+**caller**, and two published codes are not. `AuthenticationException` separates "we
+do not know who you are" (401, worth retrying after signing in) from "we know, and
+no" (403, not worth retrying) — a distinction the client acts on.
+`UpstreamServiceException` covers `llm_unavailable` (503) and `invalid_llm_response`
+(422): the caller did nothing wrong and no entity is rejecting them, but both codes
+are published in `API_SPEC.md` §7 and so must be mappable by type, or the boundary
+is back to comparing message text for exactly the cases this requirement removed.
+
+An internal failure with **no** published code is not a domain exception at all:
+`short_code_exhausted` stays a plain `\RuntimeException` and is answered 500,
+because a saturated code space is a bug on our side rather than a contract offered
+to callers.
 
 A service MUST NOT throw `\RuntimeException` with a code in its message. The HTTP
 layer maps by exception type; message text is not part of any contract.

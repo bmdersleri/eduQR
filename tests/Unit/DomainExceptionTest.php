@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace EduQR\Tests\Unit;
 
+use EduQR\Exceptions\AuthenticationException;
 use EduQR\Exceptions\ConflictException;
 use EduQR\Exceptions\DomainException;
 use EduQR\Exceptions\ForbiddenException;
 use EduQR\Exceptions\NotFoundException;
+use EduQR\Exceptions\UpstreamServiceException;
 use EduQR\Exceptions\ValidationException;
 use EduQR\Services\DuplicateAnswerException;
 use PHPUnit\Framework\TestCase;
@@ -39,6 +41,55 @@ class DomainExceptionTest extends TestCase
     public function test_conflict_defaults_to_409_NFR78(): void
     {
         $this->assertSame(409, (new ConflictException('already_anonymized'))->getStatus());
+    }
+
+    public function test_authentication_defaults_to_401_NFR78(): void
+    {
+        $this->assertSame(401, (new AuthenticationException('invalid_credentials'))->getStatus());
+    }
+
+    public function test_upstream_defaults_to_503_NFR78(): void
+    {
+        $this->assertSame(503, (new UpstreamServiceException('llm_unavailable'))->getStatus());
+    }
+
+    /**
+     * The two codes UpstreamServiceException carries are published with different
+     * statuses: the provider being down is a 503, the provider answering with
+     * something unusable is a 422. Both must survive the round trip by type, which
+     * is the whole reason this type exists rather than a bare \RuntimeException.
+     */
+    public function test_upstream_carries_both_published_statuses_NFR78(): void
+    {
+        $down = new UpstreamServiceException('llm_unavailable');
+        $garbage = new UpstreamServiceException('invalid_llm_response', 422);
+
+        $this->assertSame(503, $down->getStatus());
+        $this->assertSame('llm_unavailable', $down->getPublicCode());
+        $this->assertSame(422, $garbage->getStatus());
+        $this->assertSame('invalid_llm_response', $garbage->getPublicCode());
+    }
+
+    /**
+     * A 401 must not be reachable by catching ForbiddenException, and a 403 must
+     * not be reachable by catching AuthenticationException. Collapsing the two
+     * would tell a client to retry a sign-in that cannot help, or not to retry one
+     * that would.
+     */
+    public function test_authentication_and_forbidden_are_not_interchangeable_NFR78(): void
+    {
+        $this->assertNotInstanceOf(ForbiddenException::class, new AuthenticationException('invalid_credentials'));
+        $this->assertNotInstanceOf(AuthenticationException::class, new ForbiddenException('forbidden'));
+    }
+
+    /**
+     * Both new types are still DomainExceptions, so the shared mapper introduced
+     * by T-1127 reaches them without a special case.
+     */
+    public function test_new_types_are_domain_exceptions_NFR78(): void
+    {
+        $this->assertInstanceOf(DomainException::class, new AuthenticationException('invalid_credentials'));
+        $this->assertInstanceOf(DomainException::class, new UpstreamServiceException('llm_unavailable'));
     }
 
     // ── Status override (§9.1: "a default, not a law") ────────────────────────

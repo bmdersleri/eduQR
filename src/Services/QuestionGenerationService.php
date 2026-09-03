@@ -6,7 +6,7 @@ namespace EduQR\Services;
 
 use EduQR\Config;
 use EduQR\Contracts\QuestionGenerationServiceInterface;
-use EduQR\Exceptions\ValidationException;
+use EduQR\Exceptions\UpstreamServiceException;
 
 final class QuestionGenerationService implements QuestionGenerationServiceInterface
 {
@@ -45,9 +45,8 @@ final class QuestionGenerationService implements QuestionGenerationServiceInterf
     public function generateFromNotes(string $courseTitle, ?string $topicName, string $lectureNotes, string $language): array
     {
         if (trim($this->apiUrl) === '') {
-            // Infrastructure failure, not a domain one (NFR-78): the provider is
-            // unreachable or unconfigured. Published as 503.
-            throw new \RuntimeException('llm_unavailable');
+            // The provider is unreachable or unconfigured. Published as 503.
+            throw new UpstreamServiceException('llm_unavailable');
         }
 
         $payload = [
@@ -67,14 +66,13 @@ final class QuestionGenerationService implements QuestionGenerationServiceInterf
 
         $response = $this->sendRequest($this->apiUrl, $payload);
         if (($response['status'] ?? 0) < 200 || ($response['status'] ?? 0) >= 300) {
-            // Infrastructure failure, not a domain one (NFR-78): the provider is
-            // unreachable or unconfigured. Published as 503.
-            throw new \RuntimeException('llm_unavailable');
+            // The provider is unreachable or unconfigured. Published as 503.
+            throw new UpstreamServiceException('llm_unavailable');
         }
 
         $decoded = json_decode((string) ($response['body'] ?? ''), true);
         if (! is_array($decoded)) {
-            throw new ValidationException('invalid_llm_response');
+            throw new UpstreamServiceException('invalid_llm_response', 422);
         }
 
         $content = $decoded['choices'][0]['message']['content']
@@ -194,7 +192,7 @@ TXT;
     {
         $content = trim($content);
         if ($content === '') {
-            throw new ValidationException('invalid_llm_response');
+            throw new UpstreamServiceException('invalid_llm_response', 422);
         }
 
         if (str_starts_with($content, '```')) {
@@ -204,26 +202,26 @@ TXT;
 
         $decoded = json_decode($content, true);
         if (! is_array($decoded) || ! isset($decoded['questions']) || ! is_array($decoded['questions'])) {
-            throw new ValidationException('invalid_llm_response');
+            throw new UpstreamServiceException('invalid_llm_response', 422);
         }
 
         $questions = [];
         foreach ($decoded['questions'] as $row) {
             if (! is_array($row)) {
-                throw new ValidationException('invalid_llm_response');
+                throw new UpstreamServiceException('invalid_llm_response', 422);
             }
 
             $questions[] = $this->normalizeQuestion($row);
         }
 
         if (count($questions) !== 3) {
-            throw new ValidationException('invalid_llm_response');
+            throw new UpstreamServiceException('invalid_llm_response', 422);
         }
 
         $stages = array_column($questions, 'stage');
         sort($stages);
         if ($stages !== ['closing', 'middle', 'opening']) {
-            throw new ValidationException('invalid_llm_response');
+            throw new UpstreamServiceException('invalid_llm_response', 422);
         }
 
         return $questions;
@@ -237,17 +235,17 @@ TXT;
     {
         $stage = (string) ($row['stage'] ?? '');
         if (! in_array($stage, ['opening', 'middle', 'closing'], true)) {
-            throw new ValidationException('invalid_llm_response');
+            throw new UpstreamServiceException('invalid_llm_response', 422);
         }
 
         $text = trim((string) ($row['question_text'] ?? ''));
         if ($text === '' || mb_strlen($text, 'UTF-8') > 500) {
-            throw new ValidationException('invalid_llm_response');
+            throw new UpstreamServiceException('invalid_llm_response', 422);
         }
 
         $type = (string) ($row['question_type'] ?? '');
         if (! in_array($type, self::ALLOWED_TYPES, true)) {
-            throw new ValidationException('invalid_llm_response');
+            throw new UpstreamServiceException('invalid_llm_response', 422);
         }
 
         $question = [
@@ -262,17 +260,17 @@ TXT;
         if ($type === 'multiple_choice') {
             $options = $row['options'] ?? [];
             if (! is_array($options) || count($options) < 2 || count($options) > 8) {
-                throw new ValidationException('invalid_llm_response');
+                throw new UpstreamServiceException('invalid_llm_response', 422);
             }
 
             foreach ($options as $opt) {
                 if (! is_array($opt)) {
-                    throw new ValidationException('invalid_llm_response');
+                    throw new UpstreamServiceException('invalid_llm_response', 422);
                 }
 
                 $optText = trim((string) ($opt['option_text'] ?? ''));
                 if ($optText === '' || mb_strlen($optText, 'UTF-8') > 200) {
-                    throw new ValidationException('invalid_llm_response');
+                    throw new UpstreamServiceException('invalid_llm_response', 422);
                 }
 
                 $question['options'][] = [

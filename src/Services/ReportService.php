@@ -155,8 +155,8 @@ final class ReportService
     /**
      * Builds a set of AI-assisted themes from the visible open-text answers of a question.
      *
-     * @throws DomainException  question_not_found | question_not_open_text | forbidden | invalid_llm_response
-     * @throws \RuntimeException llm_unavailable — an infrastructure failure, not a domain one
+     * @throws DomainException question_not_found | question_not_open_text | forbidden
+     *                         | invalid_llm_response (422) | llm_unavailable (503)
      */
     public function extractThemes(int $questionId, int $userId): array
     {
