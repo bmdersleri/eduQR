@@ -30,8 +30,8 @@ final class ParticipantService
      * Join a session by short code.
      *
      * @return array{participant_id: int, session_short_code: string, nickname: string}
-     * @throws DomainException  session_not_found | session_closed | session_paused | duplicate_nickname | profane_nickname
-     * @throws \InvalidArgumentException  nickname:required | nickname:too_long | nickname:invalid_chars
+     * @throws DomainException  session_not_found | session_closed | session_paused | duplicate_nickname
+     *                          | profane_nickname | nickname_required | nickname_too_long | nickname_invalid_chars
      */
     public function join(string $shortCode, string $rawNickname, ?string $deviceCookieId, string $userAgent): array
     {
@@ -104,22 +104,22 @@ final class ParticipantService
         return TextFold::forComparisonNormalized($nickname);
     }
 
-    /** Validate a raw nickname string. Throws InvalidArgumentException on failure. */
+    /** Validate a raw nickname string. Throws ValidationException on failure. */
     private function validateNickname(string $raw, string $locale): string
     {
         $trimmed = trim($raw);
 
         if (mb_strlen($trimmed, 'UTF-8') < self::MIN_NICKNAME_LEN) {
-            throw new \InvalidArgumentException('nickname:required');
+            throw new ValidationException('nickname_required', 400, 'nickname_required', 'nickname');
         }
 
         if (mb_strlen($trimmed, 'UTF-8') > self::MAX_NICKNAME_LEN) {
-            throw new \InvalidArgumentException('nickname:too_long');
+            throw new ValidationException('nickname_too_long', 400, 'nickname_too_long', 'nickname');
         }
 
         // FR-41: allowed charset
         if (! preg_match('/^[\p{L}\p{N}_\- ]+$/u', $trimmed)) {
-            throw new \InvalidArgumentException('nickname:invalid_chars');
+            throw new ValidationException('nickname_invalid_chars', 400, 'nickname_invalid_chars', 'nickname');
         }
 
         // FR-43: profanity filter

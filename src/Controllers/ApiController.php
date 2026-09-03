@@ -76,6 +76,9 @@ abstract class ApiController
         'required' => 'validation.required',
         'text_too_long' => 'validation.text_too_long',
         'invalid_language' => 'validation.invalid_language',
+        'nickname_required' => 'validation.required',
+        'nickname_too_long' => 'validation.nickname_too_long',
+        'nickname_invalid_chars' => 'student.join.error.invalid',
     ];
 
     // ── Success envelope ──────────────────────────────────────────────────────

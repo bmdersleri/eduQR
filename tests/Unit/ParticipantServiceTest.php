@@ -6,6 +6,7 @@ namespace EduQR\Tests\Unit;
 
 use EduQR\Contracts\ParticipantRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
+use EduQR\Exceptions\ValidationException;
 use EduQR\Services\ParticipantService;
 use EduQR\Support\DeviceHash;
 use EduQR\Support\ProfanityFilter;
@@ -112,29 +113,47 @@ class ParticipantServiceTest extends TestCase
 
     public function testJoinThrowsForEmptyNickname(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('nickname:required');
-
         $service = $this->makeService();
-        $service->join('ABCD23', '', null, '');
+
+        try {
+            $service->join('ABCD23', '', null, '');
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('nickname_required', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('nickname_required', $e->getPublicCode());
+            $this->assertSame('nickname', $e->getField());
+        }
     }
 
     public function testJoinThrowsForNicknameTooLong(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('nickname:too_long');
-
         $service = $this->makeService();
-        $service->join('ABCD23', str_repeat('a', 25), null, '');
+
+        try {
+            $service->join('ABCD23', str_repeat('a', 25), null, '');
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('nickname_too_long', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('nickname_too_long', $e->getPublicCode());
+            $this->assertSame('nickname', $e->getField());
+        }
     }
 
     public function testJoinThrowsForInvalidChars(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('nickname:invalid_chars');
-
         $service = $this->makeService();
-        $service->join('ABCD23', 'Ali@Veli!', null, '');
+
+        try {
+            $service->join('ABCD23', 'Ali@Veli!', null, '');
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('nickname_invalid_chars', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('nickname_invalid_chars', $e->getPublicCode());
+            $this->assertSame('nickname', $e->getField());
+        }
     }
 
     public function testJoinThrowsForClosedSession(): void

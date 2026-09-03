@@ -38,13 +38,6 @@ final class JoinController extends ApiController
 
         try {
             $result = $this->service->join($shortCode, $rawNickname, $cookieId, $userAgent);
-        } catch (\InvalidArgumentException $e) {
-            match ($e->getMessage()) {
-                'nickname:required' => $this->error(400, 'nickname_required', t('validation.required'), 'nickname'),
-                'nickname:too_long' => $this->error(400, 'nickname_too_long', t('validation.nickname_too_long'), 'nickname'),
-                'nickname:invalid_chars' => $this->error(400, 'nickname_invalid_chars', t('student.join.error.invalid'), 'nickname'),
-                default => $this->error(400, 'validation_error', t('common.error'), ''),
-            };
         } catch (\RuntimeException $e) {
             // Joining is the 410 side of the session_closed / session_paused
             // divergence (SYSTEM_ARCHITECTURE.md §9.1); the status rides on the
