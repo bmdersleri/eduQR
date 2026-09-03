@@ -5,24 +5,25 @@ declare(strict_types=1);
 namespace EduQR\Tests\Unit;
 
 use EduQR\Contracts\CourseRepositoryInterface;
-use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\I18n\I18nService;
-use EduQR\Services\ReportService;
+use EduQR\Services\ExportService;
 use EduQR\Services\ScoringService;
 use PDO;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Unit tests for the LMS file exports — T-1113.
+ * Unit tests for the LMS file exports — T-1113, T-1130.
  *
  * Moodle GIFT question export and gradebook CSV rows. Both are plain file
- * builds: no LMS API is contacted anywhere in this feature.
+ * builds: no LMS API is contacted anywhere in this feature. Split out of
+ * ReportLmsExportTest unchanged when ExportService gained its own class
+ * (NFR-82); every assertion below is the one it had there.
  *
  * @requirement FR-98
  */
-class ReportLmsExportTest extends TestCase
+class ExportServiceTest extends TestCase
 {
     private const OWNER_ID = 99;
     private const CO_INSTRUCTOR_ID = 77;
@@ -76,7 +77,7 @@ class ReportLmsExportTest extends TestCase
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     /** @param array<int,array<string,mixed>> $questionRows */
-    private function makeService(array $questionRows): ReportService
+    private function makeService(array $questionRows): ExportService
     {
         $questions = $this->createMock(QuestionRepositoryInterface::class);
         $questions->method('findBySession')->willReturn($questionRows);
@@ -102,13 +103,12 @@ class ReportLmsExportTest extends TestCase
             }
         );
 
-        return new ReportService(
+        return new ExportService(
             $sessions,
             $questions,
-            $this->createMock(OptionRepositoryInterface::class),
             $courses,
-            new ScoringService($questions, $this->pdo),
             $this->pdo,
+            new ScoringService($questions, $this->pdo),
         );
     }
 

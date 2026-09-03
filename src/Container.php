@@ -7,6 +7,7 @@ namespace EduQR;
 use EduQR\Contracts\AnswerRepositoryInterface;
 use EduQR\Contracts\AuditLogRepositoryInterface;
 use EduQR\Contracts\CourseRepositoryInterface;
+use EduQR\Contracts\ExportServiceInterface;
 use EduQR\Contracts\LoginAttemptRepositoryInterface;
 use EduQR\Contracts\OpenTextThemeExtractionServiceInterface;
 use EduQR\Contracts\OptionRepositoryInterface;
@@ -34,6 +35,7 @@ use EduQR\Repositories\UserRepository;
 use EduQR\Services\AnswerService;
 use EduQR\Services\AuthService;
 use EduQR\Services\CourseService;
+use EduQR\Services\ExportService;
 use EduQR\Services\OpenTextThemeExtractionService;
 use EduQR\Services\ParticipantService;
 use EduQR\Services\PasswordResetService;
@@ -190,6 +192,23 @@ final class Container
         return self::$instances['courseService'] ??= new CourseService(
             self::courseRepository(),
             self::userRepository(),
+        );
+    }
+
+    /**
+     * The LMS file exports (NFR-82). Like the scoring unit it holds the shared
+     * connection rather than reaching for one per query, so resolving it opens
+     * that connection — every export it can build reads rows.
+     */
+    public static function exportService(): ExportServiceInterface
+    {
+        /** @var ExportServiceInterface */
+        return self::$instances['exportService'] ??= new ExportService(
+            self::sessionRepository(),
+            self::questionRepository(),
+            self::courseRepository(),
+            Database::connection(),
+            self::scoringService(),
         );
     }
 
