@@ -488,6 +488,23 @@ belongs in `locales/` and is resolved at the HTTP boundary.
 A service MUST NOT throw `\RuntimeException` with a code in its message. The HTTP
 layer maps by exception type; message text is not part of any contract.
 
+**The status in that table is a default, not a law.** The published contract already
+answers the same condition differently depending on where it is met, and those
+differences are deliberate:
+
+| Condition | At join / resolve | While answering |
+| --- | --- | --- |
+| `session_closed` | `410 Gone` — the thing you are trying to enter no longer exists | `422` — you are already inside; this attempt is rejected |
+| `session_paused` | `410 Gone` | `422` |
+
+A `DomainException` therefore carries its own status and its own public error code,
+defaulted by subtype and overridable at the throw site. Two further overrides exist
+today and MUST be preserved: `participant_not_found` is published as `not_joined`
+with `401`, and `question_not_active` is published as `question_closed`. Introducing
+a new override requires an `API_SPEC.md` change in the same commit — the point of
+this design is that a divergence has to be written down, not that divergence is
+forbidden.
+
 See the canonical error-code list in `API_SPEC.md` §12.
 
 ---
