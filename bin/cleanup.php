@@ -52,50 +52,51 @@ $stmt = $pdo->prepare($findSql);
 $stmt->execute([$cutoff]);
 $stale = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
+// Tasks 2 and 3 below run on every invocation, so this task must never exit the
+// script — retention (FR-71, NFR-34) would otherwise only be honoured on days
+// that happen to have a stale session to close.
 if (empty($stale)) {
     echo '[cleanup] No stale sessions found.' . PHP_EOL;
-    exit(0);
-}
+} else {
+    echo sprintf('[cleanup] Found %d stale session(s) (older than %dh).%s', count($stale), $maxHours, PHP_EOL);
 
-echo sprintf('[cleanup] Found %d stale session(s) (older than %dh).%s', count($stale), $maxHours, PHP_EOL);
+    if ($dryRun) {
+        foreach ($stale as $s) {
+            echo sprintf(
+                '  [dry-run] Would close session id=%d (%s) started_at=%s%s',
+                $s['id'],
+                $s['short_code'],
+                $s['started_at'],
+                PHP_EOL
+            );
+        }
+    } else {
+        $closeSql = "
+            UPDATE sessions
+            SET    status    = 'closed',
+                   closed_at = UTC_TIMESTAMP()
+            WHERE  id        = ?
+              AND  status   IN ('active', 'paused')
+        ";
+        $closeStmt = $pdo->prepare($closeSql);
 
-if ($dryRun) {
-    foreach ($stale as $s) {
-        echo sprintf(
-            '  [dry-run] Would close session id=%d (%s) started_at=%s%s',
-            $s['id'],
-            $s['short_code'],
-            $s['started_at'],
-            PHP_EOL
-        );
+        $closed = 0;
+        foreach ($stale as $s) {
+            $closeStmt->execute([$s['id']]);
+            if ($closeStmt->rowCount() > 0) {
+                $closed++;
+                echo sprintf(
+                    '  [cleanup] Closed session id=%d (%s)%s',
+                    $s['id'],
+                    $s['short_code'],
+                    PHP_EOL
+                );
+            }
+        }
+
+        echo sprintf('[cleanup] Done. %d session(s) closed.%s', $closed, PHP_EOL);
     }
-    exit(0);
 }
-
-$closeSql = "
-    UPDATE sessions
-    SET    status    = 'closed',
-           closed_at = UTC_TIMESTAMP()
-    WHERE  id        = ?
-      AND  status   IN ('active', 'paused')
-";
-$closeStmt = $pdo->prepare($closeSql);
-
-$closed = 0;
-foreach ($stale as $s) {
-    $closeStmt->execute([$s['id']]);
-    if ($closeStmt->rowCount() > 0) {
-        $closed++;
-        echo sprintf(
-            '  [cleanup] Closed session id=%d (%s)%s',
-            $s['id'],
-            $s['short_code'],
-            PHP_EOL
-        );
-    }
-}
-
-echo sprintf('[cleanup] Done. %d session(s) closed.%s', $closed, PHP_EOL);
 
 // ── Task 2: Hard-delete sessions past 7-day grace period (FR-71) ─────────────
 
