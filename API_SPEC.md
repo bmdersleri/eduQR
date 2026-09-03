@@ -1075,8 +1075,10 @@ Stable, machine-readable codes. Add to this table when introducing a new code.
 | --- | --- | --- |
 | `missing_fields` | 400 | One or more required fields absent |
 | `validation_error` | 400 | Generic field validation failure |
-| `invalid_nickname` | 400 | Length, charset, or profanity check failed |
-| `invalid_password` | 400 | Password does not meet policy |
+| `nickname_required` | 400 | Nickname absent |
+| `nickname_too_long` | 400 | Nickname longer than the limit |
+| `nickname_invalid_chars` | 400 | Nickname contains characters outside the allowed set |
+| `profane_nickname` | 400 | Nickname failed the profanity check |
 | `invalid_credentials` | 401 | Bad email or password |
 | `not_authenticated` | 401 | Instructor cookie missing or expired |
 | `not_joined` | 401 | Participant cookie missing or expired |
@@ -1102,6 +1104,8 @@ Stable, machine-readable codes. Add to this table when introducing a new code.
 | `invalid_reaction` | 422 | Unknown comprehension reaction value |
 | `invalid_question_type` | 422 | Unknown `question_type` value |
 | `invalid_option_count` | 422 | Wrong number of options for the type |
+| `invalid_stage` | 422 | Unknown `stage` value in a question import |
+| `invalid_import_payload` | 400 | Import body is not a shape the endpoint accepts |
 | `invalid_llm_response` | 422 | AI provider returned malformed question JSON |
 | `file_too_large` | 422 | Uploaded image is larger than allowed |
 | `invalid_file_type` | 422 | Uploaded image is not JPG or PNG |
@@ -1114,6 +1118,41 @@ Stable, machine-readable codes. Add to this table when introducing a new code.
 | `server_error` | 500 | Unhandled exception |
 
 Internal logs use the same `snake_case` codes; user-facing messages come from translation keys (`error.<code>`). See `I18N_SPEC.md` §11.
+
+### 7.1 Validation failures
+
+A validation failure is a domain failure and is answered the same way as any
+other one: from a typed exception carrying the status, the published code and
+the offending field (NFR-83). It is not signalled by a `field:reason` string
+that a controller then translates in a private table.
+
+Two rules decide the envelope:
+
+- **`field` is present when one named input is at fault, and absent otherwise.**
+  `question_type:invalid` names `question_type`; `invalid_answer_shape` names
+  nothing, because it is the combination of body and question type that is
+  wrong, not one member of it.
+- **A specific published code beats the generic one.** `validation_error` and
+  `missing_fields` are what a failure falls back to, never what it is promoted
+  to. Where an endpoint already publishes something more precise, every
+  endpoint reaching the same throw site publishes it too.
+
+Four responses used to differ depending on which endpoint reached the throw
+site, because `QuestionBankService::copyToSession()` calls
+`QuestionService::create()` and the two controllers held disagreeing tables.
+The single answer for each, in force from NFR-83 onward:
+
+| Failure | HTTP | Code | `field` |
+| --- | --- | --- | --- |
+| Unknown `question_type` | 422 | `invalid_question_type` | `question_type` |
+| Unknown import `stage` | 422 | `invalid_stage` | `stage` |
+| `correct_answer` absent | 400 | `validation_error` | `correct_answer` |
+| `correct_answer` too long | 400 | `validation_error` | `correct_answer` |
+
+The first two were already the question endpoint's answer and are now the
+question-bank endpoint's as well; the bank endpoint previously fell through to
+`400 validation_error`. The last two gain the `field` member on the bank
+endpoint, which had no arm for them at all.
 
 ---
 
