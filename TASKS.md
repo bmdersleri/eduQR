@@ -329,7 +329,7 @@ Not part of the MVP. Each item must be escalated to the human owner before work 
 [x] T-1128  Service container — remove inline `new Service(new Repository())` wiring        [NFR-80]
 [x] T-1129  Admin/Public controllers for HTML routes; templates render only                 [NFR-81]
 [x] T-1130  Split ReportService into Results / Report / Analytics / Export / Scoring; the split also retires the last inline `::fromConfig()` in ReportService [NFR-82, NFR-80]
-[ ] T-1131  Retire `\InvalidArgumentException` validation; publish the four divergent responses [NFR-83]
+[x] T-1131  Retire `\InvalidArgumentException` validation; publish the four divergent responses [NFR-83]
 [ ] T-1132  Escape each page title once; eleven titles are escaped by the controller and again by the layout [NFR-84]
 ```
 
