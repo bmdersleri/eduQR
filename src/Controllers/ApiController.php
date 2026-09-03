@@ -170,10 +170,22 @@ abstract class ApiController
     }
 
     /**
+     * The locale key a thrown error code resolves to, without translating it.
+     *
+     * Choosing the key and rendering it are two jobs. Keeping them apart lets a
+     * test pin the choice without depending on whether I18nService happens to
+     * have been initialised, which is process-global and test-order dependent.
+     */
+    public static function messageKeyFor(string $errorCode): string
+    {
+        return self::MESSAGE_KEYS[$errorCode] ?? 'error.' . $errorCode;
+    }
+
+    /**
      * Resolve the user-facing message for a thrown error code (Law 1).
      */
     public static function messageFor(string $errorCode): string
     {
-        return t(self::MESSAGE_KEYS[$errorCode] ?? 'error.' . $errorCode);
+        return t(self::messageKeyFor($errorCode));
     }
 }

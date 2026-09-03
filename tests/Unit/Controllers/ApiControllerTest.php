@@ -12,20 +12,29 @@ use EduQR\Exceptions\ForbiddenException;
 use EduQR\Exceptions\NotFoundException;
 use EduQR\Exceptions\UpstreamServiceException;
 use EduQR\Exceptions\ValidationException;
+use EduQR\I18n\I18nService;
 use PHPUnit\Framework\TestCase;
 
 /**
  * The shared error mapper (NFR-79, ADR-0007 decision 3).
  *
- * `t()` is uninitialised under the unit suite, so `I18nService::translate()`
- * falls through to the key itself. That makes the translation *key* directly
- * observable, which is what these tests want to pin: the mapper's job is to
- * choose the right key, not to render Turkish.
+ * The mapper's job is to choose the right locale key, not to render Turkish, so
+ * the key assertions here read `messageKeyFor()` directly. Assertions that go
+ * through the envelope compare against `t()` rather than against a literal key:
+ * `I18nService` is process-global, and asserting the key would only pass while
+ * no earlier test in the run happens to have initialised it.
  *
  * @requirement NFR-79
  */
 class ApiControllerTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        // Pin the locale so neither the run order nor a leftover locale from an
+        // earlier test decides what these envelopes contain.
+        I18nService::init(dirname(__DIR__, 3) . '/locales', 'en');
+    }
+
     // ── Default statuses, one per type (§9.1 table) ───────────────────────────
 
     public function test_each_exception_type_maps_to_its_default_status_NFR79(): void
@@ -98,33 +107,33 @@ class ApiControllerTest extends TestCase
         $body = self::bodyFor(new ForbiddenException('course_owner_only', 403, 'forbidden'));
 
         $this->assertSame('forbidden', $body['error']['code']);
-        $this->assertSame('error.course_owner_only', $body['error']['message']);
+        $this->assertSame(t('error.course_owner_only'), $body['error']['message']);
     }
 
     public function test_a_renamed_code_takes_the_message_of_its_publication_NFR79(): void
     {
         // There is no `error.participant_not_found` sentence to show a student.
         $body = self::bodyFor(new AuthenticationException('participant_not_found', 401, 'not_joined'));
-        $this->assertSame('error.not_joined', $body['error']['message']);
+        $this->assertSame(t('error.not_joined'), $body['error']['message']);
 
         $body = self::bodyFor(new ValidationException('question_not_active', 422, 'question_closed'));
         $this->assertSame('question_closed', $body['error']['code']);
-        $this->assertSame('error.question_closed', $body['error']['message']);
+        $this->assertSame(t('error.question_closed'), $body['error']['message']);
     }
 
     public function test_a_code_without_an_override_reads_error_dot_code_NFR79(): void
     {
-        $this->assertSame('error.session_not_found', ApiController::messageFor('session_not_found'));
-        $this->assertSame('error.llm_unavailable', ApiController::messageFor('llm_unavailable'));
+        $this->assertSame('error.session_not_found', ApiController::messageKeyFor('session_not_found'));
+        $this->assertSame('error.llm_unavailable', ApiController::messageKeyFor('llm_unavailable'));
     }
 
     public function test_codes_whose_message_key_predates_them_keep_it_NFR79(): void
     {
-        $this->assertSame('error.invalid_answer_shape', ApiController::messageFor('invalid_option'));
-        $this->assertSame('common.error', ApiController::messageFor('already_anonymized'));
-        $this->assertSame('auth.login.error.locked', ApiController::messageFor('too_many_attempts'));
-        $this->assertSame('auth.login.error.invalid', ApiController::messageFor('invalid_credentials'));
-        $this->assertSame('auth.reset.error.invalid_token', ApiController::messageFor('invalid_reset_token'));
+        $this->assertSame('error.invalid_answer_shape', ApiController::messageKeyFor('invalid_option'));
+        $this->assertSame('common.error', ApiController::messageKeyFor('already_anonymized'));
+        $this->assertSame('auth.login.error.locked', ApiController::messageKeyFor('too_many_attempts'));
+        $this->assertSame('auth.login.error.invalid', ApiController::messageKeyFor('invalid_credentials'));
+        $this->assertSame('auth.reset.error.invalid_token', ApiController::messageKeyFor('invalid_reset_token'));
     }
 
     // ── Field ─────────────────────────────────────────────────────────────────
@@ -156,7 +165,7 @@ class ApiControllerTest extends TestCase
                 'status' => 404,
                 'body' => [
                     'success' => false,
-                    'error' => ['code' => 'course_not_found', 'message' => 'error.course_not_found'],
+                    'error' => ['code' => 'course_not_found', 'message' => t('error.course_not_found')],
                 ],
             ],
             $mapped
@@ -173,7 +182,7 @@ class ApiControllerTest extends TestCase
 
         $this->assertSame(409, $mapped['status']);
         $this->assertSame('duplicate_answer', $mapped['body']['error']['code']);
-        $this->assertSame('error.duplicate_answer', $mapped['body']['error']['message']);
+        $this->assertSame(t('error.duplicate_answer'), $mapped['body']['error']['message']);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
