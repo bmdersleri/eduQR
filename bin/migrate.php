@@ -28,7 +28,16 @@ $envPath = $projectRoot . '/.env';
 foreach (array_slice($argv, 1) as $arg) {
     if (str_starts_with($arg, '--env=')) {
         $envPath = substr($arg, 6);
+
+        continue;
     }
+
+    // An unrecognised argument is refused rather than ignored: --env= exists
+    // specifically so a verification run cannot touch the developer's real
+    // database, and silently falling back to the default on a typo (e.g.
+    // --en=) would defeat that.
+    fwrite(STDERR, "Unknown argument: {$arg}\n");
+    exit(1);
 }
 
 if (! file_exists($envPath)) {
