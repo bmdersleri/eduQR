@@ -68,3 +68,6 @@ composer.phar
 
 # Serena MCP local index and config
 /.serena/
+
+# Subagent-driven-development scratch (ledger, briefs, review packages)
+.superpowers/
