@@ -57,8 +57,6 @@ final class QuestionBankController extends ApiController
             \RuntimeException $e
         ) {
             $this->handleRuntimeException($e);
-        } catch (\InvalidArgumentException $e) {
-            $this->handleValidationException($e);
         }
 
         $this->json(201, [
@@ -105,8 +103,6 @@ final class QuestionBankController extends ApiController
             \RuntimeException $e
         ) {
             $this->handleRuntimeException($e);
-        } catch (\InvalidArgumentException $e) {
-            $this->handleValidationException($e);
         }
 
         $this->json(201, [
@@ -114,21 +110,5 @@ final class QuestionBankController extends ApiController
             'data' => $result,
             'message' => t('question.bank.copied'),
         ]);
-    }
-
-    private function handleValidationException(\InvalidArgumentException $e): never
-    {
-        match ($e->getMessage()) {
-            'lecture_notes:required' => $this->error(400, 'missing_fields', t('validation.required'), 'lecture_notes'),
-            'lecture_notes:too_long' => $this->error(400, 'validation_error', t('validation.text_too_long'), 'lecture_notes'),
-            'bank_question_ids:required' => $this->error(400, 'missing_fields', t('validation.required'), 'bank_question_ids'),
-            'question_text:required' => $this->error(400, 'missing_fields', t('validation.required'), 'question_text'),
-            'question_text:too_long' => $this->error(400, 'validation_error', t('validation.text_too_long'), 'question_text'),
-            'question_type:invalid' => $this->error(422, 'invalid_question_type', t('common.error'), 'question_type'),
-            'options:invalid_count' => $this->error(422, 'invalid_option_count', t('validation.invalid_option_count'), 'options'),
-            'options:empty_text' => $this->error(400, 'validation_error', t('validation.required'), 'options'),
-            'options:text_too_long' => $this->error(400, 'validation_error', t('validation.text_too_long'), 'options'),
-            default => $this->error(400, 'validation_error', t('common.error')),
-        };
     }
 }

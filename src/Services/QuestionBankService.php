@@ -12,6 +12,7 @@ use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Exceptions\ForbiddenException;
 use EduQR\Exceptions\NotFoundException;
+use EduQR\Exceptions\ValidationException;
 
 final class QuestionBankService
 {
@@ -60,10 +61,10 @@ final class QuestionBankService
 
         $lectureNotes = trim((string) ($body['lecture_notes'] ?? ''));
         if ($lectureNotes === '') {
-            throw new \InvalidArgumentException('lecture_notes:required');
+            throw new ValidationException('required', 400, 'missing_fields', 'lecture_notes');
         }
         if (mb_strlen($lectureNotes, 'UTF-8') > 20000) {
-            throw new \InvalidArgumentException('lecture_notes:too_long');
+            throw new ValidationException('text_too_long', 400, 'validation_error', 'lecture_notes');
         }
 
         $sourceTitle = trim((string) ($body['source_title'] ?? ''));
@@ -102,7 +103,7 @@ final class QuestionBankService
         $session = $this->requireSession($sessionId, $userId);
 
         if (empty($bankQuestionIds)) {
-            throw new \InvalidArgumentException('bank_question_ids:required');
+            throw new ValidationException('required', 400, 'missing_fields', 'bank_question_ids');
         }
 
         $requestedIds = array_values(array_filter(array_map('intval', $bankQuestionIds), static fn (int $id): bool => $id > 0));
