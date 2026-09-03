@@ -1,37 +1,3 @@
-<?php
-
-use EduQR\Config;
-use EduQR\Container;
-use EduQR\Middleware\AuthMiddleware;
-use EduQR\Middleware\CsrfMiddleware;
-
-$instructor = AuthMiddleware::require();
-$csrfToken  = CsrfMiddleware::getToken();
-$sessionId  = (int) ($p['id'] ?? 0);
-
-$service = Container::sessionService();
-
-try {
-    $session = $service->getSession($sessionId, (int) $instructor['id']);
-} catch (\RuntimeException $e) {
-    $status = $e->getMessage() === 'session_not_found' ? 404 : 403;
-    http_response_code($status);
-    include __DIR__ . '/../../../templates/errors/' . $status . '.php';
-    exit;
-}
-
-$courseRepo = Container::courseRepository();
-$course     = $courseRepo->findById((int) $session['course_id']);
-
-$appUrl  = rtrim(Config::get('APP_URL', ''), '/');
-$joinUrl = $appUrl . '/join/' . htmlspecialchars($session['short_code'], ENT_QUOTES, 'UTF-8');
-
-$isActive = $session['status'] === 'active';
-$isPaused = $session['status'] === 'paused';
-$isClosed = $session['status'] === 'closed';
-
-ob_start();
-?>
 <div class="eduqr-admin-hero mb-4">
     <div>
         <div class="eduqr-kicker mb-3">
@@ -1237,7 +1203,3 @@ initOptions();
 // Show options section only for multiple_choice on initial load
 document.getElementById('q-type')?.dispatchEvent(new Event('change'));
 </script>
-<?php
-$content   = ob_get_clean();
-$pageTitle = htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8') . ' — ' . t('app.name');
-include __DIR__ . '/../../layouts/admin.php';

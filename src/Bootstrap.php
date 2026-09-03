@@ -192,13 +192,11 @@ final class Bootstrap
 
         // /new must come before /{id} so it is matched first
         $router->get('/admin/courses/{id}/sessions/new', function (array $p): void {
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/admin/sessions/create.php';
+            (new Controllers\Admin\SessionController())->create((int) $p['id']);
         });
 
         $router->get('/admin/sessions/{id}', function (array $p): void {
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/admin/sessions/detail.php';
+            (new Controllers\Admin\SessionController())->show((int) $p['id']);
         });
 
         // ── Public: Projector view ────────────────────────────────────────────
@@ -480,14 +478,12 @@ final class Bootstrap
 
         // ── Admin: Live results page (T-805) ──────────────────────────────────
         $router->get('/admin/sessions/{id}/results', function (array $p): void {
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/admin/sessions/results.php';
+            (new Controllers\Admin\SessionController())->results((int) $p['id']);
         });
 
         // ── Admin: Report page (T-905) ────────────────────────────────────────
         $router->get('/admin/sessions/{id}/report', function (array $p): void {
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/admin/sessions/report.php';
+            (new Controllers\Admin\SessionController())->report((int) $p['id']);
         });
 
         // ── Admin: Audit log viewer (T-1112) ──────────────────────────────────

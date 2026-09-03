@@ -1,36 +1,3 @@
-<?php
-/**
- * Admin session report page — /admin/sessions/{id}/report  (T-905)
- *
- * Loads the full JSON report and renders it server-side.
- * Links to CSV export and printable HTML.
- * Provides anonymize and delete controls (T-906, T-907).
- */
-
-use EduQR\Container;
-use EduQR\Middleware\AuthMiddleware;
-use EduQR\Middleware\CsrfMiddleware;
-
-$instructor = AuthMiddleware::require();
-$csrfToken  = CsrfMiddleware::getToken();
-$sessionId  = (int) ($p['id'] ?? 0);
-
-$reportService = Container::reportService();
-
-try {
-    $report = $reportService->buildReport($sessionId, (int) $instructor['id'], false);
-} catch (\RuntimeException $e) {
-    $code = $e->getMessage() === 'session_not_found' ? 404 : 403;
-    http_response_code($code);
-    include __DIR__ . '/../../../templates/errors/' . $code . '.php';
-    exit;
-}
-
-$session = $report['session'];
-$summary = $report['summary'];
-
-ob_start();
-?>
 <div class="eduqr-admin-hero mb-4">
     <div>
         <div class="eduqr-kicker mb-3">
@@ -282,7 +249,3 @@ async function doAction(action, btn) {
     }
 }
 </script>
-<?php
-$pageTitle = htmlspecialchars(t('report.title'), ENT_QUOTES, 'UTF-8') . ' — ' . t('app.name');
-$content   = ob_get_clean();
-include __DIR__ . '/../../layouts/admin.php';

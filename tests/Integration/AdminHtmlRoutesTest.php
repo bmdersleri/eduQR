@@ -73,6 +73,26 @@ final class AdminHtmlRoutesTest extends TestCase
                 \EduQR\Controllers\Admin\CourseController::class,
                 'edit',
             ],
+            '/admin/courses/{id}/sessions/new' => [
+                'admin/sessions/create.php',
+                \EduQR\Controllers\Admin\SessionController::class,
+                'create',
+            ],
+            '/admin/sessions/{id}' => [
+                'admin/sessions/detail.php',
+                \EduQR\Controllers\Admin\SessionController::class,
+                'show',
+            ],
+            '/admin/sessions/{id}/results' => [
+                'admin/sessions/results.php',
+                \EduQR\Controllers\Admin\SessionController::class,
+                'results',
+            ],
+            '/admin/sessions/{id}/report' => [
+                'admin/sessions/report.php',
+                \EduQR\Controllers\Admin\SessionController::class,
+                'report',
+            ],
         ];
     }
 

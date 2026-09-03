@@ -1,26 +1,3 @@
-<?php
-
-use EduQR\Container;
-use EduQR\Middleware\AuthMiddleware;
-use EduQR\Middleware\CsrfMiddleware;
-
-$instructor = AuthMiddleware::require();
-$csrfToken  = CsrfMiddleware::getToken();
-$courseId   = (int) ($p['id'] ?? 0);
-
-$courseService = Container::courseService();
-
-try {
-    $course = $courseService->getCourse($courseId, (int) $instructor['id']);
-} catch (\RuntimeException $e) {
-    $status = $e->getMessage() === 'course_not_found' ? 404 : 403;
-    http_response_code($status);
-    include __DIR__ . '/../../../templates/errors/' . $status . '.php';
-    exit;
-}
-
-ob_start();
-?>
 <div class="eduqr-admin-hero mb-4">
     <div>
         <div class="eduqr-kicker mb-3">
@@ -119,7 +96,3 @@ document.getElementById('session-form').addEventListener('submit', async functio
     }
 });
 </script>
-<?php
-$content   = ob_get_clean();
-$pageTitle = t('session.new.title') . ' — ' . t('app.name');
-include __DIR__ . '/../../layouts/admin.php';

@@ -1,38 +1,3 @@
-<?php
-/**
- * Admin live results page — /admin/sessions/{id}/results  (T-805)
- *
- * Polls GET /api/v1/sessions/{id}/results?question_id=... every 2 seconds
- * and renders bar charts with plain Bootstrap markup so the screen works
- * without an external JS asset.
- * Also surfaces hide/unhide controls for open-text in moderation_mode (T-809).
- */
-
-use EduQR\Container;
-use EduQR\Middleware\AuthMiddleware;
-use EduQR\Middleware\CsrfMiddleware;
-
-$instructor = AuthMiddleware::require();
-$csrfToken  = CsrfMiddleware::getToken();
-$sessionId  = (int) ($p['id'] ?? 0);
-
-$sessionService = Container::sessionService();
-
-try {
-    $session = $sessionService->getSession($sessionId, (int) $instructor['id']);
-} catch (\RuntimeException $e) {
-    $code = $e->getMessage() === 'session_not_found' ? 404 : 403;
-    http_response_code($code);
-    include __DIR__ . '/../../../templates/errors/' . $code . '.php';
-    exit;
-}
-
-// Load all questions for the sidebar list
-$questionRepo = Container::questionRepository();
-$questions    = $questionRepo->findBySession($sessionId);
-
-ob_start();
-?>
 <div class="eduqr-admin-hero mb-4">
     <div>
         <div class="eduqr-kicker mb-3">
@@ -337,7 +302,3 @@ function startPolling() {
 
 startPolling();
 </script>
-<?php
-$pageTitle = htmlspecialchars(t('results.title'), ENT_QUOTES, 'UTF-8') . ' — ' . t('app.name');
-$content   = ob_get_clean();
-include __DIR__ . '/../../layouts/admin.php';
