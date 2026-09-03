@@ -122,8 +122,8 @@ final class AuthController extends ApiController
 
         try {
             $this->passwordResets->requestReset($email);
-        } catch (\InvalidArgumentException $e) {
-            $this->handlePasswordResetValidation($e);
+        } catch (DomainException $e) {
+            $this->failFromDomain($e);
         }
 
         $this->json(200, [
@@ -149,8 +149,6 @@ final class AuthController extends ApiController
 
         try {
             $this->passwordResets->resetPassword($token, $password);
-        } catch (\InvalidArgumentException $e) {
-            $this->handlePasswordResetValidation($e);
         } catch (\RuntimeException $e) {
             // `invalid_reset_token` carries its own 400, `token` field and
             // message key; anything untyped keeps answering the same way.
@@ -174,20 +172,5 @@ final class AuthController extends ApiController
             'role' => $user['role'],
             'preferred_language' => $user['preferred_language'] ?? 'en',
         ];
-    }
-
-    private function handlePasswordResetValidation(\InvalidArgumentException $e): never
-    {
-        [$field, $rule] = array_pad(explode(':', $e->getMessage(), 2), 2, 'validation_error');
-
-        $message = match ($field . ':' . $rule) {
-            'email:required', 'token:required' => t('validation.required'),
-            'password:too_short' => t('validation.password_too_short'),
-            'password:too_long' => t('validation.text_too_long'),
-            'password:too_weak' => t('validation.password_too_weak'),
-            default => t('common.error'),
-        };
-
-        $this->error(400, 'validation_error', $message, $field);
     }
 }

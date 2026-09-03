@@ -38,7 +38,7 @@ final class PasswordResetService
     {
         $email = mb_strtolower(trim($email));
         if ($email === '') {
-            throw new \InvalidArgumentException('email:required');
+            throw new ValidationException('required', 400, 'validation_error', 'email');
         }
 
         $user = $this->users->findByEmail($email);
@@ -76,7 +76,7 @@ final class PasswordResetService
     {
         $token = trim($token);
         if ($token === '') {
-            throw new \InvalidArgumentException('token:required');
+            throw new ValidationException('required', 400, 'validation_error', 'token');
         }
 
         $this->validatePassword($password);
@@ -98,11 +98,11 @@ final class PasswordResetService
     {
         $length = mb_strlen($password);
         if ($length < self::PASSWORD_MIN_LENGTH) {
-            throw new \InvalidArgumentException('password:too_short');
+            throw new ValidationException('password_too_short', 400, 'validation_error', 'password');
         }
 
         if ($length > self::PASSWORD_MAX_LENGTH) {
-            throw new \InvalidArgumentException('password:too_long');
+            throw new ValidationException('text_too_long', 400, 'validation_error', 'password');
         }
 
         $score = 0;
@@ -112,7 +112,7 @@ final class PasswordResetService
         $score += preg_match('/[^\p{L}\p{N}\s]/u', $password) ? 1 : 0;
 
         if ($score < 3) {
-            throw new \InvalidArgumentException('password:too_weak');
+            throw new ValidationException('password_too_weak', 400, 'validation_error', 'password');
         }
     }
 

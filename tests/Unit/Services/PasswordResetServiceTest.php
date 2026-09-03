@@ -6,6 +6,7 @@ namespace EduQR\Tests\Unit\Services;
 
 use EduQR\Contracts\PasswordResetRepositoryInterface;
 use EduQR\Contracts\UserRepositoryInterface;
+use EduQR\Exceptions\ValidationException;
 use EduQR\I18n\I18nService;
 use EduQR\Services\PasswordResetService;
 use PHPUnit\Framework\TestCase;
@@ -204,8 +205,14 @@ final class PasswordResetServiceTest extends TestCase
             'is_active' => '1',
         ]), $this->makeResetRepo($row), null, fn (): string => $token);
 
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('password:too_weak');
-        $service->resetPassword($token, 'weakpass!!');
+        try {
+            $service->resetPassword($token, 'weakpass!!');
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('password_too_weak', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('validation_error', $e->getPublicCode());
+            $this->assertSame('password', $e->getField());
+        }
     }
 }
