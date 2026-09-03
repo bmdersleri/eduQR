@@ -99,6 +99,39 @@ final class AuthService
         ];
     }
 
+    /**
+     * The signed-in user, confirmed against the database (NFR-87).
+     *
+     * {@see self::currentUser()} reports what the session was told at sign-in;
+     * this reports what is true now. A session whose account has been
+     * deactivated or deleted is destroyed here, so the caller sees exactly what
+     * it sees for a request that never signed in.
+     *
+     * @return array{id:int,email:string,role:string,display_name:string}|null
+     */
+    public function authenticatedUser(): ?array
+    {
+        $claims = self::currentUser();
+        if ($claims === null) {
+            return null;
+        }
+
+        $user = $this->reauthenticate($claims);
+        if ($user === null) {
+            $this->destroySession();
+
+            return null;
+        }
+
+        // Keep the session's copies in step with the row, for the few readers
+        // that still go through currentUser() (the logout audit entry, chrome).
+        $_SESSION['user_email'] = $user['email'];
+        $_SESSION['user_role'] = $user['role'];
+        $_SESSION['user_name'] = $user['display_name'];
+
+        return $user;
+    }
+
     // ── Session management (T-210) ─────────────────────────────────────────────
 
     public function startSession(array $user): void

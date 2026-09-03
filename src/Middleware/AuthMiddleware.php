@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace EduQR\Middleware;
 
-use EduQR\Services\AuthService;
+use EduQR\Container;
 use EduQR\Support\Url;
 
 /**
@@ -21,7 +21,10 @@ final class AuthMiddleware
      */
     public static function require(): array
     {
-        $user = AuthService::currentUser();
+        // Every authenticated request confirms the account against its row, so
+        // deactivating or deleting a user ends the session it already has and a
+        // role change takes effect at once [NFR-87].
+        $user = Container::authService()->authenticatedUser();
         if ($user === null) {
             self::unauthorized();
         }
