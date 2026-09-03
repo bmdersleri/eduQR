@@ -67,6 +67,38 @@ final class AuthService
         return $user;
     }
 
+    /**
+     * Re-resolves session claims against the `users` row (NFR-87).
+     *
+     * The session's copy of role and display name is from sign-in time; the row
+     * is the truth. Returns null when the account can no longer be used — the
+     * row is gone or `is_active` is 0 — and the caller answers that exactly as
+     * it answers "not signed in", so a stolen cookie learns nothing.
+     *
+     * @param array<string, mixed> $claims as stored by {@see self::startSession()}
+     *
+     * @return array{id:int,email:string,role:string,display_name:string}|null
+     */
+    public function reauthenticate(array $claims): ?array
+    {
+        $id = (int) ($claims['id'] ?? 0);
+        if ($id <= 0) {
+            return null;
+        }
+
+        $user = $this->users->findById($id);
+        if ($user === null || ! (bool) ($user['is_active'] ?? 0)) {
+            return null;
+        }
+
+        return [
+            'id' => (int) $user['id'],
+            'email' => (string) ($user['email'] ?? ''),
+            'role' => (string) ($user['role'] ?? ''),
+            'display_name' => (string) ($user['display_name'] ?? ''),
+        ];
+    }
+
     // ── Session management (T-210) ─────────────────────────────────────────────
 
     public function startSession(array $user): void

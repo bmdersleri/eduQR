@@ -18,6 +18,7 @@ final class AuthServiceTest extends TestCase
         return new class ($store) implements UserRepositoryInterface {
             private array $store;
             private array $touched = [];
+            private array $findByIdCalls = [];
 
             public function __construct(array $store)
             {
@@ -37,6 +38,8 @@ final class AuthServiceTest extends TestCase
 
             public function findById(int $id): ?array
             {
+                $this->findByIdCalls[] = $id;
+
                 foreach ($this->store as $u) {
                     if ((int) $u['id'] === $id) {
                         return $u;
@@ -63,6 +66,11 @@ final class AuthServiceTest extends TestCase
             public function touchedIds(): array
             {
                 return $this->touched;
+            }
+
+            public function findByIdCalls(): array
+            {
+                return $this->findByIdCalls;
             }
         };
     }
@@ -220,5 +228,96 @@ final class AuthServiceTest extends TestCase
         $h1 = AuthService::hashPassword('SamePassword1!');
         $h2 = AuthService::hashPassword('SamePassword1!');
         $this->assertNotSame($h1, $h2, 'bcrypt salts must differ between hashes');
+    }
+
+    // ── Tests: reauthenticate (NFR-87) ─────────────────────────────────────────
+
+    /** An active instructor (1), an inactive instructor (2) and an active admin (3). */
+    private function reauthenticateUsers(): array
+    {
+        return [
+            [
+                'id' => 1,
+                'email' => 'instructor1@example.com',
+                'display_name' => 'Instructor One',
+                'role' => 'instructor',
+                'preferred_language' => 'en',
+                'is_active' => '1',
+            ],
+            [
+                'id' => 2,
+                'email' => 'instructor2@example.com',
+                'display_name' => 'Instructor Two',
+                'role' => 'instructor',
+                'preferred_language' => 'en',
+                'is_active' => '0',
+            ],
+            [
+                'id' => 3,
+                'email' => 'admin3@example.com',
+                'display_name' => 'Admin Three',
+                'role' => 'admin',
+                'preferred_language' => 'en',
+                'is_active' => '1',
+            ],
+        ];
+    }
+
+    public function testReauthenticateReturnsCurrentRowForActiveUser(): void
+    {
+        $svc = new AuthService($this->makeUserRepo($this->reauthenticateUsers()), $this->makeAttemptRepo(0));
+
+        $result = $svc->reauthenticate(['id' => 1, 'role' => 'instructor']);
+
+        $this->assertSame([
+            'id' => 1,
+            'email' => 'instructor1@example.com',
+            'role' => 'instructor',
+            'display_name' => 'Instructor One',
+        ], $result);
+    }
+
+    public function testReauthenticateReturnsNullWhenUserIsInactive(): void
+    {
+        $svc = new AuthService($this->makeUserRepo($this->reauthenticateUsers()), $this->makeAttemptRepo(0));
+
+        $this->assertNull($svc->reauthenticate(['id' => 2]));
+    }
+
+    public function testReauthenticateReturnsNullWhenUserIsDeleted(): void
+    {
+        $svc = new AuthService($this->makeUserRepo($this->reauthenticateUsers()), $this->makeAttemptRepo(0));
+
+        $this->assertNull($svc->reauthenticate(['id' => 999]));
+    }
+
+    public function testReauthenticateReturnsNullAndSkipsTheRepositoryWithoutAnId(): void
+    {
+        $users = $this->makeUserRepo($this->reauthenticateUsers());
+        $svc = new AuthService($users, $this->makeAttemptRepo(0));
+
+        $this->assertNull($svc->reauthenticate([]));
+        $this->assertNull($svc->reauthenticate(['id' => 0]));
+        $this->assertSame([], $users->findByIdCalls());
+    }
+
+    public function testReauthenticateRoleComesFromRowWhenPromotedSinceSignIn(): void
+    {
+        $svc = new AuthService($this->makeUserRepo($this->reauthenticateUsers()), $this->makeAttemptRepo(0));
+
+        // Session claims say instructor; the row (id 3) is now admin.
+        $result = $svc->reauthenticate(['id' => 3, 'role' => 'instructor']);
+
+        $this->assertSame('admin', $result['role']);
+    }
+
+    public function testReauthenticateRoleComesFromRowWhenDemotedSinceSignIn(): void
+    {
+        $svc = new AuthService($this->makeUserRepo($this->reauthenticateUsers()), $this->makeAttemptRepo(0));
+
+        // Session claims say admin; the row (id 1) is now instructor.
+        $result = $svc->reauthenticate(['id' => 1, 'role' => 'admin']);
+
+        $this->assertSame('instructor', $result['role']);
     }
 }
