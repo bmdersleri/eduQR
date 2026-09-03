@@ -140,6 +140,57 @@ records why they were needed and what it cost to add them late.
 Turkish-correct answer folding is applied (NFR-77) — splitting it out is what stops
 that rule from being re-implemented per report format.
 
+### 2.4 The HTML Render Contract
+
+`Controllers/HtmlController.php` is the HTML sibling of `ApiController`: one owns
+the JSON boundary, the other owns the HTML boundary. Every controller under
+`Controllers/Admin/` and `Controllers/Public/` extends it, and it is the only
+place a template is included. Its protected surface is small on purpose:
+
+```php
+protected function render(
+    string  $template,                       // path under templates/, e.g. 'auth/login.php'
+    array   $data = [],                      // view variables, by name
+    ?string $pageTitle = null,
+    string  $layout = self::LAYOUT_PUBLIC,   // LAYOUT_ADMIN | LAYOUT_PROJECTOR | LAYOUT_PUBLIC
+    int     $status = 200
+): void;
+
+protected function renderError(int $status): void;
+protected function renderDomainError(DomainException $e): void;
+protected static function titleWithAppName(string $lead): string;
+protected function sendHtmlHeaders(int $status): void;
+protected function templateRoot(): string;      // overridable, for tests only
+```
+
+`render()` sends the status and `Content-Type: text/html; charset=utf-8`, buffers
+the template, then includes `templates/layouts/<layout>.php` with `$content` and
+`$pageTitle` in scope. Nothing else touches an output buffer.
+
+**A template may assume exactly two things.** First, that every key of `$data` is
+in scope as an ordinary variable of that name — `['course' => $c]` arrives as
+`$course`. Second, that its own output is captured, so it must not open a buffer,
+set a header, or include a layout. Everything else it must be handed. `$this` is
+unbound inside a template, because templates are included from a static method; a
+template cannot call back into its controller, and no template escapes a variable
+it did not receive by name. The array is unpacked with `extract(..., EXTR_SKIP)`,
+which is safe here for the reason `extract($_POST)` is not: the keys are literals
+in controller source, and `EXTR_SKIP` means a stray key cannot shadow the path the
+renderer is about to include.
+
+**A domain failure never reaches a template.** A controller calls its service,
+catches `DomainException`, and calls `renderDomainError($e)`, which sends
+`$e->getStatus()` and renders the error page for it. The status comes off the
+exception and is not re-decided here, for the reason §9.1 gives: a status belongs
+to the throw site, not to the error code.
+
+**`templates/errors/` holds pages for 403, 404 and 500 only.** Any other status
+sends the real status and renders the generic 500 page. The status line is what a
+monitor, a cache and a test read, so falsifying it to match the available artwork
+would be the worse trade. A route that deserves a better answer than the generic
+page — a 422 on a form POST, say — should re-render its own template with the
+validation message rather than reach for an error page at all.
+
 ---
 
 ## 3. Main Interfaces
@@ -213,10 +264,11 @@ eduqr/
 │   ├── Container.php         # composition root — the only place services are built
 │   ├── Router.php
 │   ├── Controllers/
-│   │   ├── Admin/            # HTML routes behind auth
+│   │   ├── Admin/            # HTML routes behind auth — extend HtmlController
 │   │   ├── Api/              # all extend Controllers/ApiController.php
-│   │   ├── Public/           # HTML routes reachable without a login
-│   │   └── ApiController.php # shared envelope, body decoding, error mapping
+│   │   ├── Public/           # HTML routes reachable without a login — extend HtmlController
+│   │   ├── ApiController.php # shared envelope, body decoding, error mapping
+│   │   └── HtmlController.php # shared render contract and error pages — see §2.4
 │   ├── Exceptions/           # typed domain errors — see §9.1
 │   │   ├── DomainException.php
 │   │   ├── NotFoundException.php
