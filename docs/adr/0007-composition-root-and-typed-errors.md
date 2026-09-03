@@ -123,5 +123,24 @@ interface, at which point the collaborator becomes a constructor parameter and
 the fallback disappears without the eagerness. Fixing it twice was not worth
 one line, so it waits for T-1130.
 
+A third finding is cosmetic until it is not. Five admin pages hand `render()`
+a title they have already escaped, and `layouts/*.php` escapes `$pageTitle`
+again: `/admin/courses/{id}`, `/admin/courses/{id}/analytics`,
+`/admin/sessions/{id}`, `/admin/sessions/{id}/results` and
+`/admin/sessions/{id}/report`. A course titled `Ölçme & Değerlendirme` reaches
+the browser's title bar as `Ölçme &amp;amp; Değerlendirme`. NFR-81 moved those
+titles from the templates into the controllers unchanged and deliberately: the
+double escape predates the move, and undoing it changes rendered bytes for
+every title containing an ampersand or a quote. Correcting it route by route
+would leave the codebase in a state where two neighbouring pages escape
+differently, which is harder to reason about than the bug. So it is written as
+NFR-84 / T-1132 and applied everywhere at once.
+
+While cataloguing them, one more asymmetry turned up in the same five:
+`/admin/courses/{id}/analytics` ends its title with the course title rather
+than with `t('app.name')`, so it is the only page in the panel whose title bar
+does not identify the application. That is a product decision rather than a
+defect, and T-1132 is where it gets made.
+
 Recording them here means the next person to read this file does not have to
 rediscover them to know they were seen.
