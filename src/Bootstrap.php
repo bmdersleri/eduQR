@@ -106,6 +106,14 @@ final class Bootstrap
             );
             error_log($msg, 3, rtrim($logPath, '/') . '/app.log');
 
+            // Discard any buffer HtmlController::capture() left open — a template
+            // that fataled mid-render leaves partial markup sitting unflushed, and
+            // headers_sent() says nothing about it. Without this, the error
+            // response is appended to that partial markup instead of replacing it.
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+
             if (headers_sent()) {
                 return;
             }
@@ -146,6 +154,14 @@ final class Bootstrap
                 $last['line']
             );
             error_log($msg, 3, rtrim($logPath, '/') . '/app.log');
+
+            // Same reasoning as the exception handler above: an engine fatal
+            // (OOM, E_PARSE, E_CORE_ERROR) never unwinds to
+            // HtmlController::capture()'s catch block, so its ob_start() buffer
+            // is still open here and must be discarded before we write anything.
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
 
             if (headers_sent()) {
                 return;
