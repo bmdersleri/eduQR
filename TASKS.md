@@ -334,7 +334,7 @@ Not part of the MVP. Each item must be escalated to the human owner before work 
 [x] T-1133  Verify migrations 0001-0019 against a real MySQL 8.4 in a throwaway container [NFR-86]
 [x] T-1134  Uncaught failures on /api/v1/ answer with the JSON envelope, fatals included    [NFR-85]
 [x] T-1135  Admin role grants co-instructor access to every course, never ownership         [FR-99]
-[ ] T-1136  Deactivating a user does not end their live session; is_active is checked only at login [FR-99]
+[ ] T-1136  Deactivating a user does not end their live session; is_active is checked only at login [NFR-87]
 [ ] T-1137  No course-delete operation exists though FR-97/FR-99 list delete as owner-only  [FR-97, FR-99]
 [ ] T-1138  Unmatched /api/v1/ path still 404s with HTML, not the JSON envelope             [NFR-85]
 ```
