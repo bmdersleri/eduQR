@@ -8,6 +8,7 @@ use EduQR\Container;
 use EduQR\Contracts\ResultsServiceInterface;
 use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
+use EduQR\Services\PollVersionService;
 
 /**
  * Results endpoints — Phase 8 (T-803, T-804)
@@ -18,10 +19,12 @@ use EduQR\Middleware\AuthMiddleware;
 final class ResultsController extends ApiController
 {
     private ResultsServiceInterface $service;
+    private PollVersionService $versions;
 
     public function __construct()
     {
         $this->service = Container::resultsService();
+        $this->versions = Container::pollVersionService();
     }
 
     // ── GET /api/v1/sessions/{id}/results (instructor) ────────────────────────
@@ -32,6 +35,13 @@ final class ResultsController extends ApiController
         $questionId = isset($_GET['question_id']) ? (int) $_GET['question_id'] : null;
 
         try {
+            // The version query runs the same session and course guards the
+            // results themselves run, so a caller who may not read this session
+            // is refused before any ETag is compared (NFR-76).
+            $this->etagOrNotModified(
+                $this->versions->resultsVersion($sessionId, (int) $user['id'], $questionId),
+            );
+
             $data = $this->service->getResults($sessionId, (int) $user['id'], $questionId);
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);

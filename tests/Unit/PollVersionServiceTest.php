@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace EduQR\Tests\Unit;
 
+use EduQR\Contracts\CourseRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
+use EduQR\Exceptions\ForbiddenException;
 use EduQR\Exceptions\NotFoundException;
 use EduQR\Exceptions\ValidationException;
 use EduQR\Services\PollVersionService;
+use PDO;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -21,18 +24,55 @@ use PHPUnit\Framework\TestCase;
  * version produces an empty-bodied `304` carrying its `ETag` is asserted in
  * ApiControllerEtagTest.
  *
- * The repositories are mocked and answer from properties the test moves between
- * two calls to the same service, which is exactly what a second poll does.
+ * The questions and answers live in an in-memory SQLite database because the
+ * results version reads them with its own SQL. Everything the version reaches
+ * through a repository is mocked.
  *
  * @requirement NFR-76
  */
 final class PollVersionServiceTest extends TestCase
 {
+    private PDO $pdo;
+
     /** @var array<string, mixed>|null */
     private ?array $sessionByCode = null;
 
     /** @var array<string, mixed>|null */
     private ?array $activeQuestion = null;
+
+    /** @var array<string, mixed>|null */
+    private ?array $sessionById = ['id' => 10, 'course_id' => 5, 'status' => 'active'];
+
+    /** @var array<string, mixed>|null */
+    private ?array $course = ['id' => 5, 'title' => 'Course'];
+
+    private ?string $role = 'owner';
+
+    protected function setUp(): void
+    {
+        $this->pdo = new PDO('sqlite::memory:', options: [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        ]);
+
+        $this->pdo->exec('
+            CREATE TABLE questions (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id INTEGER NOT NULL,
+                status     TEXT    NOT NULL DEFAULT "draft",
+                updated_at TEXT    NULL
+            )
+        ');
+
+        $this->pdo->exec('
+            CREATE TABLE answers (
+                id             INTEGER PRIMARY KEY AUTOINCREMENT,
+                question_id    INTEGER NOT NULL,
+                participant_id INTEGER NOT NULL,
+                is_hidden      INTEGER NOT NULL DEFAULT 0
+            )
+        ');
+    }
 
     // ── /active-question ──────────────────────────────────────────────────────
 
@@ -137,7 +177,200 @@ final class PollVersionServiceTest extends TestCase
         }
     }
 
+    // ── /results ──────────────────────────────────────────────────────────────
+
+    /**
+     * @requirement NFR-76
+     */
+    public function testTheResultsVersionIsStableWhileNothingMoves(): void
+    {
+        $this->givenQuestion(1, 10, 'closed', '2026-09-03 10:00:00');
+        $this->givenAnswer(1, 100);
+
+        $service = $this->makeService();
+
+        self::assertSame(
+            $service->resultsVersion(10, 42, null),
+            $service->resultsVersion(10, 42, null),
+        );
+    }
+
+    /**
+     * @requirement NFR-76
+     */
+    public function testANewAnswerMovesTheResultsVersion(): void
+    {
+        $this->givenQuestion(1, 10, 'active', '2026-09-03 10:00:00');
+        $this->givenAnswer(1, 100);
+
+        $service = $this->makeService();
+        $before = $service->resultsVersion(10, 42, null);
+
+        $this->givenAnswer(1, 101);
+
+        self::assertNotSame($before, $service->resultsVersion(10, 42, null));
+    }
+
+    /**
+     * The SUM(is_hidden) case, and the reason API_SPEC §1.9 requires it.
+     *
+     * The answers table has created_at and no updated_at, so hiding an answer
+     * changes neither COUNT(*) nor MAX(id). Without the sum, an instructor who
+     * moderated an answer would go on being handed the response that still
+     * contains it for as long as nobody else answered.
+     *
+     * @requirement NFR-76
+     */
+    public function testHidingAnAnswerMovesTheResultsVersion(): void
+    {
+        $this->givenQuestion(1, 10, 'closed', '2026-09-03 10:00:00');
+        $this->givenAnswer(1, 100);
+        $this->givenAnswer(1, 101);
+
+        $service = $this->makeService();
+        $before = $service->resultsVersion(10, 42, null);
+
+        $this->pdo->exec('UPDATE answers SET is_hidden = 1 WHERE participant_id = 101');
+        $after = $service->resultsVersion(10, 42, null);
+
+        self::assertNotSame($before, $after, 'Hiding an answer must change the results version.');
+
+        // And the count and the maximum id really did not move, which is what
+        // makes the sum load-bearing rather than belt-and-braces.
+        $row = $this->pdo->query('SELECT COUNT(*) AS c, MAX(id) AS m FROM answers WHERE question_id = 1')
+            ->fetch(PDO::FETCH_ASSOC);
+        self::assertSame(2, (int) $row['c']);
+        self::assertSame(2, (int) $row['m']);
+    }
+
+    /**
+     * @requirement NFR-76
+     */
+    public function testReopeningAQuestionMovesTheResultsVersion(): void
+    {
+        $this->givenQuestion(1, 10, 'closed', '2026-09-03 10:00:00');
+
+        $service = $this->makeService();
+        $before = $service->resultsVersion(10, 42, null);
+
+        $this->pdo->exec("UPDATE questions SET status = 'active', updated_at = '2026-09-03 11:00:00' WHERE id = 1");
+
+        self::assertNotSame($before, $service->resultsVersion(10, 42, null));
+    }
+
+    /**
+     * A question added to the session changes the version of the whole-session
+     * poll, which is the request the instructor results screen actually makes.
+     *
+     * @requirement NFR-76
+     */
+    public function testAddingAQuestionMovesTheWholeSessionResultsVersion(): void
+    {
+        $this->givenQuestion(1, 10, 'closed', '2026-09-03 10:00:00');
+
+        $service = $this->makeService();
+        $before = $service->resultsVersion(10, 42, null);
+
+        $this->givenQuestion(2, 10, 'draft', '2026-09-03 10:30:00');
+
+        self::assertNotSame($before, $service->resultsVersion(10, 42, null));
+    }
+
+    /**
+     * Narrowing to one question is a different answer, so it is a different
+     * version — an ETag that covered more than the body carries would let a
+     * browser reuse the wrong response.
+     *
+     * @requirement NFR-76
+     */
+    public function testOneQuestionAndTheWholeSessionHaveDifferentVersions(): void
+    {
+        $this->givenQuestion(1, 10, 'closed', '2026-09-03 10:00:00');
+        $this->givenQuestion(2, 10, 'closed', '2026-09-03 10:00:00');
+
+        $service = $this->makeService();
+
+        self::assertNotSame(
+            $service->resultsVersion(10, 42, null),
+            $service->resultsVersion(10, 42, 1),
+        );
+    }
+
+    /**
+     * Ruling 2, the security case: a caller with no role on the course is
+     * refused, and the refusal happens before a version exists to match.
+     *
+     * @requirement NFR-76
+     */
+    public function testACallerWithNoRoleOnTheCourseGetsNoResultsVersion(): void
+    {
+        $this->givenQuestion(1, 10, 'closed', '2026-09-03 10:00:00');
+        $this->role = null;
+
+        $this->expectException(ForbiddenException::class);
+        $this->makeService()->resultsVersion(10, 42, null);
+    }
+
+    /**
+     * @requirement NFR-76
+     */
+    public function testAnUnknownSessionGetsNoResultsVersion(): void
+    {
+        $this->sessionById = null;
+
+        $this->expectException(NotFoundException::class);
+        $this->makeService()->resultsVersion(10, 42, null);
+    }
+
+    /**
+     * A question id belonging to another session is answered the way
+     * getResults() answers it — not found, rather than a version of somebody
+     * else's question.
+     *
+     * @requirement NFR-76
+     */
+    public function testAQuestionFromAnotherSessionGetsNoResultsVersion(): void
+    {
+        $this->givenQuestion(1, 10, 'closed', '2026-09-03 10:00:00');
+        $this->givenQuestion(9, 99, 'closed', '2026-09-03 10:00:00');
+
+        try {
+            $this->makeService()->resultsVersion(10, 42, 9);
+            self::fail('A question from another session must not produce a version.');
+        } catch (NotFoundException $e) {
+            self::assertSame('question_not_found', $e->getErrorCode());
+        }
+    }
+
+    /**
+     * A session with no questions still has a version, and it is not an error.
+     *
+     * @requirement NFR-76
+     */
+    public function testASessionWithNoQuestionsHasAnEmptyButStableVersion(): void
+    {
+        $service = $this->makeService();
+
+        self::assertSame('', $service->resultsVersion(10, 42, null));
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private function givenQuestion(int $id, int $sessionId, string $status, string $updatedAt): void
+    {
+        $statement = $this->pdo->prepare(
+            'INSERT INTO questions (id, session_id, status, updated_at) VALUES (?, ?, ?, ?)'
+        );
+        $statement->execute([$id, $sessionId, $status, $updatedAt]);
+    }
+
+    private function givenAnswer(int $questionId, int $participantId): void
+    {
+        $statement = $this->pdo->prepare(
+            'INSERT INTO answers (question_id, participant_id) VALUES (?, ?)'
+        );
+        $statement->execute([$questionId, $participantId]);
+    }
 
     /**
      * The repositories answer from the properties above, so a test can move the
@@ -148,10 +381,15 @@ final class PollVersionServiceTest extends TestCase
     {
         $sessions = $this->createMock(SessionRepositoryInterface::class);
         $sessions->method('findByShortCode')->willReturnCallback(fn (): ?array => $this->sessionByCode);
+        $sessions->method('findById')->willReturnCallback(fn (): ?array => $this->sessionById);
 
         $questions = $this->createMock(QuestionRepositoryInterface::class);
         $questions->method('findActiveBySessionCode')->willReturnCallback(fn (): ?array => $this->activeQuestion);
 
-        return new PollVersionService($sessions, $questions);
+        $courses = $this->createMock(CourseRepositoryInterface::class);
+        $courses->method('findById')->willReturnCallback(fn (): ?array => $this->course);
+        $courses->method('roleFor')->willReturnCallback(fn (): ?string => $this->role);
+
+        return new PollVersionService($sessions, $questions, $courses, $this->pdo);
     }
 }

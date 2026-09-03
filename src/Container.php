@@ -261,13 +261,22 @@ final class Container
         );
     }
 
-    /** The version queries behind the conditional answers to a poll (NFR-76). */
+    /**
+     * The version queries behind the conditional answers to a poll (NFR-76).
+     *
+     * Holds the shared connection rather than reaching for one per query, like
+     * the other units that count rows. That does mean resolving it opens the
+     * connection — no new cost, since nothing asks for a version without being
+     * about to read the rows the version describes.
+     */
     public static function pollVersionService(): PollVersionService
     {
         /** @var PollVersionService */
         return self::$instances['pollVersionService'] ??= new PollVersionService(
             self::sessionRepository(),
             self::questionRepository(),
+            self::courseRepository(),
+            Database::connection(),
         );
     }
 
