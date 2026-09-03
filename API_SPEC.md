@@ -1140,7 +1140,11 @@ Two rules decide the envelope:
 Four responses used to differ depending on which endpoint reached the throw
 site, because `QuestionBankService::copyToSession()` calls
 `QuestionService::create()` and the two controllers held disagreeing tables.
-The single answer for each, in force from NFR-83 onward:
+They did not all differ the same way: the two `correct_answer` rows and the
+`stage` row had no arm at all on the bank endpoint and fell through to a
+generic `400`, while `question_type` was already `422 invalid_question_type` on
+both — it was the question endpoint that omitted `field`. The single answer for
+each, in force from NFR-83 onward:
 
 | Failure | HTTP | Code | `field` |
 | --- | --- | --- | --- |
