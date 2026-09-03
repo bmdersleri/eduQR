@@ -29,7 +29,8 @@ final class CourseRepositoryAdminAccessTest extends TestCase
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT NOT NULL,
             display_name TEXT NOT NULL,
-            role TEXT NOT NULL
+            role TEXT NOT NULL,
+            is_active INTEGER NOT NULL DEFAULT 1
         )');
         $this->pdo->exec('CREATE TABLE courses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,11 +48,12 @@ final class CourseRepositoryAdminAccessTest extends TestCase
             UNIQUE (course_id, user_id)
         )');
 
-        // 1 = owner instructor, 2 = unrelated instructor, 3 = admin
-        $this->pdo->exec("INSERT INTO users (id, email, display_name, role) VALUES
-            (1, 'owner@example.edu', 'Owner', 'instructor'),
-            (2, 'other@example.edu', 'Other', 'instructor'),
-            (3, 'admin@example.edu', 'Admin', 'admin')");
+        // 1 = owner instructor, 2 = unrelated instructor, 3 = active admin, 4 = inactive admin
+        $this->pdo->exec("INSERT INTO users (id, email, display_name, role, is_active) VALUES
+            (1, 'owner@example.edu', 'Owner', 'instructor', 1),
+            (2, 'other@example.edu', 'Other', 'instructor', 1),
+            (3, 'admin@example.edu', 'Admin', 'admin', 1),
+            (4, 'inactive@example.edu', 'Inactive', 'admin', 0)");
         $this->pdo->exec("INSERT INTO courses (id, instructor_id, title) VALUES (10, 1, 'Fizik 101')");
         $this->pdo->exec("INSERT INTO course_instructors (course_id, user_id, role) VALUES (10, 1, 'owner')");
 
@@ -61,6 +63,11 @@ final class CourseRepositoryAdminAccessTest extends TestCase
     public function test_admin_reaches_a_course_they_are_not_listed_on_FR99(): void
     {
         $this->assertSame('co_instructor', $this->repo->roleFor(10, 3));
+    }
+
+    public function test_an_inactive_admin_elevates_to_nothing_NFR87(): void
+    {
+        $this->assertNull($this->repo->roleFor(10, 4));
     }
 
     public function test_an_unrelated_instructor_still_has_no_role_FR99(): void

@@ -173,7 +173,7 @@ final class CourseRepository implements CourseRepositoryInterface
 
     private function isAdmin(int $userId): bool
     {
-        $stmt = $this->pdo->prepare("SELECT 1 FROM users WHERE id = ? AND role = 'admin' LIMIT 1");
+        $stmt = $this->pdo->prepare("SELECT 1 FROM users WHERE id = ? AND role = 'admin' AND is_active = 1 LIMIT 1");
         $stmt->execute([$userId]);
 
         return $stmt->fetchColumn() !== false;
