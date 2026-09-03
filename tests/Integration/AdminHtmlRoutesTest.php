@@ -153,6 +153,42 @@ final class AdminHtmlRoutesTest extends TestCase
         }
     }
 
+    /**
+     * A template names no class.
+     *
+     * `admin/courses/edit.php` compared each instructor row against
+     * `CourseService::ROLE_OWNER` without importing it. A template runs in the
+     * global namespace, so that resolved to `\CourseService`, and the page
+     * fatalled the moment a course had a co-instructor to list — invisible
+     * until then, because a single-instructor course never enters the loop.
+     * Neither the needle list above nor the variable check below can see it.
+     *
+     * The rule that would have caught it is the one NFR-81 already implies: a
+     * template that only renders has nothing to say to a class. Every decision
+     * that needs one is a decision the controller makes and hands over.
+     */
+    #[DataProvider('adminPages')]
+    public function test_a_converted_admin_template_names_no_class_NFR81(string $template): void
+    {
+        $this->assertSame(
+            [],
+            $this->staticReferencesIn($this->templateSource($template)),
+            $template . ' must be handed the answer rather than ask a class for it.',
+        );
+    }
+
+    /**
+     * The guard above is only worth having if it can see a reference, so it is
+     * pointed at one the parser must resolve the same way the broken page did.
+     */
+    public function test_the_class_check_actually_finds_a_class_NFR81(): void
+    {
+        $this->assertSame(
+            ['CourseService::ROLE_OWNER'],
+            $this->staticReferencesIn('<?php echo CourseService::ROLE_OWNER; ?>'),
+        );
+    }
+
     // ── Every variable the template names arrives through $data ───────────────
 
     #[DataProvider('adminPages')]
@@ -196,6 +232,49 @@ final class AdminHtmlRoutesTest extends TestCase
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Every `Class::` a template writes, in source order.
+     *
+     * Token-based rather than a regular expression so that a class name inside
+     * a comment or a string is not mistaken for a reference the parser has to
+     * resolve — only the ones that would actually fatal count.
+     *
+     * @return list<string>
+     */
+    private function staticReferencesIn(string $source): array
+    {
+        $tokens = token_get_all($source);
+        $references = [];
+
+        foreach ($tokens as $i => $token) {
+            if ($token !== '::' && (! \is_array($token) || $token[0] !== T_DOUBLE_COLON)) {
+                continue;
+            }
+
+            $class = $this->previousSignificant($tokens, $i);
+            $member = $this->nextSignificant($tokens, $i);
+
+            $references[] = (\is_array($class) ? $class[1] : (string) $class)
+                . '::' . (\is_array($member) ? $member[1] : (string) $member);
+        }
+
+        return $references;
+    }
+
+    /** @return array|string|null */
+    private function previousSignificant(array $tokens, int $from)
+    {
+        for ($j = $from - 1; $j >= 0; --$j) {
+            if (\is_array($tokens[$j]) && \in_array($tokens[$j][0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) {
+                continue;
+            }
+
+            return $tokens[$j];
+        }
+
+        return null;
+    }
 
     /**
      * The names a template reads without ever assigning them — what it must be

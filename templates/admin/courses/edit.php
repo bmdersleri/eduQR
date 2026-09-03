@@ -97,13 +97,13 @@
                             <div class="meta"><?= htmlspecialchars($courseInstructor['email'], ENT_QUOTES, 'UTF-8') ?></div>
                         </td>
                         <td>
-                            <span class="badge <?= $courseInstructor['role'] === CourseService::ROLE_OWNER ? 'text-bg-primary' : 'text-bg-secondary' ?>">
+                            <span class="badge <?= $courseInstructor['is_owner'] ? 'text-bg-primary' : 'text-bg-secondary' ?>">
                                 <?= htmlspecialchars(t('course.instructors.role.' . $courseInstructor['role']), ENT_QUOTES, 'UTF-8') ?>
                             </span>
                         </td>
                         <?php if ($isCourseOwner): ?>
                         <td class="text-end">
-                            <?php if ($courseInstructor['role'] !== CourseService::ROLE_OWNER): ?>
+                            <?php if (! $courseInstructor['is_owner']): ?>
                             <button type="button" class="btn btn-outline-danger btn-sm instructor-remove-btn"
                                     data-user-id="<?= (int) $courseInstructor['user_id'] ?>">
                                 <?= htmlspecialchars(t('course.instructors.remove'), ENT_QUOTES, 'UTF-8') ?>

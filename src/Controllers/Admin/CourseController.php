@@ -181,7 +181,7 @@ final class CourseController extends HtmlController
             [
                 'csrfToken' => CsrfMiddleware::getToken(),
                 'course' => $course,
-                'courseInstructors' => $courseInstructors,
+                'courseInstructors' => self::withOwnerFlag($courseInstructors),
                 'isCourseOwner' => $this->isOwner($courseInstructors, (int) $instructor['id']),
             ],
             self::titleWithAppName(t('course.edit.title')),
@@ -190,6 +190,27 @@ final class CourseController extends HtmlController
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Decide the owner badge here rather than in the template.
+     *
+     * The template used to compare each row against `CourseService::ROLE_OWNER`
+     * without importing the class. Templates carry no namespace, so that
+     * resolved to a global `\CourseService` which does not exist, and the page
+     * fatalled the moment a course had a second instructor to list — the only
+     * reason it was survivable is that a single-instructor course never enters
+     * the loop. A prepared boolean is what NFR-81 asks for anyway.
+     *
+     * @param  list<array<string, mixed>> $courseInstructors
+     * @return list<array<string, mixed>>
+     */
+    private static function withOwnerFlag(array $courseInstructors): array
+    {
+        return array_map(
+            static fn (array $row): array => $row + ['is_owner' => $row['role'] === CourseService::ROLE_OWNER],
+            $courseInstructors
+        );
+    }
 
     /**
      * Owner is a per-course role, not a property of the user (FR-97), so it is
