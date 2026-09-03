@@ -85,4 +85,25 @@ final class CourseRepositoryAdminAccessTest extends TestCase
     {
         $this->assertNull($this->repo->roleFor(10, 999));
     }
+
+    public function test_an_admin_lists_courses_they_are_not_listed_on_FR99(): void
+    {
+        $this->pdo->exec("INSERT INTO courses (id, instructor_id, title) VALUES (12, 2, 'Biyoloji 101')");
+        $this->pdo->exec("INSERT INTO course_instructors (course_id, user_id, role) VALUES (12, 2, 'owner')");
+
+        $titles = array_column($this->repo->listByInstructor(3, 1, 20), 'title');
+
+        sort($titles);
+        $this->assertSame(['Biyoloji 101', 'Fizik 101'], $titles);
+        $this->assertSame(2, $this->repo->countByInstructor(3));
+    }
+
+    public function test_an_instructor_still_lists_only_their_own_FR99(): void
+    {
+        $this->pdo->exec("INSERT INTO courses (id, instructor_id, title) VALUES (12, 2, 'Biyoloji 101')");
+        $this->pdo->exec("INSERT INTO course_instructors (course_id, user_id, role) VALUES (12, 2, 'owner')");
+
+        $this->assertSame(['Fizik 101'], array_column($this->repo->listByInstructor(1, 1, 20), 'title'));
+        $this->assertSame(1, $this->repo->countByInstructor(1));
+    }
 }

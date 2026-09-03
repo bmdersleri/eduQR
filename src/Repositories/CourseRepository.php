@@ -26,25 +26,39 @@ final class CourseRepository implements CourseRepositoryInterface
         return $row !== false ? $row : null;
     }
 
-    /** Owned or co-instructed courses (FR-97), newest first. */
+    /** Owned or co-instructed courses (FR-97), newest first. An admin sees all (FR-99). */
     public function listByInstructor(int $instructorId, int $page, int $perPage): array
     {
         $offset = ($page - 1) * $perPage;
-        $stmt = $this->pdo->prepare(
-            'SELECT c.*
-               FROM courses c
-               JOIN course_instructors ci ON ci.course_id = c.id
-              WHERE ci.user_id = ?
-              ORDER BY c.created_at DESC
-              LIMIT ? OFFSET ?'
-        );
-        $stmt->execute([$instructorId, $perPage, $offset]);
+        $isAdmin = $this->isAdmin($instructorId);
+
+        $sql = $isAdmin
+            ? 'SELECT c.* FROM courses c ORDER BY c.created_at DESC LIMIT ? OFFSET ?'
+            : 'SELECT c.*
+                 FROM courses c
+                 JOIN course_instructors ci ON ci.course_id = c.id
+                WHERE ci.user_id = ?
+                ORDER BY c.created_at DESC
+                LIMIT ? OFFSET ?';
+
+        $params = $isAdmin
+            ? [$perPage, $offset]
+            : [$instructorId, $perPage, $offset];
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function countByInstructor(int $instructorId): int
     {
+        $isAdmin = $this->isAdmin($instructorId);
+
+        if ($isAdmin) {
+            return (int) $this->pdo->query('SELECT COUNT(*) FROM courses')->fetchColumn();
+        }
+
         $stmt = $this->pdo->prepare(
             'SELECT COUNT(*)
                FROM courses c
