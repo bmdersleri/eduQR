@@ -8,11 +8,11 @@ use EduQR\Config;
 use EduQR\Container;
 use EduQR\Contracts\CourseRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
+use EduQR\Contracts\ReportBuilderInterface;
 use EduQR\Controllers\HtmlController;
 use EduQR\Exceptions\DomainException;
 use EduQR\Middleware\CsrfMiddleware;
 use EduQR\Services\CourseService;
-use EduQR\Services\ReportService;
 use EduQR\Services\SessionService;
 
 /**
@@ -33,7 +33,7 @@ final class SessionController extends HtmlController
 {
     private SessionService $sessions;
     private CourseService $courses;
-    private ReportService $reports;
+    private ReportBuilderInterface $reports;
     private CourseRepositoryInterface $courseRepository;
     private QuestionRepositoryInterface $questions;
 
@@ -41,7 +41,7 @@ final class SessionController extends HtmlController
     {
         $this->sessions = Container::sessionService();
         $this->courses = Container::courseService();
-        $this->reports = Container::reportService();
+        $this->reports = Container::reportBuilder();
         $this->courseRepository = Container::courseRepository();
         $this->questions = Container::questionRepository();
     }

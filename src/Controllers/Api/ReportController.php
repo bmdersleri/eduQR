@@ -6,6 +6,7 @@ namespace EduQR\Controllers\Api;
 
 use EduQR\Container;
 use EduQR\Contracts\ExportServiceInterface;
+use EduQR\Contracts\ReportBuilderInterface;
 use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Services\ReportService;
@@ -20,11 +21,13 @@ final class ReportController extends ApiController
 {
     private ReportService $report;
     private ExportServiceInterface $exports;
+    private ReportBuilderInterface $reports;
 
     public function __construct()
     {
         $this->report = Container::reportService();
         $this->exports = Container::exportService();
+        $this->reports = Container::reportBuilder();
     }
 
     // ── GET /api/v1/sessions/{id}/report ──────────────────────────────────────
@@ -35,7 +38,7 @@ final class ReportController extends ApiController
         $anonymize = filter_var($_GET['anonymize'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         try {
-            $data = $this->report->buildReport($sessionId, (int) $user['id'], $anonymize);
+            $data = $this->reports->buildReport($sessionId, (int) $user['id'], $anonymize);
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);
         }
@@ -99,7 +102,7 @@ final class ReportController extends ApiController
         $anonymize = filter_var($_GET['anonymize'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         try {
-            $data = $this->report->buildReport($sessionId, (int) $user['id'], $anonymize);
+            $data = $this->reports->buildReport($sessionId, (int) $user['id'], $anonymize);
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);
         }
@@ -248,7 +251,7 @@ final class ReportController extends ApiController
         $anonymize = filter_var($_GET['anonymize'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         try {
-            $data = $this->report->buildReport($sessionId, (int) $user['id'], $anonymize);
+            $data = $this->reports->buildReport($sessionId, (int) $user['id'], $anonymize);
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);
         }

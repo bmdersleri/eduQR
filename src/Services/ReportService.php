@@ -8,7 +8,7 @@ use EduQR\Contracts\CourseRepositoryInterface;
 use EduQR\Contracts\OpenTextThemeExtractionServiceInterface;
 use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
-use EduQR\Contracts\ScoringServiceInterface;
+use EduQR\Contracts\ReportBuilderInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Exceptions\DomainException;
 use EduQR\Exceptions\ForbiddenException;
@@ -35,7 +35,7 @@ final class ReportService
         private readonly QuestionRepositoryInterface $questions,
         private readonly OptionRepositoryInterface   $options,
         private readonly CourseRepositoryInterface   $courses,
-        private readonly ScoringServiceInterface     $scoring,
+        private readonly ReportBuilderInterface      $reportBuilder,
         private readonly ?PDO                        $pdo = null,
         private readonly ?OpenTextThemeExtractionServiceInterface $themeExtractor = null,
     ) {
@@ -281,140 +281,6 @@ final class ReportService
         ];
     }
 
-    // ── Full session report (T-900) ───────────────────────────────────────────
-
-    /**
-     * Builds a complete post-session report.
-     *
-     * @param  bool $anonymize  Replace nicknames with "Participant N" (FR-70)
-     * @throws DomainException  session_not_found | forbidden
-     */
-    public function buildReport(int $sessionId, int $userId, bool $anonymize = false): array
-    {
-        $session = $this->requireSession($sessionId, $userId);
-        $course = $this->courses->findById((int) $session['course_id']);
-        $pdo = $this->pdo ?? \EduQR\Support\Database::connection();
-
-        // Participant count
-        $stmt = $pdo->prepare('SELECT COUNT(*) FROM participants WHERE session_id = ?');
-        $stmt->execute([$sessionId]);
-        $participantCount = (int) $stmt->fetchColumn();
-
-        // All questions (any status — report shows closed history)
-        $questions = $this->questions->findBySession($sessionId);
-
-        // Total answer count across all questions
-        $totalAnswers = 0;
-        foreach ($questions as $q) {
-            $stmt = $pdo->prepare(
-                'SELECT COUNT(*) FROM answers WHERE question_id = ? AND is_hidden = 0'
-            );
-            $stmt->execute([(int) $q['id']]);
-            $totalAnswers += (int) $stmt->fetchColumn();
-        }
-
-        // Participation rate: avg(answerers per question / participant_count)
-        // Simplified: total_answers / (question_count * participant_count), capped at 1.0
-        $questionCount = count($questions);
-        $participationRate = ($questionCount > 0 && $participantCount > 0)
-            ? round(min(1.0, $totalAnswers / ($questionCount * $participantCount)), 4)
-            : 0.0;
-
-        // Build nickname → "Participant N" map for anonymization
-        $nicknameMap = [];
-        $counter = 1;
-
-        $questionResults = [];
-        foreach ($questions as $q) {
-            $qId = (int) $q['id'];
-            $qType = $q['question_type'];
-
-            $stmt = $pdo->prepare(
-                'SELECT COUNT(*) FROM answers WHERE question_id = ? AND is_hidden = 0'
-            );
-            $stmt->execute([$qId]);
-            $qAnswerCount = (int) $stmt->fetchColumn();
-
-            $base = [
-                'id' => $qId,
-                'type' => $qType,
-                'text' => $q['question_text'],
-                'status' => $q['status'],
-                'answer_count' => $qAnswerCount,
-            ];
-
-            if ($qType === 'open_text') {
-                $rows = $this->openTextAnswers($qId, true); // instructor = include hidden
-                $answers = [];
-                foreach ($rows as $r) {
-                    $nick = $r['nickname'];
-                    if ($anonymize) {
-                        if (! isset($nicknameMap[$nick])) {
-                            $nicknameMap[$nick] = $counter++;
-                        }
-                        $nick = 'Participant ' . $nicknameMap[$nick];
-                    }
-                    $answers[] = [
-                        'nickname' => $nick,
-                        'answer_text' => $r['text'],
-                        'is_hidden' => (bool) $r['is_hidden'],
-                        'created_at' => $r['created_at'],
-                    ];
-                }
-                $questionResults[] = array_merge($base, [
-                    'answers' => $answers,
-                    'word_cloud' => $this->buildWordCloud($rows, (string) ($session['language'] ?? 'en')),
-                ]);
-            } else {
-                $agg = $this->aggregateOptions($qId);
-                $questionResults[] = array_merge($base, [
-                    'distribution' => array_map(fn (array $o) => [
-                        'option_text' => $o['text'],
-                        'count' => $o['count'],
-                        'percentage' => $o['percent'],
-                    ], $agg['options']),
-                ]);
-            }
-        }
-
-        $report = [
-            'session' => [
-                'id' => (int) $session['id'],
-                'title' => $session['title'],
-                'course_title' => $course['title'] ?? '',
-                'language' => $session['language'],
-                'started_at' => $session['started_at'],
-                'closed_at' => $session['closed_at'],
-                'anonymized' => (bool) $session['anonymized'],
-                'is_quiz' => (bool) ($session['is_quiz'] ?? 0),
-            ],
-            'summary' => [
-                'participant_count' => $participantCount,
-                'question_count' => $questionCount,
-                'answer_count' => $totalAnswers,
-                'participation_rate' => $participationRate,
-            ],
-            'questions' => $questionResults,
-        ];
-
-        if ((bool) ($session['is_quiz'] ?? 0)) {
-            $scores = $this->scoring->computeScores($sessionId);
-            if ($anonymize) {
-                foreach ($scores as &$scoreRow) {
-                    $nick = $scoreRow['nickname'];
-                    if (! isset($nicknameMap[$nick])) {
-                        $nicknameMap[$nick] = $counter++;
-                    }
-                    $scoreRow['nickname'] = 'Participant ' . $nicknameMap[$nick];
-                }
-                unset($scoreRow);
-            }
-            $report['scores'] = $scores;
-        }
-
-        return $report;
-    }
-
     /**
      * Builds a deterministic word cloud from open-text answers.
      *
@@ -548,7 +414,7 @@ final class ReportService
         $lastSessionAt = null;
 
         foreach ($sessions as $session) {
-            $report = $this->buildReport((int) $session['id'], $userId, false);
+            $report = $this->reportBuilder->buildReport((int) $session['id'], $userId, false);
             $summary = $report['summary'];
 
             if (($session['status'] ?? '') === 'closed') {
