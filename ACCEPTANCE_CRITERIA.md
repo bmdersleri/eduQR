@@ -66,6 +66,7 @@ The MVP is complete when **all** of the following hold.
 [ ] Be prevented from answering the same question twice                      [FR-44]
 [ ] See a confirmation after submitting                                       [FR-45]
 [ ] See the privacy notice on the join page                                  [FR-75]
+[x] Open the privacy notice link and reach the notice page, not a 404         [FR-75, NFR-31]
 [ ] Use the student interface on a mobile browser                             [NFR-12]
 [ ] Submit one answer even with JavaScript disabled (form fallback)           [NFR-44]
 [x] Send a comprehension reaction (got it / lost) on the open question        [FR-48]
@@ -316,6 +317,8 @@ Each phase in `TASKS.md` is gated by the checkpoint below. Do not start the next
 [ ] Student is redirected to the waiting / active-question page                    [FR-45]
 [ ] Student UI is mobile-first                                                     [NFR-12, NFR-14]
 [ ] Privacy notice is shown                                                        [FR-75]
+[x] GET /privacy returns 200 without a login or a participant session               [FR-75, NFR-31]
+[x] The link target in the notice partial matches the registered route              [FR-75]
 ```
 
 ### 4.5 Question Module

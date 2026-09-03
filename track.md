@@ -577,7 +577,7 @@
 
 ---
 
-## Faz 11 — Gelecek İyileştirmeler (post-MVP) 🔄 (12/19)
+## Faz 11 — Gelecek İyileştirmeler (post-MVP) 🔄 (13/20)
 
 **Hedef:** MVP sonrası geliştirmeler — her görev başlamadan önce proje sahibi onayı gerektirir.
 **Başlangıç:** 2026-05-15 | **Bitiş:** —
@@ -606,6 +606,7 @@
 [x] T-1116  Question import V2 supporting legacy format and staged flow with metadata   [FR-31]
 [ ] T-1123  Bounded-cost live polling (ETag/304, configurable intervals)                 [NFR-76]
 [x] T-1124  Türkçe doğruluk geçişi: noktalı/noktasız I katlaması, sabit metin taraması   [NFR-77, FR-80, FR-85]
+[x] T-1125  Herkese açık /privacy rotası ve gizlilik bildirimi sayfası                   [FR-75, NFR-31]
 ```
 
 ### Notlar
@@ -623,6 +624,11 @@
 - FR-80 taraması: `error.rate_limited`, `error.csrf_invalid`, `course.status.*`, `common.pagination`, `session.qr.alt`, `instructor.dashboard.live_badge` anahtarları eklendi; ham durum/soru-türü enum'ları artık çeviriden geçiyor; `templates/errors/403.php` eklendi (önceden düz `Forbidden.` yazıyordu).
 - FR-85: `fmt_date` / `fmt_percent` yardımcıları vardı ama hiçbir yerde çağrılmıyordu. Rapor, ders listesi/detayı ve analiz ekranlarındaki tarih ve yüzdeler bu yardımcılara bağlandı.
 - `docs/tr-review-queue.md`: son beş özellik dalgasında dil modeliyle üretilmiş, insan onayından geçmemiş 40 `tr.json` anahtarı incelenmek üzere listelendi. Bu kuyruk kapanmadan Türkçe yayına hazır sayılmaz.
+- T-1125: FR-75 kâğıt üzerinde karşılanıyordu ama pratikte kırıktı. `templates/partials/privacy-notice.php` her öğrenci sayfasında `/privacy` bağlantısını gösteriyordu; `/privacy` rotası hiç tanımlanmamıştı, dolayısıyla bağlantı 404 dönüyordu. `src/Bootstrap.php` içine herkese açık `GET /privacy` rotası ve `templates/privacy.php` sayfası eklendi (oturum ve kimlik doğrulaması gerektirmez).
+- Sayfa metni uydurma değil: `SECURITY_PRIVACY.md` §2–§4 ve §15, `DATA_MODEL.md` §2.8–§2.10 ve §7 ile koddaki gerçek davranıştan türetildi. Uydurma saklama süresi, uydurma hukuki dayanak, uydurma KVKK/GDPR madde atfı ve uydurma kurum iletişim adresi yok.
+- Yapılandırmada bir iletişim adresi ayarı bulunmadığı için (`.env.example` ve `src/Config.php` içinde yok) öğrenci, gereksinimlerin zaten kullandığı ifadeyle dersinin eğitmenine yönlendiriliyor.
+- Sayfa, metnin sistem davranışının olgusal açıklaması olduğunu ve kurum incelemesini beklediğini açıkça belirten bir notla bitiyor. Kurumun kendi hukuki bildirimi bu metnin yerini alabilir; karar Prof. Dr. İsmail Kırbaş'a aittir.
+- Yeni 27 `privacy.page.*` anahtarı `docs/tr-review-queue.md` kuyruğuna eklendi. Gizlilik metni arayüz etiketlerinden daha ağır basar; bu maddeler öncelikli incelenmeli.
 - Doğru cevabı işaretlenmemiş sorular bozuk GIFT üretmek yerine geçerli açık uçlu soruya dönüştürülür ve seçenekleri metin olarak korunur. Her iki dışa aktarım da mevcut rapor dışa aktarımlarıyla aynı ders sahipliği ve anonimleştirme kurallarına tabidir.
 
 ---

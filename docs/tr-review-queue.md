@@ -36,7 +36,13 @@ değerlerin doğru olduğunu değil.
 | Öğrenci anlama tepkileri | `99b3e3c` | FR-48 | 8 |
 | Yardımcı eğitmen erişimi | `01ddd4c` | FR-97 | 19 |
 | LMS dışa aktarımı (Moodle GIFT + not çizelgesi) | `8a1f59a` | FR-98 | 9 |
-| **Toplam** | | | **40** |
+| **Gizlilik bildirimi sayfası (T-1125)** | — | FR-75, NFR-31 | 27 |
+| **Toplam** | | | **67** |
+
+> **Öncelik uyarısı.** Aşağıdaki `privacy.page.*` maddeleri arayüz etiketi değil; öğrencilere
+> kendi verilerinin nasıl işlendiğini anlatan bir gizlilik metnidir. Yanlış ya da fazla
+> iddialı bir çeviri, hatalı bir buton yazısından çok daha ağır sonuç doğurur. Bu bölüm
+> kuyruğun geri kalanından **önce** incelenmelidir.
 
 ## Öncelikli maddeler — karara bağlandı
 
@@ -217,6 +223,123 @@ _Commit `8a1f59a` — FR-98_
 - [ ] `student.batch.error_all_required` — "Lütfen göndermeden önce tüm soruları yanıtlayın."
   ifadesi `siz` kipindeydi; öğrenci arayüzü kuralı gereği "…yanıtla." olarak düzeltildi.
   Bu anahtar yukarıdaki beş özellik dalgasından değil, daha eski bir commit'ten geliyor.
+
+## Gizlilik bildirimi sayfası — ÖNCELİKLİ
+
+_T-1125 — FR-75, NFR-31_
+
+> Bu bölümdeki metinler öğrenciye kendi verisinin ne olduğunu anlatıyor ve `/privacy`
+> sayfasında yayımlanıyor. İncelerken iki şeye ayrı ayrı bakın: (1) Türkçesi doğru mu,
+> (2) **söylenen şey doğru mu** — yani sistemin gerçek davranışını abartmıyor ya da
+> eksik anlatmıyor mu. İkincisi daha önemlidir; koruma vaat eden ama karşılığı olmayan
+> bir cümle, kötü çeviriden daha zararlıdır.
+>
+> Kaynak: `SECURITY_PRIVACY.md` §2–§4 ve §15, `DATA_MODEL.md` §2.8–§2.10 ve §7.
+> Metinde bilerek yer almayanlar: uydurma saklama süresi, uydurma hukuki dayanak,
+> KVKK/GDPR madde numarası ve kuruma ait iletişim adresi.
+>
+> Üslup: sayfa öğrenciye hitap ettiği için 2. tekil şahıs (`sen`) kullanıldı; mevcut
+> `student.*` anahtarlarıyla uyumlu. "instructor" karşılığı **"Eğitmen"**.
+
+- [ ] `privacy.page.title`
+  - **EN:** Privacy notice
+  - **TR:** Gizlilik Bildirimi
+- [ ] `privacy.page.collected.title`
+  - **EN:** What is stored
+  - **TR:** Neler saklanıyor
+- [ ] `privacy.page.collected.nickname`
+  - **EN:** The nickname you choose when you join. It has to be unique inside one session so that participants can be told apart.
+  - **TR:** Katılırken seçtiğin takma ad. Katılımcıların birbirinden ayırt edilebilmesi için bir oturum içinde benzersiz olmak zorunda.
+- [ ] `privacy.page.collected.answers`
+  - **EN:** Your answers, and the time each one was submitted.
+  - **TR:** Cevapların ve her cevabın gönderildiği zaman.
+- [ ] `privacy.page.collected.reactions`
+  - **EN:** Your comprehension signal for a question — I got it or I am lost — if you send one.
+  - **TR:** Gönderdiysen, bir soruya verdiğin anlama tepkisi: Anladım ya da Kayboldum.
+  - **Not:** "Anladım" / "Kayboldum" karşılıkları `student.reaction.got_it` ve `student.reaction.lost` ile birebir aynı tutuldu; o anahtarlar değişirse burası da değişmeli.
+- [ ] `privacy.page.collected.device`
+  - **EN:** A one-way device code, derived from a random identifier stored in your browser, your browser's user-agent string, and a secret held on the server. It lets a session notice a duplicate join and put you back into your existing participant record if you reload the page. It is only ever compared within a single session, it is never shown to anyone, and it never appears in a report or an export.
+  - **TR:** Tek yönlü bir cihaz kodu. Tarayıcında saklanan rastgele bir tanımlayıcıdan, tarayıcının user-agent bilgisinden ve sunucuda tutulan bir gizli anahtardan türetilir. Bir oturumun aynı cihazdan ikinci kez katılımı fark etmesini ve sayfayı yenilediğinde seni mevcut katılımcı kaydına geri döndürmesini sağlar. Yalnızca tek bir oturum içinde karşılaştırılır, kimseye gösterilmez ve hiçbir rapora veya dışa aktarıma girmez.
+  - **Not:** "user-agent" teknik terim olarak bırakıldı. Türkçe bir karşılık ("tarayıcı kimlik bilgisi") tercih edilecekse burada karara bağlanmalı. Metin bilerek "seni tanır" demiyor: `SECURITY_PRIVACY.md` §4 bu kodun bir güvenlik denetimi değil, yalnızca sürtünme azaltıcı olduğunu söylüyor.
+- [ ] `privacy.page.collected.cookies`
+  - **EN:** Three small cookies in your browser: the random device identifier, a marker for the session you joined, and your language choice.
+  - **TR:** Tarayıcında üç küçük çerez: rastgele cihaz tanımlayıcısı, katıldığın oturumun işareti ve dil tercihin.
+  - **Not:** Sayı (üç) `eduqr_device`, `eduqr_participant`, `eduqr_locale` çerezlerine karşılık geliyor. Öğrenci akışına yeni bir çerez eklenirse bu cümle güncellenmeli.
+- [ ] `privacy.page.not_collected.title`
+  - **EN:** What is not asked for
+  - **TR:** Neler istenmiyor
+- [ ] `privacy.page.not_collected.account`
+  - **EN:** No account and no password. You are never asked for an email address.
+  - **TR:** Hesap ve parola yok. Senden hiçbir zaman e-posta adresi istenmez.
+- [ ] `privacy.page.not_collected.identity`
+  - **EN:** Your real name, student number, phone number, national identity number, location, and photograph are never asked for and never stored.
+  - **TR:** Gerçek adın, öğrenci numaran, telefon numaran, kimlik numaran, konumun ve fotoğrafın hiçbir zaman istenmez ve saklanmaz.
+  - **Not:** "national identity number" için "T.C. kimlik numarası" yerine yalın "kimlik numaran" seçildi; eduQR tek bir ülkeye bağlı değil.
+- [ ] `privacy.page.not_collected.ip`
+  - **EN:** No IP address is stored in the application database. The web server hosting eduQR may hold one briefly in its own access log, which sits outside the application.
+  - **TR:** Uygulama veritabanında hiçbir IP adresi saklanmaz. eduQR'ı barındıran web sunucusu kendi erişim kaydında bir IP adresini kısa süreliğine tutabilir; bu kayıt uygulamanın dışındadır.
+  - **Not:** `SECURITY_PRIVACY.md` §2.2'deki "30 gün sonra maskelenir" ifadesi bilerek yazılmadı: NFR-33 bir `SHOULD` ve web sunucusu yapılandırmasına bağlı; söz verilemez.
+- [ ] `privacy.page.who.title`
+  - **EN:** Who can see it
+  - **TR:** Kimler görebilir
+- [ ] `privacy.page.who.instructor`
+  - **EN:** The instructor who runs your course, and any co-instructor they have added to it.
+  - **TR:** Dersini yürüten eğitmen ve eğitmenin derse eklediği ortak eğitmenler.
+  - **Not:** "Ortak eğitmen" terimi bu kuyruğun üst bölümündeki 2 numaralı kararla uyumlu.
+- [ ] `privacy.page.who.reports`
+  - **EN:** Reports sit behind an instructor login. There is no public report link.
+  - **TR:** Raporlar eğitmen girişinin arkasındadır. Herkese açık bir rapor bağlantısı yoktur.
+- [ ] `privacy.page.who.reactions`
+  - **EN:** Comprehension reactions reach the instructor only as totals per question: how many chose I got it and how many chose I am lost. Nobody is told which one you sent.
+  - **TR:** Anlama tepkileri eğitmene yalnızca soru başına toplam olarak ulaşır: kaç kişi Anladım, kaç kişi Kayboldum demiş. Senin hangisini gönderdiğin kimseye bildirilmez.
+- [ ] `privacy.page.who.class`
+  - **EN:** If your instructor turns on live results for the class, answers to open-text questions can appear on the classroom screen next to the nickname that sent them. Choice questions are shown as counts only. Pick a nickname you are happy to see on the screen.
+  - **TR:** Eğitmenin canlı sonuçları sınıfa açarsa, açık uçlu sorulara verilen cevaplar gönderen takma adla birlikte sınıf ekranında görünebilir. Seçmeli sorular yalnızca sayı olarak gösterilir. Ekranda görmekten rahatsız olmayacağın bir takma ad seç.
+  - **Not:** Bu madde öğrenci için en önemli olanı. FR-52/FR-53/FR-54 ve `ReportService::openTextAnswers()` doğruluyor: açık uçlu cevaplar takma adla birlikte dönüyor. Cümle yumuşatılmamalı.
+- [ ] `privacy.page.who.never`
+  - **EN:** Device codes and IP addresses never appear in any report or export.
+  - **TR:** Cihaz kodları ve IP adresleri hiçbir raporda veya dışa aktarımda yer almaz.
+- [ ] `privacy.page.retention.title`
+  - **EN:** How long it is kept
+  - **TR:** Ne kadar süre saklanıyor
+- [ ] `privacy.page.retention.active`
+  - **EN:** Session data is kept until the session closes, and for 365 days after that.
+  - **TR:** Oturum verileri, oturum kapanana kadar ve kapanışından sonra 365 gün boyunca saklanır.
+- [ ] `privacy.page.retention.auto`
+  - **EN:** After 365 days a closed session is anonymized automatically.
+  - **TR:** 365 günün sonunda kapalı bir oturum otomatik olarak anonimleştirilir.
+- [ ] `privacy.page.retention.anonymize`
+  - **EN:** Anonymizing replaces every nickname in that session with a numbered label such as Participant 3, and clears the device code. The answers and the totals stay, but they are no longer tied to a nickname. Anonymized data is kept indefinitely, because it no longer identifies anyone.
+  - **TR:** Anonimleştirme, o oturumdaki her takma adı Participant 3 gibi numaralı bir etiketle değiştirir ve cihaz kodunu siler. Cevaplar ve toplamlar kalır ama artık bir takma adla ilişkili değildir. Anonimleştirilmiş veriler kimseyi tanımlamadığı için süresiz saklanır.
+  - **Not:** "Participant 3" çevrilmedi çünkü veritabanına gerçekten bu İngilizce etiket yazılıyor (`SessionRepository::anonymize()`). Etiket ileride yerelleştirilirse bu cümle de değişmeli.
+- [ ] `privacy.page.retention.instructor`
+  - **EN:** An instructor can anonymize a closed session at any time, and can request that a whole session be deleted. A deletion request has a 7-day grace period, after which the session and everything in it is removed permanently.
+  - **TR:** Eğitmen kapalı bir oturumu istediği zaman anonimleştirebilir ve oturumun tümüyle silinmesini isteyebilir. Silme talebinin 7 günlük bir bekleme süresi vardır; sürenin sonunda oturum ve içindeki her şey kalıcı olarak kaldırılır.
+- [ ] `privacy.page.options.title`
+  - **EN:** Your options
+  - **TR:** Senin seçeneklerin
+- [ ] `privacy.page.options.nickname`
+  - **EN:** You choose your nickname, and it does not have to be your real name.
+  - **TR:** Takma adı sen seçersin; gerçek adın olmak zorunda değil.
+- [ ] `privacy.page.options.contact`
+  - **EN:** You have no account here, so there is nothing to log into in order to change or delete your data. Requests are handled per session by the instructor who owns it, so ask the instructor of your course.
+  - **TR:** Burada bir hesabın yok, dolayısıyla verilerini değiştirmek veya silmek için giriş yapabileceğin bir yer de yok. Talepler, oturumun sahibi olan eğitmen tarafından oturum bazında ele alınır; dersinin eğitmenine başvur.
+  - **Not:** Yapılandırmada bir iletişim adresi ayarı yok, bu yüzden `SECURITY_PRIVACY.md` §15.3'ün ifadesi ("öğrencinin hesabı olmadığı için talepler oturum sahibi eğitmen tarafından karşılanır") kullanıldı. Kurum bir veri sorumlusu adresi belirlerse bu madde güncellenmeli.
+- [ ] `privacy.page.review.title`
+  - **EN:** Status of this notice
+  - **TR:** Bu bildirimin durumu
+- [ ] `privacy.page.review.body`
+  - **EN:** This page is a factual description of how the software behaves. It is not an institutional legal notice and it has not been reviewed by the institution yet. Your institution may replace it or add to it.
+  - **TR:** Bu sayfa, yazılımın gerçekte nasıl davrandığının olgusal bir açıklamasıdır. Kurumsal bir hukuki bildirim değildir ve henüz kurum tarafından incelenmemiştir. Kurumun bu metni değiştirebilir veya metne ekleme yapabilir.
+  - **Not:** Bu uyarı sayfadan çıkarılmamalı; metnin kurum incelemesinden geçmediğini söyleyen tek yer burası.
+
+### Ayrıca dikkat
+
+`privacy.notice.body` bu sayfada yeniden kullanılıyor ama `siz` kipinde yazılmış
+("takma adınızı", "girmeniz gerekmez") ve "Öğretim Elemanı" terimini içeriyor. Sayfanın
+geri kalanı `sen` kipinde ve "Eğitmen" diyor. Bu anahtar `SECURITY_PRIVACY.md` §15.4'te
+zorunlu metin olarak geçtiği için bu değişiklikte **bilerek dokunulmadı**; kip ve terim
+birliği ayrı bir kararla sağlanmalı.
 
 ## Kuyruk kapandığında
 

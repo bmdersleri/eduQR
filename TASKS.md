@@ -323,6 +323,7 @@ Not part of the MVP. Each item must be escalated to the human owner before work 
 [x] T-1116  Question import V2 (legacy questions[] and staged sections opening->middle->closing, processing order, metadata, error: invalid_import_payload) [FR-31]
 [ ] T-1123  Bounded-cost live polling (ETag/304, configurable intervals)                    [NFR-76]
 [x] T-1124  Turkish correctness pass: dotted/dotless I case folding, hardcoded-string sweep, tr.json review queue [NFR-77, FR-80, FR-85]
+[x] T-1125  Public /privacy route and notice page — the student-page link existed but 404'd [FR-75, NFR-31]
 ```
 
 ---

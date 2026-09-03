@@ -139,6 +139,14 @@ final class Bootstrap
             include __DIR__ . '/../templates/home.php';
         });
 
+        // ── Privacy notice (public, no auth, no session) ──────────────────────
+        // Linked from templates/partials/privacy-notice.php on every student page.
+        $router->get('/privacy', function (array $p): void {
+            http_response_code(200);
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/../templates/privacy.php';
+        });
+
         // ── Auth ──────────────────────────────────────────────────────────────
         $router->get('/login', function (array $p): void {
             http_response_code(200);
