@@ -1,18 +1,3 @@
-<?php
-
-use EduQR\Middleware\AuthMiddleware;
-use EduQR\Middleware\CsrfMiddleware;
-
-$user       = AuthMiddleware::requireRole('admin');
-$instructor = $user;
-$csrfToken  = CsrfMiddleware::getToken();
-
-$filterActor = in_array($_GET['actor_type'] ?? '', ['instructor', 'admin', 'system'], true)
-    ? $_GET['actor_type']
-    : '';
-
-ob_start();
-?>
 <div class="eduqr-admin-hero mb-4">
     <div>
         <div class="eduqr-kicker mb-3">
@@ -131,7 +116,3 @@ ob_start();
     load(1);
 }());
 </script>
-<?php
-$content   = ob_get_clean();
-$pageTitle = t('audit.title') . ' — ' . t('app.name');
-include __DIR__ . '/../layouts/admin.php';

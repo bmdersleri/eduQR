@@ -1,17 +1,3 @@
-<?php
-use EduQR\Container;
-use EduQR\Middleware\AuthMiddleware;
-use EduQR\Middleware\CsrfMiddleware;
-
-$instructor = AuthMiddleware::require();
-$csrfToken  = CsrfMiddleware::getToken();
-
-$courseService = Container::courseService();
-$coursesData   = $courseService->listMyCourses((int) $instructor['id'], 1, 3);
-$recentCourses = $coursesData['data'] ?? [];
-
-ob_start();
-?>
 <div class="eduqr-admin-hero mb-4">
     <div>
         <div class="eduqr-kicker mb-3">
@@ -80,7 +66,3 @@ ob_start();
     <?php endforeach; ?>
 </div>
 <?php endif; ?>
-<?php
-$content   = ob_get_clean();
-$pageTitle = t('instructor.dashboard.title') . ' — ' . t('app.name');
-include __DIR__ . '/../layouts/admin.php';

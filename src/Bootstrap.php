@@ -164,8 +164,7 @@ final class Bootstrap
         });
 
         $router->get('/admin/dashboard', function (array $p): void {
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/admin/dashboard.php';
+            (new Controllers\Admin\DashboardController())->index();
         });
 
         // ── Admin: Courses ────────────────────────────────────────────────────
@@ -488,8 +487,7 @@ final class Bootstrap
 
         // ── Admin: Audit log viewer (T-1112) ──────────────────────────────────
         $router->get('/admin/audit-logs', function (array $p): void {
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/admin/audit-logs.php';
+            (new Controllers\Admin\AuditLogController())->index();
         });
 
         // ── API: Audit logs JSON (T-1112) ─────────────────────────────────────

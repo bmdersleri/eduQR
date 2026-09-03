@@ -27,19 +27,14 @@ use ReflectionClass;
  * undefined `$course` is a warning and an empty string, so the page would
  * render, slightly wrong, and no assertion above would notice. It reads each
  * template's free variables — the ones it names but never assigns — and checks
- * that its controller hands over every one.
+ * that its controller hands over every one. Nothing is exempt, `$instructor`
+ * and `$csrfToken` included: `requireUser()` records those for the *layout*,
+ * and a page body sees only what its own `$data` carries.
  *
  * @requirement NFR-81
  */
 final class AdminHtmlRoutesTest extends TestCase
 {
-    /**
-     * `$instructor` and `$csrfToken` are the admin layout's own chrome, which
-     * `HtmlController::requireUser()` records for every authenticated page. A
-     * template may name them without its controller passing them.
-     */
-    private const CHROME = ['instructor', 'csrfToken'];
-
     /**
      * route pattern => [template under templates/, controller class, method].
      *
@@ -48,6 +43,16 @@ final class AdminHtmlRoutesTest extends TestCase
     public static function adminPages(): array
     {
         return [
+            '/admin/dashboard' => [
+                'admin/dashboard.php',
+                \EduQR\Controllers\Admin\DashboardController::class,
+                'index',
+            ],
+            '/admin/audit-logs' => [
+                'admin/audit-logs.php',
+                \EduQR\Controllers\Admin\AuditLogController::class,
+                'index',
+            ],
             '/admin/courses' => [
                 'admin/courses/list.php',
                 \EduQR\Controllers\Admin\CourseController::class,
@@ -158,16 +163,27 @@ final class AdminHtmlRoutesTest extends TestCase
         $handedOver = $this->viewDataKeysFor($controller, $template);
 
         foreach ($this->freeVariablesOf($this->templateSource($template)) as $name) {
-            if (\in_array($name, self::CHROME, true)) {
-                continue;
-            }
-
             $this->assertContains(
                 $name,
                 $handedOver,
                 $template . ' reads $' . $name . ', which ' . $controller . ' does not pass to it.',
             );
         }
+    }
+
+    /**
+     * The audit log is the one admin page with a role on it, and the role moved
+     * out of the template with everything else. Losing it would not fail any
+     * assertion above — the page would simply render for every instructor — so
+     * it is asserted here on its own.
+     */
+    public function test_the_audit_log_page_is_admin_only_NFR81(): void
+    {
+        $source = $this->sourceOf(
+            (new ReflectionClass(\EduQR\Controllers\Admin\AuditLogController::class))->getFileName(),
+        );
+
+        $this->assertStringContainsString("requireUser('admin')", $source);
     }
 
     /** A template with no free variables would make the test above vacuous. */
