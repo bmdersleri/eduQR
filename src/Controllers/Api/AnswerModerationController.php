@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
 use EduQR\Repositories\CourseRepository;
@@ -20,7 +21,7 @@ use PDO;
  * may hide/unhide answers.
  * Requires moderation_mode = 1 on the session (enforced at service layer).
  */
-final class AnswerModerationController
+final class AnswerModerationController extends ApiController
 {
     public function hide(int $answerId): void
     {
@@ -82,18 +83,5 @@ final class AnswerModerationController
             'success' => true,
             'data' => ['id' => $answerId, 'is_hidden' => (bool) $isHidden],
         ]);
-    }
-
-    private function json(int $status, array $payload): never
-    {
-        http_response_code($status);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-        exit;
-    }
-
-    private function error(int $status, string $code, string $message): never
-    {
-        $this->json($status, ['success' => false, 'error' => ['code' => $code, 'message' => $message]]);
     }
 }

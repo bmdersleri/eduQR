@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Controllers\ApiController;
 use EduQR\Middleware\RateLimitMiddleware;
 use EduQR\Repositories\AnswerRepository;
 use EduQR\Repositories\OptionRepository;
@@ -18,7 +19,7 @@ use EduQR\Services\DuplicateAnswerException;
  *
  * Auth: participant cookie (eduqr_participant), not instructor session.
  */
-final class AnswerController
+final class AnswerController extends ApiController
 {
     private AnswerService $service;
 
@@ -85,21 +86,6 @@ final class AnswerController
         return $id;
     }
 
-    private function handleRuntimeException(\RuntimeException $e): never
-    {
-        match ($e->getMessage()) {
-            'participant_not_found' => $this->error(401, 'not_joined', t('error.not_joined')),
-            'question_not_found' => $this->error(404, 'question_not_found', t('error.question_not_found')),
-            'question_not_active' => $this->error(422, 'question_closed', t('error.question_closed')),
-            'session_not_found' => $this->error(404, 'session_not_found', t('error.session_not_found')),
-            'session_paused' => $this->error(422, 'session_paused', t('error.session_paused')),
-            'session_closed' => $this->error(422, 'session_closed', t('error.session_closed')),
-            'forbidden' => $this->error(403, 'forbidden', t('error.forbidden')),
-            'invalid_option' => $this->error(422, 'invalid_option', t('error.invalid_answer_shape')),
-            default => $this->error(500, 'server_error', t('error.server_error')),
-        };
-    }
-
     private function handleValidationException(\InvalidArgumentException $e): never
     {
         match ($e->getMessage()) {
@@ -110,27 +96,5 @@ final class AnswerController
             'answer:invalid_shape' => $this->error(422, 'invalid_answer_shape', t('error.invalid_answer_shape')),
             default => $this->error(400, 'validation_error', t('common.error')),
         };
-    }
-
-    private function jsonBody(): array
-    {
-        return json_decode((string) file_get_contents('php://input'), true) ?? [];
-    }
-
-    private function json(int $status, array $payload): never
-    {
-        http_response_code($status);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-        exit;
-    }
-
-    private function error(int $status, string $code, string $message, string $field = ''): never
-    {
-        $error = ['code' => $code, 'message' => $message];
-        if ($field !== '') {
-            $error['field'] = $field;
-        }
-        $this->json($status, ['success' => false, 'error' => $error]);
     }
 }

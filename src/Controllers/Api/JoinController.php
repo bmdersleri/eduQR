@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Controllers\ApiController;
 use EduQR\Middleware\RateLimitMiddleware;
 use EduQR\Repositories\ParticipantRepository;
 use EduQR\Repositories\SessionRepository;
 use EduQR\Services\ParticipantService;
 
-final class JoinController
+final class JoinController extends ApiController
 {
     private ParticipantService $service;
 
@@ -32,6 +33,9 @@ final class JoinController
         // T-505: Ensure eduqr_device persistent cookie exists
         $cookieId = $this->ensureDeviceCookie();
 
+        // Not self::jsonBody(): this endpoint coerces a non-object JSON body to
+        // an array and answers 400 for the missing nickname, where the shared
+        // decoder would let the TypeError become a 500.
         $body = (array) (json_decode(file_get_contents('php://input') ?: '{}', true) ?? []);
         $rawNickname = trim((string) ($body['nickname'] ?? ''));
         $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
@@ -46,14 +50,10 @@ final class JoinController
                 default => $this->error(400, 'validation_error', t('common.error'), ''),
             };
         } catch (\RuntimeException $e) {
-            match ($e->getMessage()) {
-                'session_not_found' => $this->error(404, 'session_not_found', t('error.session_not_found')),
-                'session_closed' => $this->error(410, 'session_closed', t('error.session_closed')),
-                'session_paused' => $this->error(410, 'session_paused', t('error.session_paused')),
-                'duplicate_nickname' => $this->error(409, 'duplicate_nickname', t('error.duplicate_nickname'), 'nickname'),
-                'profane_nickname' => $this->error(400, 'profane_nickname', t('error.profane_nickname'), 'nickname'),
-                default => $this->error(500, 'server_error', t('error.server_error')),
-            };
+            // Joining is the 410 side of the session_closed / session_paused
+            // divergence (SYSTEM_ARCHITECTURE.md §9.1); the status rides on the
+            // exception thrown by ParticipantService, not on a table here.
+            $this->handleRuntimeException($e);
         }
 
         // Set participant session cookie (session-lifetime, HttpOnly)
@@ -94,22 +94,5 @@ final class JoinController
         ]);
 
         return $id;
-    }
-
-    private function json(int $status, array $payload): never
-    {
-        http_response_code($status);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-        exit;
-    }
-
-    private function error(int $status, string $code, string $message, string $field = ''): never
-    {
-        $error = ['code' => $code, 'message' => $message];
-        if ($field !== '') {
-            $error['field'] = $field;
-        }
-        $this->json($status, ['success' => false, 'error' => $error]);
     }
 }

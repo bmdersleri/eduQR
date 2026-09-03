@@ -4,10 +4,16 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Controllers\ApiController;
 use EduQR\Support\Database;
 
-final class LocaleController
+final class LocaleController extends ApiController
 {
+    /**
+     * Predates the envelope and is consumed by the language switcher as a bare
+     * `{"data": [...]}` document, so it is emitted here rather than through
+     * {@see self::json()}.
+     */
     public function index(): void
     {
         $pdo = Database::connection();

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
 use EduQR\Repositories\AuditLogRepository;
@@ -16,7 +17,7 @@ use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\Writer\PngWriter;
 
-final class SessionController
+final class SessionController extends ApiController
 {
     private SessionService $service;
     private AuditLogRepository $auditLog;
@@ -292,18 +293,6 @@ final class SessionController
         ];
     }
 
-    private function handleRuntimeException(\RuntimeException $e): never
-    {
-        match ($e->getMessage()) {
-            'session_not_found' => $this->error(404, 'session_not_found', t('error.session_not_found')),
-            'course_not_found' => $this->error(404, 'course_not_found', t('error.course_not_found')),
-            'forbidden' => $this->error(403, 'forbidden', t('error.forbidden')),
-            'invalid_state_transition' => $this->error(422, 'invalid_state_transition', t('error.invalid_state_transition')),
-            'already_anonymized' => $this->error(409, 'already_anonymized', t('common.error')),
-            default => $this->error(500, 'server_error', t('error.server_error')),
-        };
-    }
-
     private function handleValidationException(\InvalidArgumentException $e): never
     {
         $parts = explode(':', $e->getMessage(), 2);
@@ -318,27 +307,6 @@ final class SessionController
         $this->json(400, [
             'success' => false,
             'error' => ['code' => 'validation_error', 'message' => $message, 'field' => $field],
-        ]);
-    }
-
-    private function jsonBody(): array
-    {
-        return json_decode((string) file_get_contents('php://input'), true) ?? [];
-    }
-
-    private function json(int $status, array $payload): never
-    {
-        http_response_code($status);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-        exit;
-    }
-
-    private function error(int $status, string $code, string $message): never
-    {
-        $this->json($status, [
-            'success' => false,
-            'error' => ['code' => $code, 'message' => $message],
         ]);
     }
 }

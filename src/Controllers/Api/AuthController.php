@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Controllers\ApiController;
+use EduQR\Exceptions\DomainException;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
 use EduQR\Repositories\AuditLogRepository;
@@ -13,7 +15,7 @@ use EduQR\Repositories\UserRepository;
 use EduQR\Services\AuthService;
 use EduQR\Services\PasswordResetService;
 
-final class AuthController
+final class AuthController extends ApiController
 {
     private AuthService $auth;
     private PasswordResetService $passwordResets;
@@ -42,11 +44,12 @@ final class AuthController
 
         try {
             $user = $this->auth->login($email, $pass);
+        } catch (DomainException $e) {
+            $this->failFromDomain($e);
         } catch (\RuntimeException $e) {
-            if ($e->getMessage() === 'too_many_attempts') {
-                $this->error(429, 'too_many_attempts', t('auth.login.error.locked'));
-            }
             // Intentionally vague — never reveal whether the email exists (FR-08).
+            // Only untyped failures land here; `invalid_credentials` and
+            // `too_many_attempts` are typed and answered by the mapper above.
             $this->error(401, 'invalid_credentials', t('auth.login.error.invalid'));
         }
 
@@ -151,7 +154,9 @@ final class AuthController
         } catch (\InvalidArgumentException $e) {
             $this->handlePasswordResetValidation($e);
         } catch (\RuntimeException $e) {
-            $this->error(400, 'invalid_reset_token', t('auth.reset.error.invalid_token'), 'token');
+            // `invalid_reset_token` carries its own 400, `token` field and
+            // message key; anything untyped keeps answering the same way.
+            $this->handleRuntimeException($e);
         }
 
         $this->json(200, [
@@ -162,13 +167,6 @@ final class AuthController
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 
-    private function jsonBody(): array
-    {
-        $raw = (string) file_get_contents('php://input');
-
-        return json_decode($raw, true) ?? [];
-    }
-
     private function userPayload(array $user): array
     {
         return [
@@ -178,28 +176,6 @@ final class AuthController
             'role' => $user['role'],
             'preferred_language' => $user['preferred_language'] ?? 'en',
         ];
-    }
-
-    private function json(int $status, array $payload): never
-    {
-        http_response_code($status);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-        exit;
-    }
-
-    private function error(int $status, string $code, string $message, ?string $field = null): never
-    {
-        $payload = [
-            'success' => false,
-            'error' => ['code' => $code, 'message' => $message],
-        ];
-
-        if ($field !== null && $field !== '') {
-            $payload['error']['field'] = $field;
-        }
-
-        $this->json($status, $payload);
     }
 
     private function handlePasswordResetValidation(\InvalidArgumentException $e): never

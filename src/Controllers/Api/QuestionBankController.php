@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace EduQR\Controllers\Api;
 
 use EduQR\Contracts\QuestionGenerationServiceInterface;
+use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
 use EduQR\Repositories\CourseRepository;
@@ -16,7 +17,7 @@ use EduQR\Services\QuestionBankService;
 use EduQR\Services\QuestionGenerationService;
 use EduQR\Services\QuestionService;
 
-final class QuestionBankController
+final class QuestionBankController extends ApiController
 {
     private QuestionBankService $service;
 
@@ -130,20 +131,6 @@ final class QuestionBankController
         ]);
     }
 
-    private function handleRuntimeException(\RuntimeException $e): never
-    {
-        match ($e->getMessage()) {
-            'question_not_found' => $this->error(404, 'question_not_found', t('error.question_not_found')),
-            'question_bank_not_found' => $this->error(404, 'question_bank_not_found', t('error.question_bank_not_found')),
-            'course_not_found' => $this->error(404, 'course_not_found', t('error.course_not_found')),
-            'session_not_found' => $this->error(404, 'session_not_found', t('error.session_not_found')),
-            'forbidden' => $this->error(403, 'forbidden', t('error.forbidden')),
-            'llm_unavailable' => $this->error(503, 'llm_unavailable', t('error.llm_unavailable')),
-            'invalid_llm_response' => $this->error(422, 'invalid_llm_response', t('error.invalid_llm_response')),
-            default => $this->error(500, 'server_error', t('error.server_error')),
-        };
-    }
-
     private function handleValidationException(\InvalidArgumentException $e): never
     {
         match ($e->getMessage()) {
@@ -158,28 +145,5 @@ final class QuestionBankController
             'options:text_too_long' => $this->error(400, 'validation_error', t('validation.text_too_long'), 'options'),
             default => $this->error(400, 'validation_error', t('common.error')),
         };
-    }
-
-    private function jsonBody(): array
-    {
-        return json_decode((string) file_get_contents('php://input'), true) ?? [];
-    }
-
-    private function json(int $status, array $payload): never
-    {
-        http_response_code($status);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-        exit;
-    }
-
-    private function error(int $status, string $code, string $message, string $field = ''): never
-    {
-        $error = ['code' => $code, 'message' => $message];
-        if ($field !== '') {
-            $error['field'] = $field;
-        }
-
-        $this->json($status, ['success' => false, 'error' => $error]);
     }
 }

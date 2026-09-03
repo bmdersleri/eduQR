@@ -462,7 +462,7 @@ final class Bootstrap
         });
 
         $router->get('/api/v1/sessions/{id}/report', function (array $p): void {
-            (new Controllers\Api\ReportController())->json((int) $p['id']);
+            (new Controllers\Api\ReportController())->reportJson((int) $p['id']);
         });
 
         // ── API: LMS exports — Moodle GIFT + gradebook CSV (T-1113) ───────────

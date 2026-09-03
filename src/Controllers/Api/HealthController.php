@@ -4,10 +4,16 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Controllers\ApiController;
 use EduQR\Support\Database;
 
-final class HealthController
+final class HealthController extends ApiController
 {
+    /**
+     * Not the `/api/v1/` envelope: the body is the probe document a load
+     * balancer reads, and it carries a `Cache-Control` header the envelope has
+     * no place for. Emitted here rather than through {@see self::json()}.
+     */
     public function check(): never
     {
         $checks = $this->runChecks();

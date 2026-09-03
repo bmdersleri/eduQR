@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
 use EduQR\Repositories\CourseRepository;
@@ -12,7 +13,7 @@ use EduQR\Repositories\QuestionRepository;
 use EduQR\Repositories\SessionRepository;
 use EduQR\Services\QuestionService;
 
-final class QuestionImageController
+final class QuestionImageController extends ApiController
 {
     private const UPLOAD_DIR = 'uploads/questions';
     private const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
@@ -152,22 +153,5 @@ final class QuestionImageController
         if ($course === null || $courseRepo->roleFor($courseId, $userId) === null) {
             $this->error(403, 'forbidden', t('error.forbidden'));
         }
-    }
-
-    private function json(int $status, array $payload): never
-    {
-        http_response_code($status);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-        exit;
-    }
-
-    private function error(int $status, string $code, string $message, string $field = ''): never
-    {
-        $error = ['code' => $code, 'message' => $message];
-        if ($field !== '') {
-            $error['field'] = $field;
-        }
-        $this->json($status, ['success' => false, 'error' => $error]);
     }
 }

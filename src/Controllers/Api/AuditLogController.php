@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace EduQR\Controllers\Api;
 
 use EduQR\Contracts\AuditLogRepositoryInterface;
+use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Repositories\AuditLogRepository;
 
@@ -13,7 +14,7 @@ use EduQR\Repositories\AuditLogRepository;
  *
  * Admin-only endpoint. Returns paginated audit-log entries.
  */
-final class AuditLogController
+final class AuditLogController extends ApiController
 {
     private AuditLogRepositoryInterface $repo;
 
@@ -34,12 +35,7 @@ final class AuditLogController
             ? $_GET['actor_type']
             : null;
 
-        $payload = $this->buildPayload($limit, $page, $actorType);
-
-        http_response_code(200);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-        exit;
+        $this->json(200, $this->buildPayload($limit, $page, $actorType));
     }
 
     /**

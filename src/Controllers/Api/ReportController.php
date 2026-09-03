@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Repositories\CourseRepository;
 use EduQR\Repositories\OptionRepository;
@@ -17,7 +18,7 @@ use EduQR\Services\ReportService;
  * All endpoints require instructor authentication (FR-74).
  * Device hash and IP addresses are never included in any output (FR-72, FR-73).
  */
-final class ReportController
+final class ReportController extends ApiController
 {
     private ReportService $report;
 
@@ -33,7 +34,7 @@ final class ReportController
 
     // ── GET /api/v1/sessions/{id}/report ──────────────────────────────────────
 
-    public function json(int $sessionId): void
+    public function reportJson(int $sessionId): void
     {
         $user = AuthMiddleware::require();
         $anonymize = filter_var($_GET['anonymize'] ?? false, FILTER_VALIDATE_BOOLEAN);
@@ -41,16 +42,10 @@ final class ReportController
         try {
             $data = $this->report->buildReport($sessionId, (int) $user['id'], $anonymize);
         } catch (\RuntimeException $e) {
-            $this->handleError($e);
+            $this->handleRuntimeException($e);
         }
 
-        http_response_code(200);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode(
-            ['success' => true, 'data' => $data],
-            JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR
-        );
-        exit;
+        $this->json(200, ['success' => true, 'data' => $data]);
     }
 
     // ── GET /api/v1/questions/{id}/themes ───────────────────────────────────
@@ -64,16 +59,10 @@ final class ReportController
         } catch (
             \RuntimeException $e
         ) {
-            $this->handleError($e);
+            $this->handleRuntimeException($e);
         }
 
-        http_response_code(200);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode(
-            ['success' => true, 'data' => $data],
-            JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR
-        );
-        exit;
+        $this->json(200, ['success' => true, 'data' => $data]);
     }
 
     // ── GET /api/v1/courses/{id}/analytics ───────────────────────────────────
@@ -85,16 +74,10 @@ final class ReportController
         try {
             $data = $this->report->buildCourseAnalytics($courseId, (int) $user['id']);
         } catch (\RuntimeException $e) {
-            $this->handleError($e);
+            $this->handleRuntimeException($e);
         }
 
-        http_response_code(200);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode(
-            ['success' => true, 'data' => $data],
-            JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR
-        );
-        exit;
+        $this->json(200, ['success' => true, 'data' => $data]);
     }
 
     // ── GET /api/v1/sessions/{id}/report.pdf ─────────────────────────────────
@@ -123,7 +106,7 @@ final class ReportController
         try {
             $data = $this->report->buildReport($sessionId, (int) $user['id'], $anonymize);
         } catch (\RuntimeException $e) {
-            $this->handleError($e);
+            $this->handleRuntimeException($e);
         }
 
         $filename = 'session-' . $sessionId . ($anonymize ? '-anonymized' : '') . '.csv';
@@ -205,7 +188,7 @@ final class ReportController
         try {
             $data = $this->report->buildGiftExport($sessionId, (int) $user['id']);
         } catch (\RuntimeException $e) {
-            $this->handleError($e);
+            $this->handleRuntimeException($e);
         }
 
         $filename = 'session-' . $sessionId . '-questions.gift.txt';
@@ -228,7 +211,7 @@ final class ReportController
         try {
             $data = $this->report->buildGradebook($sessionId, (int) $user['id'], $anonymize);
         } catch (\RuntimeException $e) {
-            $this->handleError($e);
+            $this->handleRuntimeException($e);
         }
 
         $filename = 'session-' . $sessionId . '-gradebook' . ($anonymize ? '-anonymized' : '') . '.csv';
@@ -272,7 +255,7 @@ final class ReportController
         try {
             $data = $this->report->buildReport($sessionId, (int) $user['id'], $anonymize);
         } catch (\RuntimeException $e) {
-            $this->handleError($e);
+            $this->handleRuntimeException($e);
         }
 
         header('Content-Type: text/html; charset=utf-8');
@@ -373,28 +356,5 @@ final class ReportController
         }
 
         return $value;
-    }
-
-    // ── Error handler ──────────────────────────────────────────────────────────
-
-    private function handleError(\RuntimeException $e): never
-    {
-        $map = [
-            'session_not_found' => [404, t('error.session_not_found')],
-            'course_not_found' => [404, t('error.course_not_found')],
-            'question_not_found' => [404, t('error.question_not_found')],
-            'question_not_open_text' => [422, t('error.question_not_open_text')],
-            'forbidden' => [403, t('error.forbidden')],
-            'llm_unavailable' => [503, t('error.llm_unavailable')],
-            'invalid_llm_response' => [422, t('error.invalid_llm_response')],
-        ];
-        [$status, $msg] = $map[$e->getMessage()] ?? [500, t('error.server_error')];
-        http_response_code($status);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode([
-            'success' => false,
-            'error' => ['code' => $e->getMessage(), 'message' => $msg],
-        ], JSON_UNESCAPED_UNICODE);
-        exit;
     }
 }

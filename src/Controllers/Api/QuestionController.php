@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace EduQR\Controllers\Api;
 
 use EduQR\Contracts\AuditLogRepositoryInterface;
+use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
 use EduQR\Repositories\AuditLogRepository;
@@ -14,7 +15,7 @@ use EduQR\Repositories\QuestionRepository;
 use EduQR\Repositories\SessionRepository;
 use EduQR\Services\QuestionService;
 
-final class QuestionController
+final class QuestionController extends ApiController
 {
     private QuestionService $service;
     private AuditLogRepositoryInterface $auditLog;
@@ -327,19 +328,6 @@ final class QuestionController
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 
-    private function handleRuntimeException(\RuntimeException $e): never
-    {
-        match ($e->getMessage()) {
-            'question_not_found' => $this->error(404, 'question_not_found', t('error.question_not_found')),
-            'session_not_found' => $this->error(404, 'session_not_found', t('error.session_not_found')),
-            'forbidden' => $this->error(403, 'forbidden', t('error.forbidden')),
-            'question_not_draft' => $this->error(422, 'invalid_state_transition', t('error.invalid_state_transition')),
-            'invalid_state_transition' => $this->error(422, 'invalid_state_transition', t('error.invalid_state_transition')),
-            'session_not_active' => $this->error(422, 'session_not_active', t('error.session_not_active')),
-            default => $this->error(500, 'server_error', t('error.server_error')),
-        };
-    }
-
     private function handleValidationException(\InvalidArgumentException $e): never
     {
         match ($e->getMessage()) {
@@ -357,27 +345,5 @@ final class QuestionController
             'stage:invalid' => $this->error(422, 'invalid_stage', t('common.error')),
             default => $this->error(400, 'validation_error', t('common.error')),
         };
-    }
-
-    private function jsonBody(): array
-    {
-        return json_decode((string) file_get_contents('php://input'), true) ?? [];
-    }
-
-    private function json(int $status, array $payload): never
-    {
-        http_response_code($status);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-        exit;
-    }
-
-    private function error(int $status, string $code, string $message, string $field = ''): never
-    {
-        $error = ['code' => $code, 'message' => $message];
-        if ($field !== '') {
-            $error['field'] = $field;
-        }
-        $this->json($status, ['success' => false, 'error' => $error]);
     }
 }
