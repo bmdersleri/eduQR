@@ -87,7 +87,7 @@ final class Bootstrap
                 return false;
             }
             $msg = "[eduQR][error] {$errstr} in {$errfile}:{$errline}";
-            error_log($msg, 3, rtrim($logPath, '/') . '/app.log');
+            error_log($msg . "\n", 3, rtrim($logPath, '/') . '/app.log');
             if ($debug) {
                 throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
             }
@@ -104,25 +104,20 @@ final class Bootstrap
                 $e->getLine(),
                 $e->getTraceAsString()
             );
-            error_log($msg, 3, rtrim($logPath, '/') . '/app.log');
+            error_log($msg . "\n", 3, rtrim($logPath, '/') . '/app.log');
 
             // Discard any buffer HtmlController::capture() left open — a template
             // that fataled mid-render leaves partial markup sitting unflushed, and
             // headers_sent() says nothing about it. Without this, the error
             // response is appended to that partial markup instead of replacing it.
-            while (ob_get_level() > 0) {
-                ob_end_clean();
-            }
+            self::drainOutputBuffers();
 
             if (headers_sent()) {
                 return;
             }
 
             if (FailureResponse::wantsJson($_SERVER['REQUEST_URI'] ?? null)) {
-                $payload = FailureResponse::payloadFor($e);
-                http_response_code($payload['status']);
-                header('Content-Type: application/json; charset=utf-8');
-                echo json_encode($payload['body'], JSON_UNESCAPED_UNICODE);
+                self::respondWithFailureEnvelope(FailureResponse::payloadFor($e));
 
                 return;
             }
@@ -153,25 +148,20 @@ final class Bootstrap
                 $last['file'],
                 $last['line']
             );
-            error_log($msg, 3, rtrim($logPath, '/') . '/app.log');
+            error_log($msg . "\n", 3, rtrim($logPath, '/') . '/app.log');
 
             // Same reasoning as the exception handler above: an engine fatal
             // (OOM, E_PARSE, E_CORE_ERROR) never unwinds to
             // HtmlController::capture()'s catch block, so its ob_start() buffer
             // is still open here and must be discarded before we write anything.
-            while (ob_get_level() > 0) {
-                ob_end_clean();
-            }
+            self::drainOutputBuffers();
 
             if (headers_sent()) {
                 return;
             }
 
             if (FailureResponse::wantsJson($_SERVER['REQUEST_URI'] ?? null)) {
-                $payload = FailureResponse::payloadFor(new \RuntimeException('fatal'));
-                http_response_code($payload['status']);
-                header('Content-Type: application/json; charset=utf-8');
-                echo json_encode($payload['body'], JSON_UNESCAPED_UNICODE);
+                self::respondWithFailureEnvelope(FailureResponse::payloadFor(new \RuntimeException('fatal')));
 
                 return;
             }
@@ -180,6 +170,44 @@ final class Bootstrap
             header('Content-Type: text/html; charset=utf-8');
             include __DIR__ . '/../templates/errors/500.php';
         });
+    }
+
+    /**
+     * Discards every open output buffer, bounded so a buffer that refuses to
+     * close (a future custom handler installed with PHP_OUTPUT_HANDLER_CLEANABLE
+     * unset) can never spin this loop forever inside a global error handler.
+     */
+    private static function drainOutputBuffers(): void
+    {
+        $guard = 0;
+        while (ob_get_level() > 0 && $guard < 64) {
+            ob_end_clean();
+            $guard++;
+        }
+    }
+
+    /**
+     * Writes the shared NFR-85 failure envelope for an API request.
+     *
+     * Removes any `ETag` queued by ApiController::json() for the 200 this
+     * failure interrupted (NFR-76, set at ApiController:114-119) — a 500 must
+     * never ship carrying the ETag of the response it replaced.
+     *
+     * json_encode() is not given JSON_THROW_ON_ERROR: this runs inside a
+     * global handler, where letting it throw would just produce a second,
+     * unhandled failure. The literal fallback keeps the body a valid envelope
+     * even if encoding the (already-sanitised) payload somehow fails.
+     *
+     * @param array{status:int, body:array<string,mixed>} $payload
+     */
+    private static function respondWithFailureEnvelope(array $payload): void
+    {
+        header_remove('ETag');
+        http_response_code($payload['status']);
+        header('Content-Type: application/json; charset=utf-8');
+
+        $body = json_encode($payload['body'], JSON_UNESCAPED_UNICODE);
+        echo $body !== false ? $body : '{"success":false,"error":{"code":"server_error","message":"Server error"}}';
     }
 
     // ── Route registration ─────────────────────────────────────────────────────
