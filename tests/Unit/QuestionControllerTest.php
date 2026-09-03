@@ -10,6 +10,7 @@ use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Controllers\Api\QuestionController;
+use EduQR\Exceptions\ValidationException;
 use EduQR\I18n\I18nService;
 use EduQR\Services\QuestionService;
 use PHPUnit\Framework\TestCase;
@@ -37,6 +38,19 @@ final class QuestionControllerTest extends TestCase
         $method = new ReflectionMethod($controller, 'normalizeImportPayload');
 
         return $method->invoke($controller, $body);
+    }
+
+    private function assertInvalidImportPayload(array $body): void
+    {
+        try {
+            $this->callNormalizeImportPayload($body);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('invalid_import_payload', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('invalid_import_payload', $e->getPublicCode());
+            $this->assertNull($e->getField());
+        }
     }
 
     public function testLegacyFormatNormalization(): void
@@ -147,50 +161,46 @@ final class QuestionControllerTest extends TestCase
 
     public function testInvalidPayloadStructureThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('import:invalid_payload');
-
         $body = [
             'not_questions_or_sections' => [],
         ];
 
-        $this->callNormalizeImportPayload($body);
+        $this->assertInvalidImportPayload($body);
     }
 
     public function testInvalidQuestionsTypeThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('import:invalid_payload');
-
         $body = [
             'questions' => 'not an array',
         ];
 
-        $this->callNormalizeImportPayload($body);
+        $this->assertInvalidImportPayload($body);
     }
 
     public function testInvalidSectionsTypeThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('import:invalid_payload');
-
         $body = [
             'sections' => 'not an array',
         ];
 
-        $this->callNormalizeImportPayload($body);
+        $this->assertInvalidImportPayload($body);
     }
 
     public function testEmptyPayloadThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('questions:required');
-
         $body = [
             'questions' => [],
         ];
 
-        $this->callNormalizeImportPayload($body);
+        try {
+            $this->callNormalizeImportPayload($body);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('required', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('missing_fields', $e->getPublicCode());
+            $this->assertSame('questions', $e->getField());
+        }
     }
 
     public function testCombinedFormatNormalizationAndOrdering(): void
@@ -257,9 +267,6 @@ final class QuestionControllerTest extends TestCase
 
     public function testInvalidSectionKeysThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('import:invalid_payload');
-
         $body = [
             'sections' => [
                 'invalid_key' => [
@@ -271,6 +278,6 @@ final class QuestionControllerTest extends TestCase
             ],
         ];
 
-        $this->callNormalizeImportPayload($body);
+        $this->assertInvalidImportPayload($body);
     }
 }

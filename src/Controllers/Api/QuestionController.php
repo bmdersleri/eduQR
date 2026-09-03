@@ -7,6 +7,7 @@ namespace EduQR\Controllers\Api;
 use EduQR\Container;
 use EduQR\Contracts\AuditLogRepositoryInterface;
 use EduQR\Controllers\ApiController;
+use EduQR\Exceptions\ValidationException;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
 use EduQR\Services\QuestionService;
@@ -69,9 +70,9 @@ final class QuestionController extends ApiController
         CsrfMiddleware::verify();
 
         $body = $this->jsonBody();
-        $items = $this->normalizeImportPayload($body);
 
         try {
+            $items = $this->normalizeImportPayload($body);
             $ids = $this->service->createMany($sessionId, (int) $user['id'], $items);
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);
@@ -109,17 +110,17 @@ final class QuestionController extends ApiController
         $hasSections = isset($body['sections']);
 
         if (! $hasQuestions && ! $hasSections) {
-            throw new \InvalidArgumentException('import:invalid_payload');
+            throw new ValidationException('invalid_import_payload', 400, 'invalid_import_payload');
         }
 
         if ($hasQuestions) {
             if (! is_array($body['questions'])) {
-                throw new \InvalidArgumentException('import:invalid_payload');
+                throw new ValidationException('invalid_import_payload', 400, 'invalid_import_payload');
             }
 
             foreach ($body['questions'] as $row) {
                 if (! is_array($row)) {
-                    throw new \InvalidArgumentException('import:invalid_payload');
+                    throw new ValidationException('invalid_import_payload', 400, 'invalid_import_payload');
                 }
 
                 $stage = $row['stage'] ?? 'middle';
@@ -140,19 +141,19 @@ final class QuestionController extends ApiController
         if ($hasSections) {
             $sections = $body['sections'];
             if (! is_array($sections)) {
-                throw new \InvalidArgumentException('import:invalid_payload');
+                throw new ValidationException('invalid_import_payload', 400, 'invalid_import_payload');
             }
 
             foreach (array_keys($sections) as $key) {
                 if (! in_array($key, ['opening', 'middle', 'closing'], true)) {
-                    throw new \InvalidArgumentException('import:invalid_payload');
+                    throw new ValidationException('invalid_import_payload', 400, 'invalid_import_payload');
                 }
             }
 
             if ((isset($sections['opening']) && ! is_array($sections['opening'])) ||
                 (isset($sections['middle']) && ! is_array($sections['middle'])) ||
                 (isset($sections['closing']) && ! is_array($sections['closing']))) {
-                throw new \InvalidArgumentException('import:invalid_payload');
+                throw new ValidationException('invalid_import_payload', 400, 'invalid_import_payload');
             }
 
             $courseName = trim((string) ($body['course_name'] ?? ''));
@@ -167,12 +168,12 @@ final class QuestionController extends ApiController
             foreach ($ordered as $phase => $rows) {
                 foreach ($rows as $row) {
                     if (! is_array($row)) {
-                        throw new \InvalidArgumentException('import:invalid_payload');
+                        throw new ValidationException('invalid_import_payload', 400, 'invalid_import_payload');
                     }
 
                     $text = trim((string) ($row['question_text'] ?? ''));
                     if ($text === '') {
-                        throw new \InvalidArgumentException('question_text:required');
+                        throw new ValidationException('required', 400, 'missing_fields', 'question_text');
                     }
 
                     $prefixParts = [];
@@ -205,7 +206,7 @@ final class QuestionController extends ApiController
 
         $result = array_merge($opening, $middle, $closing);
         if (count($result) === 0) {
-            throw new \InvalidArgumentException('questions:required');
+            throw new ValidationException('required', 400, 'missing_fields', 'questions');
         }
 
         return $result;
