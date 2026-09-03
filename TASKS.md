@@ -314,13 +314,14 @@ Not part of the MVP. Each item must be escalated to the human owner before work 
 [x] T-1107  Email-based password reset                                                      [FR-06]
 [ ] T-1108  Add de.json, fr.json (>= 95% coverage each)                                     [FR-86]
 [ ] T-1109  RTL support + ar.json                                                           [FR-86]
-[ ] T-1110  WebSocket / Socket.IO real-time (replaces polling)                              [NFR-02]
+[-] T-1110  WebSocket / Socket.IO real-time — closed, see ADR-0002                          [NFR-02]
 [x] T-1111  Health-check endpoint /api/v1/health                                            [NFR-72]
 [x] T-1112  Admin audit-log viewer UI                                                       [FR-91]
 [x] T-1113  LMS integration (Moodle / Canvas export)                                        [FR-98]
 [x] T-1114  Multi-instructor course ownership                                               [FR-97]
 [x] T-1115  Containerize (docker-compose: PHP + MySQL [+ Node later])                       [NFR-75]
 [x] T-1116  Question import V2 (legacy questions[] and staged sections opening->middle->closing, processing order, metadata, error: invalid_import_payload) [FR-31]
+[ ] T-1123  Bounded-cost live polling (ETag/304, configurable intervals)                    [NFR-76]
 ```
 
 ---
@@ -328,6 +329,7 @@ Not part of the MVP. Each item must be escalated to the human owner before work 
 ## Conventions for Editing This File
 
 - Tick `[x]` only when a task is **shipped** — code, tests, docs, and locale keys all done.
+- Mark `[-]` when a task is **closed without shipping** — deliberately rejected. Keep the line and point at the ADR that records why, so the decision is not silently re-opened later.
 - Keep completed tasks for one release cycle; they are useful for retrospectives.
 - New tasks go to the end of the phase they belong to and get the next free ID in that phase's range.
 - A task with no `FR-` / `NFR-` reference cannot be started — add the requirement first.
