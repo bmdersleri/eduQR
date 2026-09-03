@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace EduQR\Controllers\Api;
 
 use EduQR\Container;
+use EduQR\Contracts\CourseAnalyticsServiceInterface;
 use EduQR\Contracts\ExportServiceInterface;
 use EduQR\Contracts\ReportBuilderInterface;
 use EduQR\Controllers\ApiController;
@@ -22,12 +23,14 @@ final class ReportController extends ApiController
     private ReportService $report;
     private ExportServiceInterface $exports;
     private ReportBuilderInterface $reports;
+    private CourseAnalyticsServiceInterface $analytics;
 
     public function __construct()
     {
         $this->report = Container::reportService();
         $this->exports = Container::exportService();
         $this->reports = Container::reportBuilder();
+        $this->analytics = Container::courseAnalyticsService();
     }
 
     // ── GET /api/v1/sessions/{id}/report ──────────────────────────────────────
@@ -70,7 +73,7 @@ final class ReportController extends ApiController
         $user = AuthMiddleware::require();
 
         try {
-            $data = $this->report->buildCourseAnalytics($courseId, (int) $user['id']);
+            $data = $this->analytics->buildCourseAnalytics($courseId, (int) $user['id']);
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);
         }

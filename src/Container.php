@@ -341,7 +341,6 @@ final class Container
             self::questionRepository(),
             self::optionRepository(),
             self::courseRepository(),
-            self::reportBuilder(),
         );
     }
 

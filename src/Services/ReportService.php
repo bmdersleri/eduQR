@@ -8,7 +8,6 @@ use EduQR\Contracts\CourseRepositoryInterface;
 use EduQR\Contracts\OpenTextThemeExtractionServiceInterface;
 use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
-use EduQR\Contracts\ReportBuilderInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Exceptions\DomainException;
 use EduQR\Exceptions\ForbiddenException;
@@ -35,7 +34,6 @@ final class ReportService
         private readonly QuestionRepositoryInterface $questions,
         private readonly OptionRepositoryInterface   $options,
         private readonly CourseRepositoryInterface   $courses,
-        private readonly ReportBuilderInterface      $reportBuilder,
         private readonly ?PDO                        $pdo = null,
         private readonly ?OpenTextThemeExtractionServiceInterface $themeExtractor = null,
     ) {
@@ -385,100 +383,6 @@ final class ReportService
             'there', 'these', 'they', 'this', 'those', 'to', 'too', 'us', 'very', 'was',
             'we', 'were', 'what', 'when', 'where', 'which', 'who', 'will', 'with', 'you',
             'your',
-        ];
-    }
-
-    /**
-     * Builds a course-level analytics view across every session in the course.
-     *
-     * @throws DomainException course_not_found | forbidden
-     */
-    public function buildCourseAnalytics(int $courseId, int $userId): array
-    {
-        $course = $this->requireCourse($courseId, $userId);
-        $sessions = $this->sessions->listByCourse($courseId);
-
-        $sessionAnalytics = [];
-        $questionTypeCounts = [
-            'multiple_choice' => 0,
-            'open_text' => 0,
-            'yes_no' => 0,
-            'likert_5' => 0,
-        ];
-
-        $closedSessionCount = 0;
-        $participantCount = 0;
-        $questionCount = 0;
-        $answerCount = 0;
-        $participationTotal = 0.0;
-        $lastSessionAt = null;
-
-        foreach ($sessions as $session) {
-            $report = $this->reportBuilder->buildReport((int) $session['id'], $userId, false);
-            $summary = $report['summary'];
-
-            if (($session['status'] ?? '') === 'closed') {
-                $closedSessionCount++;
-            }
-
-            $participantCount += (int) $summary['participant_count'];
-            $questionCount += (int) $summary['question_count'];
-            $answerCount += (int) $summary['answer_count'];
-            $participationTotal += (float) $summary['participation_rate'];
-
-            foreach ($report['questions'] as $question) {
-                $type = $question['type'];
-                if (array_key_exists($type, $questionTypeCounts)) {
-                    $questionTypeCounts[$type]++;
-                }
-            }
-
-            $candidateLastSessionAt = $session['started_at'] ?: $session['created_at'];
-            if ($candidateLastSessionAt !== null && ($lastSessionAt === null || strcmp((string) $candidateLastSessionAt, (string) $lastSessionAt) > 0)) {
-                $lastSessionAt = $candidateLastSessionAt;
-            }
-
-            $sessionAnalytics[] = [
-                'session_id' => (int) $session['id'],
-                'title' => $session['title'],
-                'short_code' => $session['short_code'],
-                'status' => $session['status'],
-                'started_at' => $session['started_at'],
-                'closed_at' => $session['closed_at'],
-                'participant_count' => (int) $summary['participant_count'],
-                'question_count' => (int) $summary['question_count'],
-                'answer_count' => (int) $summary['answer_count'],
-                'participation_rate' => (float) $summary['participation_rate'],
-                'anonymized' => (bool) $session['anonymized'],
-                'is_quiz' => (bool) ($session['is_quiz'] ?? false),
-            ];
-        }
-
-        $sessionCount = count($sessionAnalytics);
-
-        return [
-            'course' => [
-                'id' => (int) $course['id'],
-                'title' => $course['title'],
-                'code' => $course['code'],
-                'semester' => $course['semester'],
-                'status' => $course['status'],
-            ],
-            'summary' => [
-                'session_count' => $sessionCount,
-                'closed_session_count' => $closedSessionCount,
-                'participant_count' => $participantCount,
-                'question_count' => $questionCount,
-                'answer_count' => $answerCount,
-                'average_participation_rate' => $sessionCount > 0 ? round($participationTotal / $sessionCount, 4) : 0.0,
-                'last_session_at' => $lastSessionAt,
-            ],
-            'question_type_breakdown' => array_map(
-                static fn (string $type, int $count): array => ['type' => $type, 'count' => $count],
-                array_keys($questionTypeCounts),
-                array_values($questionTypeCounts)
-            ),
-            'sessions' => $sessionAnalytics,
         ];
     }
 

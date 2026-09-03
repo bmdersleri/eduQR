@@ -9,9 +9,7 @@ use EduQR\Contracts\OpenTextThemeExtractionServiceInterface;
 use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
-use EduQR\Services\ReportBuilder;
 use EduQR\Services\ReportService;
-use EduQR\Services\ScoringService;
 use PDO;
 use PHPUnit\Framework\TestCase;
 
@@ -71,7 +69,6 @@ class ReportServiceTest extends TestCase
         ?array $questionRow = null,
         ?array $sessionRow = null,
         ?array $courseRow = null,
-        ?array $sessionList = null,
         ?OpenTextThemeExtractionServiceInterface $themeExtractor = null,
     ): ReportService {
         $q = $questionRow ?? [
@@ -90,7 +87,6 @@ class ReportServiceTest extends TestCase
         $sessions = $this->createMock(SessionRepositoryInterface::class);
         $sessions->method('findById')->willReturn($sessionRow ?? ['id' => 10, 'status' => 'active', 'course_id' => 5, 'show_results_to_students' => 1]);
         $sessions->method('findByShortCode')->willReturn($sessionRow ?? ['id' => 10, 'status' => 'active', 'course_id' => 5, 'show_results_to_students' => 1]);
-        $sessions->method('listByCourse')->willReturn($sessionList ?? [$sessionRow ?? ['id' => 10, 'status' => 'active', 'course_id' => 5, 'show_results_to_students' => 1]]);
 
         $course = $courseRow ?? ['id' => 5, 'instructor_id' => 99];
 
@@ -110,7 +106,6 @@ class ReportServiceTest extends TestCase
             $questions,
             $options,
             $courses,
-            new ReportBuilder($sessions, $questions, $courses, $this->pdo, new ScoringService($questions, $this->pdo)),
             $this->pdo,
             $themeExtractor,
         );
@@ -448,136 +443,5 @@ class ReportServiceTest extends TestCase
         $terms = array_column($cloud, 'term');
         $this->assertCount(1, $terms, 'i-casing variants must collapse into one term');
         $this->assertSame(3, $cloud[0]['count']);
-    }
-
-    public function testBuildCourseAnalyticsReturnsSummaryAndSessionRows_FR64(): void
-    {
-        $this->seedOptions(1, ['A', 'B']);
-        $this->seedAnswer(1, 1, 1);
-        $this->seedAnswer(2, 1, 2);
-
-        $service = $this->makeService(
-            sessionRow: [
-                'id' => 10,
-                'status' => 'closed',
-                'course_id' => 5,
-                'show_results_to_students' => 1,
-                'title' => 'Week 1',
-                'short_code' => 'ABCD23',
-                'language' => 'en',
-                'started_at' => '2026-05-15 10:00:00',
-                'closed_at' => '2026-05-15 11:00:00',
-                'created_at' => '2026-05-15 09:55:00',
-                'anonymized' => 0,
-                'is_quiz' => 0,
-            ],
-            sessionList: [[
-                'id' => 10,
-                'status' => 'closed',
-                'course_id' => 5,
-                'show_results_to_students' => 1,
-                'title' => 'Week 1',
-                'short_code' => 'ABCD23',
-                'language' => 'en',
-                'started_at' => '2026-05-15 10:00:00',
-                'closed_at' => '2026-05-15 11:00:00',
-                'created_at' => '2026-05-15 09:55:00',
-                'anonymized' => 0,
-                'is_quiz' => 0,
-            ]],
-            courseRow: ['id' => 5, 'instructor_id' => 99, 'title' => 'CS', 'status' => 'active', 'code' => 'CSE203', 'semester' => '2026-Spring'],
-        );
-
-        $analytics = $service->buildCourseAnalytics(5, 99);
-
-        $this->assertSame('CS', $analytics['course']['title']);
-        $this->assertSame(1, $analytics['summary']['session_count']);
-        $this->assertSame(1, $analytics['summary']['closed_session_count']);
-        $this->assertSame(2, $analytics['summary']['participant_count']);
-        $this->assertSame(1, $analytics['summary']['question_count']);
-        $this->assertSame(2, $analytics['summary']['answer_count']);
-        $this->assertSame('2026-05-15 10:00:00', $analytics['summary']['last_session_at']);
-        $this->assertSame('multiple_choice', $analytics['question_type_breakdown'][0]['type']);
-        $this->assertSame(1, $analytics['question_type_breakdown'][0]['count']);
-        $this->assertSame('Week 1', $analytics['sessions'][0]['title']);
-        $this->assertSame('ABCD23', $analytics['sessions'][0]['short_code']);
-    }
-
-    public function testBuildCourseAnalyticsRejectsWrongInstructor_FR64(): void
-    {
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('forbidden');
-
-        $service = $this->makeService(courseRow: ['id' => 5, 'instructor_id' => 999]);
-        $service->buildCourseAnalytics(5, 1);
-    }
-
-    // ── Co-instructor access (FR-97) ───────────────────────────────────────────
-
-    /** Course 5 is owned by 99; user 20 co-instructs it, user 77 is unrelated. */
-    private function makeServiceWithCoInstructor(): \EduQR\Services\ReportService
-    {
-        $sessionRow = [
-            'id' => 10,
-            'status' => 'closed',
-            'course_id' => 5,
-            'show_results_to_students' => 1,
-            'title' => 'Week 1',
-            'short_code' => 'ABCD23',
-            'language' => 'en',
-            'started_at' => '2026-05-15 10:00:00',
-            'closed_at' => '2026-05-15 11:00:00',
-            'created_at' => '2026-05-15 09:55:00',
-            'anonymized' => 0,
-            'is_quiz' => 0,
-        ];
-
-        $questions = $this->createMock(QuestionRepositoryInterface::class);
-        $questions->method('findBySession')->willReturn([]);
-
-        $sessions = $this->createMock(SessionRepositoryInterface::class);
-        $sessions->method('findById')->willReturn($sessionRow);
-        $sessions->method('listByCourse')->willReturn([$sessionRow]);
-
-        $courses = $this->createMock(CourseRepositoryInterface::class);
-        $courses->method('findById')->willReturn([
-            'id' => 5,
-            'instructor_id' => 99,
-            'title' => 'CS',
-            'status' => 'active',
-            'code' => 'CSE203',
-            'semester' => '2026-Spring',
-        ]);
-        $courses->method('roleFor')->willReturnCallback(
-            static fn (int $courseId, int $userId): ?string => match ($userId) {
-                99 => 'owner',
-                20 => 'co_instructor',
-                default => null,
-            }
-        );
-
-        $options = $this->createMock(OptionRepositoryInterface::class);
-
-        return new \EduQR\Services\ReportService(
-            $sessions,
-            $questions,
-            $options,
-            $courses,
-            new ReportBuilder($sessions, $questions, $courses, $this->pdo, new ScoringService($questions, $this->pdo)),
-            $this->pdo,
-        );
-    }
-
-    public function testBuildCourseAnalyticsAllowedForCoInstructor_FR97(): void
-    {
-        $analytics = $this->makeServiceWithCoInstructor()->buildCourseAnalytics(5, 20);
-        $this->assertSame('CS', $analytics['course']['title']);
-    }
-
-    public function testBuildCourseAnalyticsStillForbiddenForStranger_FR97(): void
-    {
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('forbidden');
-        $this->makeServiceWithCoInstructor()->buildCourseAnalytics(5, 77);
     }
 }

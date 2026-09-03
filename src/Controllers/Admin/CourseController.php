@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace EduQR\Controllers\Admin;
 
 use EduQR\Container;
+use EduQR\Contracts\CourseAnalyticsServiceInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Controllers\HtmlController;
 use EduQR\Exceptions\DomainException;
 use EduQR\Middleware\CsrfMiddleware;
 use EduQR\Services\CourseService;
-use EduQR\Services\ReportService;
 
 /**
  * The five course screens of the instructor panel (NFR-81).
@@ -29,13 +29,13 @@ use EduQR\Services\ReportService;
 final class CourseController extends HtmlController
 {
     private CourseService $courses;
-    private ReportService $reports;
+    private CourseAnalyticsServiceInterface $reports;
     private SessionRepositoryInterface $sessions;
 
     public function __construct()
     {
         $this->courses = Container::courseService();
-        $this->reports = Container::reportService();
+        $this->reports = Container::courseAnalyticsService();
         $this->sessions = Container::sessionRepository();
     }
 
