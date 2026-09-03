@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace EduQR\Controllers\Public;
 
 use EduQR\Container;
+use EduQR\Contracts\AnswerRepositoryInterface;
 use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\ParticipantRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Controllers\HtmlController;
+use EduQR\Exceptions\DuplicateAnswerException;
+use EduQR\Services\AnswerService;
 use EduQR\Services\ParticipantService;
 
 /**
@@ -35,7 +38,9 @@ final class StudentController extends HtmlController
     private QuestionRepositoryInterface $questions;
     private OptionRepositoryInterface $options;
     private ParticipantRepositoryInterface $participants;
+    private AnswerRepositoryInterface $answers;
     private ParticipantService $participantService;
+    private AnswerService $answerService;
 
     public function __construct()
     {
@@ -43,7 +48,9 @@ final class StudentController extends HtmlController
         $this->questions = Container::questionRepository();
         $this->options = Container::optionRepository();
         $this->participants = Container::participantRepository();
+        $this->answers = Container::answerRepository();
         $this->participantService = Container::participantService();
+        $this->answerService = Container::answerService();
     }
 
     // ── GET /join/{short_code}/wait ───────────────────────────────────────────
@@ -229,7 +236,137 @@ final class StudentController extends HtmlController
         );
     }
 
+    // ── GET and POST /play/{short_code} ───────────────────────────────────────
+
+    /**
+     * The active question, and the no-JS form that answers it (T-709, T-710).
+     *
+     * One method serves both verbs. Six gates run before either of them can
+     * render anything — session, closed, paused, participant cookie, an active
+     * question, and whether this participant has already answered it — and the
+     * POST handler needs every one of them to have passed. Splitting the routes
+     * would duplicate all six to save a single branch.
+     *
+     * As with the join page, the closed and paused bodies the template used to
+     * include a layout around are templates of their own under `student/play/`.
+     * Neither sends a status of its own, so both still answer 200.
+     */
+    public function play(string $shortCode): void
+    {
+        $session = $this->sessions->findByShortCode($shortCode);
+
+        if ($session === null) {
+            $this->renderError(404);
+
+            return;
+        }
+
+        if ($session['status'] === 'closed') {
+            $this->render('student/play/closed.php', [], t('app.name'), self::LAYOUT_PUBLIC);
+
+            return;
+        }
+
+        if ($session['status'] === 'paused') {
+            $this->render('student/play/paused.php', [], t('app.name'), self::LAYOUT_PUBLIC);
+
+            return;
+        }
+
+        $participantId = (int) ($_COOKIE['eduqr_participant'] ?? 0);
+
+        if ($participantId <= 0) {
+            // Not joined — go and join.
+            $this->redirect(eduqr_path('/join/' . rawurlencode($shortCode)), 302);
+        }
+
+        $question = $this->questions->findActiveBySessionCode($shortCode);
+
+        if ($question === null) {
+            // Nothing to answer right now — wait for the next one.
+            $this->redirect(eduqr_path('/join/' . rawurlencode($shortCode) . '/wait'), 302);
+        }
+
+        $options = $this->options->findByQuestion((int) $question['id']);
+
+        $answeredUrl = eduqr_path(
+            '/play/' . rawurlencode($shortCode) . '/answered?answered_q=' . (int) $question['id'],
+        );
+
+        if ($this->answers->existsByParticipantAndQuestion($participantId, (int) $question['id'])) {
+            // Already answered — show the confirmation screen instead.
+            $this->redirect($answeredUrl, 302);
+        }
+
+        $noJsError = $_SERVER['REQUEST_METHOD'] === 'POST'
+            ? $this->submitNoJsAnswer($participantId, (int) $question['id'], $answeredUrl)
+            : '';
+
+        $qType = $question['question_type'];
+
+        $this->render(
+            'student/play.php',
+            [
+                'session' => $session,
+                'shortCode' => $shortCode,
+                'question' => $question,
+                'options' => $options,
+                'noJsError' => $noJsError,
+                'qType' => $qType,
+                // Pre-escaped, because the template writes it into a heading
+                // with a raw `<?=`. Left that way so nothing is escaped twice.
+                'qText' => htmlspecialchars($question['question_text'], ENT_QUOTES, 'UTF-8'),
+                'optionCount' => \count($options),
+            ],
+            // Escaped here and again by the layout, as above.
+            self::titleWithAppName(htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8')),
+            self::LAYOUT_PUBLIC,
+        );
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Handle the no-JS form POST and return the message to draw above the form.
+     *
+     * An accepted answer never comes back from here: it redirects with 303 so
+     * that a reload does not resubmit, and a duplicate redirects the same way
+     * because the student has, from their point of view, already answered.
+     *
+     * The `match` over `getMessage()` is the template's, unchanged. Since
+     * NFR-78 the services throw typed domain exceptions, but `DomainException`
+     * extends `\RuntimeException` and its `getMessage()` returns the error
+     * code, so both catches still select exactly what they selected before.
+     * Retyping them to `instanceof` checks is T-1131's job, not this move's.
+     */
+    private function submitNoJsAnswer(int $participantId, int $questionId, string $answeredUrl): string
+    {
+        $body = [
+            'question_id' => $questionId,
+            'selected_option_id' => isset($_POST['selected_option_id']) && $_POST['selected_option_id'] !== ''
+                ? (int) $_POST['selected_option_id']
+                : null,
+            'answer_text' => $_POST['answer_text'] ?? null,
+        ];
+
+        try {
+            $this->answerService->submit($participantId, $body);
+
+            $this->redirect($answeredUrl, 303);
+        } catch (DuplicateAnswerException) {
+            $this->redirect($answeredUrl, 303);
+        } catch (\InvalidArgumentException) {
+            return t('error.invalid_answer_shape');
+        } catch (\RuntimeException $e) {
+            return match ($e->getMessage()) {
+                'question_not_active' => t('error.question_closed'),
+                'session_paused' => t('error.session_paused'),
+                'session_closed' => t('error.session_closed'),
+                'invalid_option' => t('error.invalid_answer_shape'),
+                default => t('error.server_error'),
+            };
+        }
+    }
 
     /**
      * The first few questions of a session that are still open, each with its

@@ -220,8 +220,7 @@ final class Bootstrap
         });
 
         $router->get('/play/{short_code}', function (array $p): void {
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/student/play.php';
+            (new Controllers\Public\StudentController())->play($p['short_code']);
         });
 
         // ── Student batch answer page ─────────────────────────────────────────
@@ -230,8 +229,10 @@ final class Bootstrap
         });
 
         // No-JS fallback: form POST to /play/{short_code} (T-710)
+        // Same method as the GET: the six gates in front of the POST handler
+        // are identical, and play() branches on the verb itself.
         $router->post('/play/{short_code}', function (array $p): void {
-            include __DIR__ . '/../templates/student/play.php';
+            (new Controllers\Public\StudentController())->play($p['short_code']);
         });
 
         // ── API v1 ────────────────────────────────────────────────────────────
