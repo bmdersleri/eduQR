@@ -248,6 +248,12 @@ final class SessionController extends ApiController
 
     // ── GET /api/v1/sessions/{id}/participants/count ──────────────────────────
 
+    /**
+     * The one polled endpoint with no version query of its own: API_SPEC.md
+     * §1.9 says its version is "the count itself", and the count is also the
+     * whole body. So it is read once — after getParticipantCount() has proved
+     * the caller may see this session — and used for both (NFR-76).
+     */
     public function participantCount(int $id): void
     {
         $user = AuthMiddleware::require();
@@ -257,6 +263,8 @@ final class SessionController extends ApiController
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);
         }
+
+        $this->etagOrNotModified('participants|' . $id . '|' . $count);
 
         $this->json(200, [
             'success' => true,

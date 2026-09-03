@@ -8,6 +8,7 @@ use EduQR\Container;
 use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\RateLimitMiddleware;
+use EduQR\Services\PollVersionService;
 use EduQR\Services\ReactionService;
 
 /**
@@ -22,10 +23,22 @@ use EduQR\Services\ReactionService;
 final class ReactionController extends ApiController
 {
     private ReactionService $service;
+    private ?PollVersionService $versions;
 
-    public function __construct(?ReactionService $service = null)
+    public function __construct(?ReactionService $service = null, ?PollVersionService $versions = null)
     {
         $this->service = $service ?? Container::reactionService();
+        $this->versions = $versions;
+    }
+
+    /**
+     * Resolved on use rather than in the constructor: only aggregates() polls,
+     * and a student submitting a reaction should not pay for a collaborator
+     * that endpoint never touches (NFR-76).
+     */
+    private function versions(): PollVersionService
+    {
+        return $this->versions ??= Container::pollVersionService();
     }
 
     // ── POST /api/v1/reactions ────────────────────────────────────────────────
@@ -75,6 +88,10 @@ final class ReactionController extends ApiController
         $user = AuthMiddleware::require();
 
         try {
+            // Same guards as aggregatesForSession(), run first, so a caller with
+            // no role on the course is refused whatever ETag they hold (NFR-76).
+            $this->etagOrNotModified($this->versions()->reactionsVersion($sessionId, (int) $user['id']));
+
             $data = $this->service->aggregatesForSession($sessionId, (int) $user['id']);
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);

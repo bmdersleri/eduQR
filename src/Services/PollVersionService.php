@@ -144,7 +144,121 @@ final class PollVersionService
         return implode(';', $parts);
     }
 
+    // ── GET /api/v1/sessions/{id}/questions ───────────────────────────────────
+
+    /**
+     * Over the session's questions, `COUNT(*)` and `MAX(updated_at)`
+     * (API_SPEC.md §1.9) — plus the session's options, which §1.9 does not
+     * name.
+     *
+     * The addition is not caution, it is a reproduction. The body of this
+     * endpoint carries each question's options, and QuestionService::update()
+     * replaces options through OptionRepository without writing to the question
+     * row when nothing but `options` was submitted. `questions.updated_at` is
+     * `ON UPDATE CURRENT_TIMESTAMP`, so an options-only edit moves neither the
+     * count nor the maximum, and an instructor who rewrote the choices of a
+     * draft question would be handed a `304` and go on seeing the old ones.
+     *
+     * Options are deleted and recreated rather than edited in place, so their
+     * count and maximum id move whenever any of them change. Two scalar reads,
+     * neither of which assembles a row set.
+     *
+     * @throws DomainException session_not_found | course_not_found | forbidden
+     */
+    public function questionsVersion(int $sessionId, int $userId): string
+    {
+        $this->requireSession($sessionId, $userId);
+
+        return self::join([
+            $this->sessionQuestionsVersion($sessionId),
+            $this->sessionOptionsVersion($sessionId),
+        ]);
+    }
+
+    // ── GET /api/v1/sessions/{id}/reactions ───────────────────────────────────
+
+    /**
+     * Over the reactions, `COUNT(*)` and `MAX(updated_at)` (API_SPEC.md §1.9),
+     * scoped to the session — plus the session's questions.
+     *
+     * §1.9 says "the question's reactions", but the endpoint is session-scoped:
+     * ReactionService::aggregatesForSession() aggregates every question in the
+     * session and emits one row per question, so session scoping is the only
+     * reading that matches what the body carries.
+     *
+     * That is also why the question count and maximum `updated_at` are in the
+     * version. The body emits a `got_it: 0, lost: 0` row for a question nobody
+     * has reacted to yet, so adding a question changes the response while
+     * leaving the reactions table untouched. The extra read is the version
+     * query §1.9 already specifies for `/questions`, reused rather than
+     * invented.
+     *
+     * @throws DomainException session_not_found | course_not_found | forbidden
+     */
+    public function reactionsVersion(int $sessionId, int $userId): string
+    {
+        $this->requireSession($sessionId, $userId);
+
+        $statement = $this->pdo->prepare(
+            'SELECT COUNT(*) AS reaction_count, MAX(updated_at) AS last_update
+               FROM question_reactions
+              WHERE session_id = ?'
+        );
+        $statement->execute([$sessionId]);
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return self::join([
+            (string) (int) ($row['reaction_count'] ?? 0),
+            (string) ($row['last_update'] ?? ''),
+            $this->sessionQuestionsVersion($sessionId),
+        ]);
+    }
+
     // ── Version queries ───────────────────────────────────────────────────────
+
+    /**
+     * `COUNT(*)` and `MAX(updated_at)` over a session's questions — the version
+     * query API_SPEC.md §1.9 gives `/questions`, used by two endpoints.
+     */
+    private function sessionQuestionsVersion(int $sessionId): string
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT COUNT(*) AS question_count, MAX(updated_at) AS last_update
+               FROM questions
+              WHERE session_id = ?'
+        );
+        $statement->execute([$sessionId]);
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return self::join([
+            (string) (int) ($row['question_count'] ?? 0),
+            (string) ($row['last_update'] ?? ''),
+        ]);
+    }
+
+    /**
+     * `COUNT(*)` and `MAX(id)` over the options of a session's questions.
+     *
+     * The subquery is a semi-join over `idx_questions_session` returning two
+     * scalars, not a join that builds a row set. `options` has no timestamp of
+     * its own, which is why the maximum id stands in for one: an edit deletes
+     * every option of the question and inserts new ones.
+     */
+    private function sessionOptionsVersion(int $sessionId): string
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT COUNT(*) AS option_count, MAX(id) AS max_id
+               FROM options
+              WHERE question_id IN (SELECT id FROM questions WHERE session_id = ?)'
+        );
+        $statement->execute([$sessionId]);
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return self::join([
+            (string) (int) ($row['option_count'] ?? 0),
+            (string) (int) ($row['max_id'] ?? 0),
+        ]);
+    }
 
     /**
      * The cheap columns of every question in a session, in id order.

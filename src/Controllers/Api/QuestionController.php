@@ -10,19 +10,34 @@ use EduQR\Controllers\ApiController;
 use EduQR\Exceptions\ValidationException;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
+use EduQR\Services\PollVersionService;
 use EduQR\Services\QuestionService;
 
 final class QuestionController extends ApiController
 {
     private QuestionService $service;
     private AuditLogRepositoryInterface $auditLog;
+    private ?PollVersionService $versions;
 
     public function __construct(
         ?QuestionService $service = null,
-        ?AuditLogRepositoryInterface $auditLog = null
+        ?AuditLogRepositoryInterface $auditLog = null,
+        ?PollVersionService $versions = null
     ) {
         $this->service = $service ?? Container::questionService();
         $this->auditLog = $auditLog ?? Container::auditLogRepository();
+        $this->versions = $versions;
+    }
+
+    /**
+     * Resolved on use rather than in the constructor: index() is the only
+     * method here that polls, and PollVersionService holds the shared
+     * connection, so resolving it eagerly would open a database connection for
+     * every create, update and delete that does not need one (NFR-76).
+     */
+    private function versions(): PollVersionService
+    {
+        return $this->versions ??= Container::pollVersionService();
     }
 
     // ── GET /api/v1/sessions/{id}/questions ───────────────────────────────────
@@ -32,6 +47,11 @@ final class QuestionController extends ApiController
         $user = AuthMiddleware::require();
 
         try {
+            // The version query runs the same session and course guards list()
+            // runs, so an unauthorized caller is refused before any ETag is
+            // compared (NFR-76).
+            $this->etagOrNotModified($this->versions()->questionsVersion($sessionId, (int) $user['id']));
+
             $questions = $this->service->list($sessionId, (int) $user['id']);
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);

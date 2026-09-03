@@ -72,6 +72,25 @@ final class PollVersionServiceTest extends TestCase
                 is_hidden      INTEGER NOT NULL DEFAULT 0
             )
         ');
+
+        $this->pdo->exec('
+            CREATE TABLE options (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                question_id INTEGER NOT NULL,
+                option_text TEXT    NOT NULL
+            )
+        ');
+
+        $this->pdo->exec('
+            CREATE TABLE question_reactions (
+                id             INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id     INTEGER NOT NULL,
+                question_id    INTEGER NOT NULL,
+                participant_id INTEGER NOT NULL,
+                reaction       TEXT    NOT NULL,
+                updated_at     TEXT    NULL
+            )
+        ');
     }
 
     // ── /active-question ──────────────────────────────────────────────────────
@@ -354,6 +373,219 @@ final class PollVersionServiceTest extends TestCase
         self::assertSame('', $service->resultsVersion(10, 42, null));
     }
 
+    // ── /questions ────────────────────────────────────────────────────────────
+
+    /**
+     * @requirement NFR-76
+     */
+    public function testTheQuestionsVersionIsStableWhileNothingMoves(): void
+    {
+        $this->givenQuestion(1, 10, 'draft', '2026-09-03 10:00:00');
+        $this->givenOption(1, 'A');
+
+        $service = $this->makeService();
+
+        self::assertSame(
+            $service->questionsVersion(10, 42),
+            $service->questionsVersion(10, 42),
+        );
+    }
+
+    /**
+     * @requirement NFR-76
+     */
+    public function testAddingAQuestionMovesTheQuestionsVersion(): void
+    {
+        $this->givenQuestion(1, 10, 'draft', '2026-09-03 10:00:00');
+
+        $service = $this->makeService();
+        $before = $service->questionsVersion(10, 42);
+
+        $this->givenQuestion(2, 10, 'draft', '2026-09-03 10:00:00');
+
+        self::assertNotSame($before, $service->questionsVersion(10, 42));
+    }
+
+    /**
+     * @requirement NFR-76
+     */
+    public function testEditingAQuestionMovesTheQuestionsVersion(): void
+    {
+        $this->givenQuestion(1, 10, 'draft', '2026-09-03 10:00:00');
+
+        $service = $this->makeService();
+        $before = $service->questionsVersion(10, 42);
+
+        $this->pdo->exec("UPDATE questions SET updated_at = '2026-09-03 10:04:00' WHERE id = 1");
+
+        self::assertNotSame($before, $service->questionsVersion(10, 42));
+    }
+
+    /**
+     * Why this version reads more than API_SPEC §1.9 names for it.
+     *
+     * QuestionService::update() replaces the options of a draft question
+     * through OptionRepository, and does not write the question row when only
+     * the options were submitted. Without the options in the version, an
+     * instructor who rewrote the choices would be handed a 304 and go on seeing
+     * the old ones.
+     *
+     * @requirement NFR-76
+     */
+    public function testReplacingOnlyTheOptionsMovesTheQuestionsVersion(): void
+    {
+        $this->givenQuestion(1, 10, 'draft', '2026-09-03 10:00:00');
+        $this->givenOption(1, 'A');
+        $this->givenOption(1, 'B');
+
+        $service = $this->makeService();
+        $before = $service->questionsVersion(10, 42);
+
+        // Exactly what an options-only edit does: delete, then insert again.
+        $this->pdo->exec('DELETE FROM options WHERE question_id = 1');
+        $this->givenOption(1, 'C');
+        $this->givenOption(1, 'D');
+
+        self::assertNotSame($before, $service->questionsVersion(10, 42));
+
+        // And the question row really did not move, which is what makes the
+        // second read load-bearing rather than belt-and-braces.
+        $row = $this->pdo->query('SELECT COUNT(*) AS c, MAX(updated_at) AS m FROM questions WHERE session_id = 10')
+            ->fetch(PDO::FETCH_ASSOC);
+        self::assertSame(1, (int) $row['c']);
+        self::assertSame('2026-09-03 10:00:00', $row['m']);
+    }
+
+    /**
+     * Another session's questions are not this session's version.
+     *
+     * @requirement NFR-76
+     */
+    public function testTheQuestionsVersionIsScopedToItsSession(): void
+    {
+        $this->givenQuestion(1, 10, 'draft', '2026-09-03 10:00:00');
+
+        $service = $this->makeService();
+        $before = $service->questionsVersion(10, 42);
+
+        $this->givenQuestion(9, 99, 'draft', '2026-09-03 11:00:00');
+
+        self::assertSame($before, $service->questionsVersion(10, 42));
+    }
+
+    /**
+     * Ruling 2 again, on the second polled endpoint of the detail screen.
+     *
+     * @requirement NFR-76
+     */
+    public function testACallerWithNoRoleOnTheCourseGetsNoQuestionsVersion(): void
+    {
+        $this->givenQuestion(1, 10, 'draft', '2026-09-03 10:00:00');
+        $this->role = null;
+
+        $this->expectException(ForbiddenException::class);
+        $this->makeService()->questionsVersion(10, 42);
+    }
+
+    // ── /reactions ────────────────────────────────────────────────────────────
+
+    /**
+     * @requirement NFR-76
+     */
+    public function testTheReactionsVersionIsStableWhileNothingMoves(): void
+    {
+        $this->givenQuestion(1, 10, 'active', '2026-09-03 10:00:00');
+        $this->givenReaction(10, 1, 500, '2026-09-03 10:02:00');
+
+        $service = $this->makeService();
+
+        self::assertSame(
+            $service->reactionsVersion(10, 42),
+            $service->reactionsVersion(10, 42),
+        );
+    }
+
+    /**
+     * @requirement NFR-76
+     */
+    public function testANewReactionMovesTheReactionsVersion(): void
+    {
+        $this->givenQuestion(1, 10, 'active', '2026-09-03 10:00:00');
+        $this->givenReaction(10, 1, 500, '2026-09-03 10:02:00');
+
+        $service = $this->makeService();
+        $before = $service->reactionsVersion(10, 42);
+
+        $this->givenReaction(10, 1, 501, '2026-09-03 10:03:00');
+
+        self::assertNotSame($before, $service->reactionsVersion(10, 42));
+    }
+
+    /**
+     * Reacting again is an upsert, so the count does not move and only
+     * updated_at does — which is why §1.9 asks for both.
+     *
+     * @requirement NFR-76
+     */
+    public function testChangingAnExistingReactionMovesTheReactionsVersion(): void
+    {
+        $this->givenQuestion(1, 10, 'active', '2026-09-03 10:00:00');
+        $this->givenReaction(10, 1, 500, '2026-09-03 10:02:00');
+
+        $service = $this->makeService();
+        $before = $service->reactionsVersion(10, 42);
+
+        $this->pdo->exec(
+            "UPDATE question_reactions SET reaction = 'lost', updated_at = '2026-09-03 10:06:00'"
+            . ' WHERE participant_id = 500'
+        );
+
+        self::assertNotSame($before, $service->reactionsVersion(10, 42));
+    }
+
+    /**
+     * The other reason this version reads more than §1.9 names for it: the body
+     * carries a zeroed row for every question in the session, so adding a
+     * question changes the response while leaving the reactions untouched.
+     *
+     * @requirement NFR-76
+     */
+    public function testAddingAQuestionMovesTheReactionsVersion(): void
+    {
+        $this->givenQuestion(1, 10, 'active', '2026-09-03 10:00:00');
+        $this->givenReaction(10, 1, 500, '2026-09-03 10:02:00');
+
+        $service = $this->makeService();
+        $before = $service->reactionsVersion(10, 42);
+
+        $this->givenQuestion(2, 10, 'draft', '2026-09-03 10:07:00');
+
+        self::assertNotSame($before, $service->reactionsVersion(10, 42));
+    }
+
+    /**
+     * @requirement NFR-76
+     */
+    public function testACallerWithNoRoleOnTheCourseGetsNoReactionsVersion(): void
+    {
+        $this->givenQuestion(1, 10, 'active', '2026-09-03 10:00:00');
+        $this->role = null;
+
+        $this->expectException(ForbiddenException::class);
+        $this->makeService()->reactionsVersion(10, 42);
+    }
+
+    /**
+     * @requirement NFR-76
+     */
+    public function testAnUnknownSessionGetsNoReactionsVersion(): void
+    {
+        $this->sessionById = null;
+
+        $this->expectException(NotFoundException::class);
+        $this->makeService()->reactionsVersion(10, 42);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private function givenQuestion(int $id, int $sessionId, string $status, string $updatedAt): void
@@ -370,6 +602,23 @@ final class PollVersionServiceTest extends TestCase
             'INSERT INTO answers (question_id, participant_id) VALUES (?, ?)'
         );
         $statement->execute([$questionId, $participantId]);
+    }
+
+    private function givenOption(int $questionId, string $text): void
+    {
+        $statement = $this->pdo->prepare(
+            'INSERT INTO options (question_id, option_text) VALUES (?, ?)'
+        );
+        $statement->execute([$questionId, $text]);
+    }
+
+    private function givenReaction(int $sessionId, int $questionId, int $participantId, string $updatedAt): void
+    {
+        $statement = $this->pdo->prepare(
+            'INSERT INTO question_reactions (session_id, question_id, participant_id, reaction, updated_at)
+             VALUES (?, ?, ?, ?, ?)'
+        );
+        $statement->execute([$sessionId, $questionId, $participantId, 'got_it', $updatedAt]);
     }
 
     /**

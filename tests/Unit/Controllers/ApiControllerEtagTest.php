@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace EduQR\Tests\Unit\Controllers;
 
 use EduQR\Controllers\ApiController;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -170,7 +171,76 @@ final class ApiControllerEtagTest extends TestCase
         self::assertNull($this->rememberedEtag($this->controller()));
     }
 
+    // ── The five polled endpoints ─────────────────────────────────────────────
+
+    /**
+     * Every endpoint API_SPEC §1.9 lists asks for a conditional answer, and asks
+     * for it before it builds a body. The inventory is asserted from the source
+     * because none of these methods can be dispatched from a test.
+     *
+     * @requirement NFR-76
+     */
+    #[DataProvider('polledEndpoints')]
+    public function testEveryPolledEndpointAnswersConditionally(string $file, string $method): void
+    {
+        $body = self::methodBody($file, $method);
+
+        self::assertStringContainsString(
+            '$this->etagOrNotModified(',
+            $body,
+            $method . '() is polled on a timer and must be answerable with a 304.',
+        );
+    }
+
+    /**
+     * §1.9 gives the participant count no version query of its own: the count is
+     * the whole body, so the count is the version. It is therefore the one
+     * endpoint whose ETag is built in the controller, and it is still built from
+     * a value the authorization check has already produced.
+     *
+     * @requirement NFR-76
+     */
+    public function testTheParticipantCountIsItsOwnVersion(): void
+    {
+        $body = self::methodBody('src/Controllers/Api/SessionController.php', 'participantCount');
+
+        self::assertStringContainsString('$count = $this->service->getParticipantCount(', $body);
+        self::assertStringContainsString("\$this->etagOrNotModified('participants|' . \$id . '|' . \$count)", $body);
+        self::assertLessThan(
+            strpos($body, '$this->etagOrNotModified('),
+            strpos($body, 'getParticipantCount('),
+            'The count is authorized before it is turned into an ETag.',
+        );
+    }
+
+    /** @return array<string, array{string, string}> */
+    public static function polledEndpoints(): array
+    {
+        return [
+            'active-question' => ['src/Controllers/Api/PublicQuestionController.php', 'activeQuestion'],
+            'results' => ['src/Controllers/Api/ResultsController.php', 'instructorResults'],
+            'participants/count' => ['src/Controllers/Api/SessionController.php', 'participantCount'],
+            'reactions' => ['src/Controllers/Api/ReactionController.php', 'aggregates'],
+            'questions' => ['src/Controllers/Api/QuestionController.php', 'index'],
+        ];
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private static function methodBody(string $file, string $method): string
+    {
+        $path = \dirname(__DIR__, 3) . '/' . $file;
+        $source = file_get_contents($path);
+        self::assertIsString($source, $file . ' must be readable.');
+
+        $start = strpos($source, 'function ' . $method . '(');
+        self::assertIsInt($start, $method . '() must exist in ' . $file . '.');
+
+        $end = strpos($source, "\n    }", $start);
+        self::assertIsInt($end, $method . '() must be a method of ' . $file . '.');
+
+        return substr($source, $start, $end - $start);
+    }
 
     /** A concrete ApiController that exposes the protected conditional hook. */
     private function controller(): ApiController
