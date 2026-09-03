@@ -54,8 +54,7 @@ final class ReactionService
      * @param  array  $body           Decoded JSON body: question_id, reaction
      * @return string                 The stored reaction value
      *
-     * @throws \InvalidArgumentException  Validation failure (400 / 422)
-     * @throws DomainException          Not-found / state errors (404 / 422)
+     * @throws DomainException  Validation, not-found and state errors (400 / 401 / 403 / 404 / 422)
      *
      * @requirement FR-48
      */
@@ -70,7 +69,7 @@ final class ReactionService
         // ── 2. Resolve and validate question ──────────────────────────────────
         $questionId = isset($body['question_id']) ? (int) $body['question_id'] : 0;
         if ($questionId <= 0) {
-            throw new \InvalidArgumentException('question_id:required');
+            throw new ValidationException('required', 400, 'missing_fields', 'question_id');
         }
 
         $question = $this->questions->findById($questionId);
@@ -153,16 +152,16 @@ final class ReactionService
     // ── Validation ─────────────────────────────────────────────────────────────
 
     /**
-     * @throws \InvalidArgumentException  missing or unknown reaction value
+     * @throws ValidationException  missing or unknown reaction value
      */
     public function validateReaction(array $body): string
     {
         if (! isset($body['reaction']) || ! is_string($body['reaction']) || $body['reaction'] === '') {
-            throw new \InvalidArgumentException('reaction:required');
+            throw new ValidationException('required', 400, 'missing_fields', 'reaction');
         }
 
         if (! in_array($body['reaction'], self::REACTIONS, true)) {
-            throw new \InvalidArgumentException('reaction:invalid');
+            throw new ValidationException('invalid_reaction', 422, 'invalid_reaction', 'reaction');
         }
 
         return $body['reaction'];

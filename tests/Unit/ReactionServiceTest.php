@@ -9,6 +9,7 @@ use EduQR\Contracts\ParticipantRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\ReactionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
+use EduQR\Exceptions\ValidationException;
 use EduQR\Services\ReactionService;
 use PHPUnit\Framework\TestCase;
 
@@ -357,29 +358,47 @@ class ReactionServiceTest extends TestCase
 
     public function testUnknownReactionValueIsRejected(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('reaction:invalid');
-
         $service = $this->makeService();
-        $service->react(1, ['question_id' => 99, 'reaction' => 'confused']);
+
+        try {
+            $service->react(1, ['question_id' => 99, 'reaction' => 'confused']);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('invalid_reaction', $e->getErrorCode());
+            $this->assertSame(422, $e->getStatus());
+            $this->assertSame('invalid_reaction', $e->getPublicCode());
+            $this->assertSame('reaction', $e->getField());
+        }
     }
 
     public function testMissingReactionValueIsRejected(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('reaction:required');
-
         $service = $this->makeService();
-        $service->react(1, ['question_id' => 99]);
+
+        try {
+            $service->react(1, ['question_id' => 99]);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('required', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('missing_fields', $e->getPublicCode());
+            $this->assertSame('reaction', $e->getField());
+        }
     }
 
     public function testMissingQuestionIdIsRejected(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('question_id:required');
-
         $service = $this->makeService();
-        $service->react(1, ['reaction' => 'got_it']);
+
+        try {
+            $service->react(1, ['reaction' => 'got_it']);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('required', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('missing_fields', $e->getPublicCode());
+            $this->assertSame('question_id', $e->getField());
+        }
     }
 
     // ── State gates mirror the answer flow ─────────────────────────────────────

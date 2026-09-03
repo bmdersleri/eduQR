@@ -46,8 +46,6 @@ final class ReactionController extends ApiController
             $reaction = $this->service->react($participantId, $body);
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);
-        } catch (\InvalidArgumentException $e) {
-            $this->handleValidationException($e);
         }
 
         $this->json(200, $this->buildStudentPayload($reaction));
@@ -104,15 +102,5 @@ final class ReactionController extends ApiController
         }
 
         return $id;
-    }
-
-    private function handleValidationException(\InvalidArgumentException $e): never
-    {
-        match ($e->getMessage()) {
-            'question_id:required' => $this->error(400, 'missing_fields', t('validation.required'), 'question_id'),
-            'reaction:required' => $this->error(400, 'missing_fields', t('validation.required'), 'reaction'),
-            'reaction:invalid' => $this->error(422, 'invalid_reaction', t('error.invalid_reaction'), 'reaction'),
-            default => $this->error(400, 'validation_error', t('common.error')),
-        };
     }
 }
