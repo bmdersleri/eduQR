@@ -93,6 +93,14 @@ abstract class ApiController
         'invalid_image_path' => 'common.error',
     ];
 
+    /**
+     * The `ETag` of the response being built, once a polled endpoint has one.
+     *
+     * Null on every other endpoint, and an endpoint that never calls
+     * {@see self::etagOrNotModified()} is unchanged by NFR-76.
+     */
+    private ?string $etag = null;
+
     // ── Success envelope ──────────────────────────────────────────────────────
 
     /**
@@ -102,8 +110,122 @@ abstract class ApiController
     {
         http_response_code($status);
         header('Content-Type: application/json; charset=utf-8');
+
+        if ($this->etag !== null) {
+            header('ETag: ' . $this->etag);
+        }
+
         echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         exit;
+    }
+
+    // ── Conditional requests (NFR-76) ─────────────────────────────────────────
+
+    /**
+     * Answer `304 Not Modified` when the caller already holds this version;
+     * otherwise remember the `ETag` so that {@see self::json()} emits it.
+     *
+     * Called with a version string from a version query, and called *after* the
+     * caller's right to read the resource has been established — the version
+     * queries themselves do that, and throw before returning a version to
+     * anyone who may not see it. A `304` reachable by someone a `200` is not
+     * reachable by would be a disclosure, not an optimisation.
+     *
+     * Living here rather than in each polled controller is the point: one place
+     * decides what an `ETag` looks like, what counts as a match, and what a
+     * `304` carries.
+     *
+     * @requirement NFR-76
+     */
+    protected function etagOrNotModified(string $version): void
+    {
+        $this->etag = self::etagFor($version);
+
+        if (! self::etagMatches($this->etag, self::ifNoneMatch())) {
+            return;
+        }
+
+        $response = self::notModifiedResponse($this->etag);
+
+        http_response_code($response['status']);
+
+        foreach ($response['headers'] as $header) {
+            header($header);
+        }
+
+        echo $response['body'];
+        exit;
+    }
+
+    /**
+     * The `ETag` for a version string.
+     *
+     * Hashed rather than sent raw: a version is a list of internal ids and row
+     * counts, and none of that needs to travel to a browser. Strong, because it
+     * changes whenever a byte of the body would.
+     */
+    public static function etagFor(string $version): string
+    {
+        return '"' . hash('sha256', $version) . '"';
+    }
+
+    /**
+     * Whether an `If-None-Match` header covers this `ETag` (RFC 9110 §13.1.2).
+     *
+     * `*` matches anything, a comma-separated list matches if any member does,
+     * and the weak prefix is ignored on both sides — weak comparison is the one
+     * RFC 9110 requires for `If-None-Match`, and our tags change whenever the
+     * body does, so weak and strong agree here anyway.
+     */
+    public static function etagMatches(string $etag, ?string $ifNoneMatch): bool
+    {
+        if ($ifNoneMatch === null || trim($ifNoneMatch) === '') {
+            return false;
+        }
+
+        if (trim($ifNoneMatch) === '*') {
+            return true;
+        }
+
+        $wanted = self::withoutWeakPrefix($etag);
+
+        foreach (explode(',', $ifNoneMatch) as $candidate) {
+            if (self::withoutWeakPrefix(trim($candidate)) === $wanted) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * What a `304` is: the status, the `ETag` the caller may keep using, and no
+     * body at all.
+     *
+     * Returned rather than sent so that the shape can be asserted without a
+     * response being emitted — every terminal method here exits.
+     *
+     * @return array{status: int, headers: list<string>, body: string}
+     */
+    public static function notModifiedResponse(string $etag): array
+    {
+        return [
+            'status' => 304,
+            'headers' => ['ETag: ' . $etag],
+            'body' => '',
+        ];
+    }
+
+    private static function ifNoneMatch(): ?string
+    {
+        $header = $_SERVER['HTTP_IF_NONE_MATCH'] ?? null;
+
+        return \is_string($header) ? $header : null;
+    }
+
+    private static function withoutWeakPrefix(string $etag): string
+    {
+        return str_starts_with($etag, 'W/') ? substr($etag, 2) : $etag;
     }
 
     // ── Error envelope ────────────────────────────────────────────────────────
