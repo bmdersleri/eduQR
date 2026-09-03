@@ -6,36 +6,52 @@ namespace EduQR\Services;
 
 use EduQR\Contracts\CourseRepositoryInterface;
 use EduQR\Contracts\OpenTextThemeExtractionServiceInterface;
-use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
+use EduQR\Contracts\ResultsServiceInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Exceptions\DomainException;
 use EduQR\Exceptions\ForbiddenException;
 use EduQR\Exceptions\NotFoundException;
 use EduQR\Exceptions\ValidationException;
-use EduQR\Support\Database;
 use EduQR\Support\TextFold;
 use PDO;
 
 /**
- * Phase 8 — Live Results (T-801, T-802)
+ * Live results — Phase 8 (T-801, T-802, T-803, T-804), NFR-82.
  *
- * Provides two aggregate queries:
+ * What is left of ReportService once report assembly, course analytics, the
+ * LMS exports and quiz scoring have units of their own. This is the surface a
+ * session uses while it is running:
  *  - aggregate()          counts + percentages per option (T-801)
  *  - openTextAnswers()    answer list with nickname + timestamp (T-802)
  *  - buildWordCloud()     deterministic word cloud for open-text answers (FR-66)
+ *  - extractThemes()      AI-assisted themes over the visible answers (FR-65)
  *
- * Also guards student visibility via show_results flags (T-804).
+ * Also guards student visibility via exam_mode and the show_results flags
+ * (T-804, FR-96).
+ *
+ * The PDO handle is required. Every read path here reaches the answers table,
+ * so an instance without a connection could answer nothing.
+ *
+ * The theme extractor is required too. It used to be optional, with
+ * extractThemes() falling back to OpenTextThemeExtractionService::fromConfig()
+ * — the last construction site outside the composition root (NFR-80). The
+ * container hands it in now, and ADR-0007's note about that exception is gone
+ * with it.
+ *
+ * requireSession(), requireCourse(), requireQuestion(), aggregateOptions(),
+ * buildWordCloud() and wordCloudStopWords() overlap with the other split units
+ * on purpose (NFR-82); see ReportBuilder for why they are copied rather than
+ * shared.
  */
-final class ReportService
+final class ResultsService implements ResultsServiceInterface
 {
     public function __construct(
         private readonly SessionRepositoryInterface  $sessions,
         private readonly QuestionRepositoryInterface $questions,
-        private readonly OptionRepositoryInterface   $options,
         private readonly CourseRepositoryInterface   $courses,
-        private readonly ?PDO                        $pdo = null,
-        private readonly ?OpenTextThemeExtractionServiceInterface $themeExtractor = null,
+        private readonly PDO                         $pdo,
+        private readonly OpenTextThemeExtractionServiceInterface $themeExtractor,
     ) {
     }
 
@@ -129,7 +145,7 @@ final class ReportService
      */
     public function openTextAnswers(int $questionId, bool $includeHidden = false): array
     {
-        $pdo = $this->pdo ?? Database::connection();
+        $pdo = $this->pdo;
 
         $hiddenClause = $includeHidden ? '' : 'AND a.is_hidden = 0';
 
@@ -175,13 +191,11 @@ final class ReportService
         $session = $this->sessions->findById((int) $question['session_id']);
         $language = (string) ($session['language'] ?? 'en');
 
-        $themeExtractor = $this->themeExtractor ?? OpenTextThemeExtractionService::fromConfig();
-
         return [
             'question_id' => $questionId,
             'question_text' => $question['question_text'],
             'answer_count' => count($visibleAnswers),
-            'themes' => $themeExtractor->extractThemes(
+            'themes' => $this->themeExtractor->extractThemes(
                 (string) $question['question_text'],
                 $visibleAnswers,
                 $language
@@ -232,7 +246,7 @@ final class ReportService
      */
     private function aggregateOptions(int $questionId): array
     {
-        $pdo = $this->pdo ?? Database::connection();
+        $pdo = $this->pdo;
 
         // Count per option (excluding hidden answers)
         $stmt = $pdo->prepare(

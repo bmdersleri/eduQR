@@ -112,16 +112,22 @@ deciding which response is correct and publishing that decision. That is
 NFR-83 / T-1131.
 
 
-One construction site survived the composition root on purpose.
-`ReportService::extractThemes()` still falls back to
+One construction site survived the composition root on purpose, and no longer
+does. `ReportService::extractThemes()` used to fall back to
 `OpenTextThemeExtractionService::fromConfig()` when no extractor was injected,
 which is a service building a service and so an NFR-80 violation in its own
-right. Passing the extractor in from the container would make it eager for
-every report request, including the ones that never touch an open-text
-question. The split in NFR-82 gives theme extraction its own unit with its own
-interface, at which point the collaborator becomes a constructor parameter and
-the fallback disappears without the eagerness. Fixing it twice was not worth
-one line, so it waits for T-1130.
+right. It was left standing because passing the extractor in from the container
+would have made it eager for every report request, including the ones that never
+touch an open-text question — and because the NFR-82 split was going to move the
+line anyway, so fixing it twice was not worth one line. That split has now
+happened. `ReportService` is gone; the live-results surface it carried is
+`ResultsService`, and the extractor is one of its required constructor
+parameters, supplied by `Container::openTextThemeExtractionService()`. The
+eagerness argument went with the split: the container's accessors are memoized
+and resolved on demand, and `fromConfig()` only reads four `Config` values into
+a constructor, so a report request that never reaches an open-text question now
+pays for one object it does not use rather than for a request to the provider.
+The exception is closed — no `::fromConfig()` call remains inside a service.
 
 A third finding is cosmetic until it is not. Eleven pages hand `render()` a
 title they have already escaped, and all three layouts escape `$pageTitle`

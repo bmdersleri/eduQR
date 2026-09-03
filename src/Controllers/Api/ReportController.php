@@ -8,9 +8,9 @@ use EduQR\Container;
 use EduQR\Contracts\CourseAnalyticsServiceInterface;
 use EduQR\Contracts\ExportServiceInterface;
 use EduQR\Contracts\ReportBuilderInterface;
+use EduQR\Contracts\ResultsServiceInterface;
 use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
-use EduQR\Services\ReportService;
 
 /**
  * Phase 9 — Reports & Export (T-901, T-902, T-903, T-904, T-909)
@@ -20,14 +20,14 @@ use EduQR\Services\ReportService;
  */
 final class ReportController extends ApiController
 {
-    private ReportService $report;
+    private ResultsServiceInterface $results;
     private ExportServiceInterface $exports;
     private ReportBuilderInterface $reports;
     private CourseAnalyticsServiceInterface $analytics;
 
     public function __construct()
     {
-        $this->report = Container::reportService();
+        $this->results = Container::resultsService();
         $this->exports = Container::exportService();
         $this->reports = Container::reportBuilder();
         $this->analytics = Container::courseAnalyticsService();
@@ -56,7 +56,7 @@ final class ReportController extends ApiController
         $user = AuthMiddleware::require();
 
         try {
-            $data = $this->report->extractThemes($questionId, (int) $user['id']);
+            $data = $this->results->extractThemes($questionId, (int) $user['id']);
         } catch (
             \RuntimeException $e
         ) {

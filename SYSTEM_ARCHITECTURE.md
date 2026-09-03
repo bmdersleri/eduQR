@@ -77,7 +77,7 @@ Documented as the upgrade path, **not** part of MVP work:
                 ┌───────────────────────┴───────────────────────┐
                 │                 Service Layer                 │
                 │  AuthService, SessionService, QuestionService,│
-                │  AnswerService, ReportService, I18nService    │
+                │  AnswerService, ResultsService, I18nService   │
                 └───────────────────────┬───────────────────────┘
                                         │
                 ┌───────────────────────┴───────────────────────┐
@@ -125,8 +125,12 @@ records why they were needed and what it cost to add them late.
 
 ### 2.3 Reporting Decomposition
 
-`ReportService` accumulated five unrelated jobs. Under NFR-82 they live in
-`src/Services/Reporting/`, each behind its own interface in `src/Contracts/`:
+`ReportService` accumulated five unrelated jobs. Under NFR-82 they are five
+classes in `src/Services/`, each behind its own interface in `src/Contracts/`.
+They sit alongside the other services rather than in a `Reporting/` subdirectory,
+because `Container` exposes one accessor per service and `ContainerTest` checks
+that pairing by globbing `src/Services/*.php`; a nested directory would put these
+five outside the check that guarantees they are wired:
 
 | Unit | Answers | Consumers |
 | --- | --- | --- |
@@ -281,7 +285,11 @@ eduqr/
 │   │   ├── SessionService.php
 │   │   ├── QuestionService.php
 │   │   ├── AnswerService.php
-│   │   ├── Reporting/        # split out of ReportService — see §2.3
+│   │   ├── ResultsService.php         # the five below were one
+│   │   ├── ReportBuilder.php          # ReportService — see §2.3
+│   │   ├── CourseAnalyticsService.php
+│   │   ├── ExportService.php
+│   │   ├── ScoringService.php
 │   │   ├── ParticipantService.php
 │   │   └── I18nService.php
 │   ├── Repositories/
@@ -438,7 +446,7 @@ eduqr/
 1. Instructor opens /admin/sessions/42/live
 2. Page loads templates/admin/live.php
 3. JS polls /api/v1/sessions/42/results?question_id=Q every 2 s
-4. ReportService::aggregate(Q) returns counts/percentages or text answers
+4. ResultsService::aggregate(Q) returns counts/percentages or text answers
 5. Chart.js redraws on each response
 ```
 
@@ -449,7 +457,7 @@ eduqr/
 2. SessionService::close()  →  status='closed', closed_at=NOW()
 3. AuditLogRepository::write('session.closed', sessionId)
 4. Redirect to /admin/sessions/42/report
-5. ReportService::buildReport(42) loads metadata, questions, answers
+5. ReportBuilder::buildReport(42) loads metadata, questions, answers
 6. CSV / HTML / JSON variants share the same builder output
 ```
 

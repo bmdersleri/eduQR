@@ -245,7 +245,7 @@ A task ships only when **all** of these are true:
 2. Add migration: `ALTER TABLE questions MODIFY question_type ENUM(...)`. **Append-only** — never edit existing migrations.
 3. Extend `QuestionService::validateForType()`.
 4. Extend `AnswerService::validateAnswerShape()`.
-5. Extend `ReportService::aggregateByType()`.
+5. Extend `ResultsService::aggregate()`, which branches on `question_type`.
 6. Add template partial at `templates/student/question/<new-type>.php`.
 7. Add locale keys `question.type.<new_type>` to both `en.json` and `tr.json`.
 8. Update `API_SPEC.md` examples for the new type.

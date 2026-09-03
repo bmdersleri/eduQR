@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace EduQR\Controllers\Api;
 
 use EduQR\Container;
+use EduQR\Contracts\ResultsServiceInterface;
 use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
-use EduQR\Services\ReportService;
 
 /**
  * Results endpoints — Phase 8 (T-803, T-804)
@@ -17,11 +17,11 @@ use EduQR\Services\ReportService;
  */
 final class ResultsController extends ApiController
 {
-    private ReportService $service;
+    private ResultsServiceInterface $service;
 
     public function __construct()
     {
-        $this->service = Container::reportService();
+        $this->service = Container::resultsService();
     }
 
     // ── GET /api/v1/sessions/{id}/results (instructor) ────────────────────────

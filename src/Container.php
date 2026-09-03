@@ -19,6 +19,7 @@ use EduQR\Contracts\QuestionGenerationServiceInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\ReactionRepositoryInterface;
 use EduQR\Contracts\ReportBuilderInterface;
+use EduQR\Contracts\ResultsServiceInterface;
 use EduQR\Contracts\ScoringServiceInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Contracts\UserRepositoryInterface;
@@ -47,7 +48,7 @@ use EduQR\Services\QuestionGenerationService;
 use EduQR\Services\QuestionService;
 use EduQR\Services\ReactionService;
 use EduQR\Services\ReportBuilder;
-use EduQR\Services\ReportService;
+use EduQR\Services\ResultsService;
 use EduQR\Services\ScoringService;
 use EduQR\Services\SessionService;
 use EduQR\Support\Database;
@@ -328,19 +329,20 @@ final class Container
     }
 
     /**
-     * ReportService takes an optional PDO handle and an optional theme extractor.
-     * Both are left at their defaults here, exactly as every call site did before
-     * the container existed: the service opens the shared connection itself and
-     * resolves the extractor only when an open-text question asks for themes.
+     * Live results (NFR-82). Both of its non-repository collaborators are
+     * required: every read path reaches the answers table, and FR-65 theme
+     * extraction goes through the injected extractor rather than a
+     * ::fromConfig() call of its own (NFR-80).
      */
-    public static function reportService(): ReportService
+    public static function resultsService(): ResultsServiceInterface
     {
-        /** @var ReportService */
-        return self::$instances['reportService'] ??= new ReportService(
+        /** @var ResultsServiceInterface */
+        return self::$instances['resultsService'] ??= new ResultsService(
             self::sessionRepository(),
             self::questionRepository(),
-            self::optionRepository(),
             self::courseRepository(),
+            Database::connection(),
+            self::openTextThemeExtractionService(),
         );
     }
 

@@ -6,20 +6,22 @@ namespace EduQR\Tests\Unit;
 
 use EduQR\Contracts\CourseRepositoryInterface;
 use EduQR\Contracts\OpenTextThemeExtractionServiceInterface;
-use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
-use EduQR\Services\ReportService;
+use EduQR\Services\ResultsService;
 use PDO;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Unit tests for ReportService — T-811
+ * Unit tests for ResultsService — T-811, T-1130
  *
  * The aggregation helpers use raw SQL, so we use an in-memory SQLite DB
  * for the PDO-bound tests, and mock repositories for the permission tests.
+ *
+ * Renamed from ReportServiceTest when the live-results surface became a class
+ * of its own (NFR-82); every assertion below is the one it had there.
  */
-class ReportServiceTest extends TestCase
+class ResultsServiceTest extends TestCase
 {
     private PDO $pdo;
 
@@ -70,7 +72,7 @@ class ReportServiceTest extends TestCase
         ?array $sessionRow = null,
         ?array $courseRow = null,
         ?OpenTextThemeExtractionServiceInterface $themeExtractor = null,
-    ): ReportService {
+    ): ResultsService {
         $q = $questionRow ?? [
             'id' => 1,
             'session_id' => 10,
@@ -99,12 +101,13 @@ class ReportServiceTest extends TestCase
                 : null
         );
 
-        $options = $this->createMock(OptionRepositoryInterface::class);
+        // The extractor is a required collaborator now (NFR-80), so the tests
+        // that do not exercise FR-65 get one that is never called.
+        $themeExtractor ??= $this->createMock(OpenTextThemeExtractionServiceInterface::class);
 
-        return new ReportService(
+        return new ResultsService(
             $sessions,
             $questions,
-            $options,
             $courses,
             $this->pdo,
             $themeExtractor,
