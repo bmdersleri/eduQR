@@ -25,16 +25,18 @@ final class AuthMiddlewareWiringTest extends TestCase
     {
         $source = $this->sourceOf(\dirname(__DIR__, 3) . '/src/Middleware/AuthMiddleware.php');
 
-        $this->assertStringContainsString(
-            'authenticatedUser()',
+        // Match the call site itself, not the substring anywhere in the file:
+        // a comment mentioning `authenticatedUser()` must not satisfy this.
+        $this->assertMatchesRegularExpression(
+            '/\$user\s*=\s*Container::authService\(\)->authenticatedUser\(\);/',
             $source,
             'AuthMiddleware::require() must revalidate the session via AuthService::authenticatedUser().',
         );
 
-        $this->assertStringNotContainsString(
-            'AuthService::currentUser()',
+        $this->assertDoesNotMatchRegularExpression(
+            '/currentUser\s*\(/',
             $source,
-            'AuthMiddleware::require() must not read the unrevalidated session copy via AuthService::currentUser().',
+            'AuthMiddleware must not read the unrevalidated session copy via currentUser().',
         );
     }
 
