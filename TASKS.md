@@ -331,7 +331,7 @@ Not part of the MVP. Each item must be escalated to the human owner before work 
 [x] T-1130  Split ReportService into Results / Report / Analytics / Export / Scoring; the split also retires the last inline `::fromConfig()` in ReportService [NFR-82, NFR-80]
 [x] T-1131  Retire `\InvalidArgumentException` validation; publish the four divergent responses [NFR-83]
 [x] T-1132  Escape each page title once; eleven titles are escaped by the controller and again by the layout [NFR-84]
-[ ] T-1133  Verify migrations 0001-0019 against a real MySQL 8.4 in a throwaway container [NFR-86]
+[x] T-1133  Verify migrations 0001-0019 against a real MySQL 8.4 in a throwaway container [NFR-86]
 [ ] T-1134  Uncaught failures on /api/v1/ answer with the JSON envelope, fatals included    [NFR-85]
 [ ] T-1135  Admin role grants co-instructor access to every course, never ownership         [FR-99]
 ```

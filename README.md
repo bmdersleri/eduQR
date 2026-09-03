@@ -278,6 +278,13 @@ php bin/seed.php demo
 php -S localhost:8080 -t public/
 ```
 
+Verify that the migrations still produce the documented schema (needs Docker; uses a
+throwaway MySQL 8.4 container on port 3308 and never touches your database):
+
+```bash
+bash bin/verify-migrations.sh
+```
+
 Open `http://localhost:8080` in your browser. Default seeded credentials are in `bin/seed.php`; change them immediately on a real deployment.
 
 ## JSON Question Import (staged lesson flow)
