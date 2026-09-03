@@ -97,5 +97,20 @@ open, because none of them is currently costing anything measurable:
   template embeds inline `<script>`. Moving to nonces is real security work and
   deserves its own task rather than a corner of this one.
 
+**A fourth finding, deferred with a requirement of its own.** Forty-four throw
+sites across eight services still signal validation failure with
+`\InvalidArgumentException` and a `field:reason` message string, which every API
+controller translates through a private table. Folding them into
+`ValidationException` was scoped into NFR-79 and taken back out, because it is
+not a refactor: `QuestionBankService::copyToSession()` calls
+`QuestionService::create()`, so one throw site is read by two controllers whose
+tables disagree on four codes — `question_type:invalid` differs by `field`,
+`correct_answer:required` and `correct_answer:too_long` differ by message,
+and `stage:invalid` differs by status (422 against 400). A single exception
+carrying a single status cannot produce both responses, so unifying them means
+deciding which response is correct and publishing that decision. That is
+NFR-83 / T-1131.
+
+
 Recording them here means the next person to read this file does not have to
 rediscover them to know they were seen.

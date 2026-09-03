@@ -253,6 +253,7 @@ See `I18N_SPEC.md` for the implementation contract.
 | NFR-80 | MUST | Object graph construction MUST happen in one place. No controller, template, script, or service may construct a repository or another service inline; each collaborator MUST be resolved from the shared container. Adding a dependency to a service MUST therefore change one wiring definition rather than every call site. |
 | NFR-81 | MUST | An HTML route MUST be handled by a controller, exactly as an API route is. A template MUST receive prepared data and render it; a template MUST NOT authenticate the request, resolve services, query a repository, decide an HTTP status code, or handle a domain exception. |
 | NFR-82 | MUST | A service class MUST have a single reporting responsibility. Live result aggregation, session report assembly, course analytics, external-format export, and score computation MUST be separately addressable units with their own interfaces, so each can be understood, tested, and changed without loading the others. |
+| NFR-83 | MUST | Input validation MUST signal failure the same way every other domain failure does: a typed exception carrying the status, the published code and the offending field. A service MUST NOT signal a validation failure with `\InvalidArgumentException` and a `field:reason` message string, and a controller MUST NOT hold a private table translating those strings into responses. Where two controllers currently answer the same throw site differently, one response MUST be chosen and published in API_SPEC.md. |
 
 ---
 
