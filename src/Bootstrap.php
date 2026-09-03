@@ -170,29 +170,24 @@ final class Bootstrap
 
         // ── Admin: Courses ────────────────────────────────────────────────────
         $router->get('/admin/courses', function (array $p): void {
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/admin/courses/list.php';
+            (new Controllers\Admin\CourseController())->index();
         });
 
         // /new must come before /{id} so it is matched first
         $router->get('/admin/courses/new', function (array $p): void {
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/admin/courses/create.php';
+            (new Controllers\Admin\CourseController())->create();
         });
 
         $router->get('/admin/courses/{id}', function (array $p): void {
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/admin/courses/detail.php';
+            (new Controllers\Admin\CourseController())->show((int) $p['id']);
         });
 
         $router->get('/admin/courses/{id}/analytics', function (array $p): void {
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/admin/courses/analytics.php';
+            (new Controllers\Admin\CourseController())->analytics((int) $p['id']);
         });
 
         $router->get('/admin/courses/{id}/edit', function (array $p): void {
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/admin/courses/edit.php';
+            (new Controllers\Admin\CourseController())->edit((int) $p['id']);
         });
 
         // /new must come before /{id} so it is matched first

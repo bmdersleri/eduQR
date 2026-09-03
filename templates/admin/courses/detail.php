@@ -1,32 +1,3 @@
-<?php
-
-use EduQR\Container;
-use EduQR\Middleware\AuthMiddleware;
-use EduQR\Middleware\CsrfMiddleware;
-
-$instructor = AuthMiddleware::require();
-$csrfToken  = CsrfMiddleware::getToken();
-$courseId   = (int) ($p['id'] ?? 0);
-
-$service = Container::courseService();
-
-try {
-    $course = $service->getCourse($courseId, (int) $instructor['id']);
-} catch (\RuntimeException $e) {
-    $status = $e->getMessage() === 'course_not_found' ? 404 : 403;
-    http_response_code($status);
-    include __DIR__ . '/../../../templates/errors/' . $status . '.php';
-    exit;
-}
-
-$sessionRepo = Container::sessionRepository();
-$sessions    = $sessionRepo->listByCourse($courseId);
-
-// Owner-only controls (FR-97). The API enforces the same rule server-side.
-$isCourseOwner = (int) $course['instructor_id'] === (int) $instructor['id'];
-
-ob_start();
-?>
 <div class="eduqr-admin-hero mb-4">
     <div>
         <div class="eduqr-kicker mb-3">
@@ -163,7 +134,3 @@ document.getElementById('course-restore-btn').addEventListener('click', async fu
 });
 </script>
 <?php endif; ?>
-<?php
-$content   = ob_get_clean();
-$pageTitle = htmlspecialchars($course['title'], ENT_QUOTES, 'UTF-8') . ' — ' . t('app.name');
-include __DIR__ . '/../../layouts/admin.php';

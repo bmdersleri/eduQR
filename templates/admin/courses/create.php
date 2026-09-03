@@ -1,13 +1,3 @@
-<?php
-
-use EduQR\Middleware\AuthMiddleware;
-use EduQR\Middleware\CsrfMiddleware;
-
-$instructor = AuthMiddleware::require();
-$csrfToken  = CsrfMiddleware::getToken();
-
-ob_start();
-?>
 <div class="eduqr-admin-hero mb-4">
     <div>
         <div class="eduqr-kicker mb-3">
@@ -126,7 +116,3 @@ document.getElementById('course-form').addEventListener('submit', async function
     }
 });
 </script>
-<?php
-$content   = ob_get_clean();
-$pageTitle = t('course.new.title') . ' — ' . t('app.name');
-include __DIR__ . '/../../layouts/admin.php';

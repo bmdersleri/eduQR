@@ -1,39 +1,3 @@
-<?php
-
-use EduQR\Container;
-use EduQR\Middleware\AuthMiddleware;
-use EduQR\Middleware\CsrfMiddleware;
-
-$instructor = AuthMiddleware::require();
-$csrfToken  = CsrfMiddleware::getToken();
-$courseId   = (int) ($p['id'] ?? 0);
-
-$service = Container::courseService();
-
-try {
-    $course = $service->getCourse($courseId, (int) $instructor['id']);
-} catch (\RuntimeException $e) {
-    $status = $e->getMessage() === 'course_not_found' ? 404 : 403;
-    http_response_code($status);
-    include __DIR__ . '/../../../templates/errors/' . $status . '.php';
-    exit;
-}
-
-// Course instructors (FR-97). The mutating controls are rendered only for the
-// owner; the API enforces the same rule regardless of what is rendered here.
-$courseInstructors = $service->listInstructors($courseId, (int) $instructor['id']);
-$isCourseOwner     = false;
-
-foreach ($courseInstructors as $courseInstructor) {
-    if ($courseInstructor['user_id'] === (int) $instructor['id']
-        && $courseInstructor['role'] === CourseService::ROLE_OWNER) {
-        $isCourseOwner = true;
-        break;
-    }
-}
-
-ob_start();
-?>
 <div class="eduqr-admin-hero mb-4">
     <div>
         <div class="eduqr-kicker mb-3">
@@ -352,7 +316,3 @@ document.querySelectorAll('.instructor-remove-btn').forEach(function (button) {
 });
 <?php endif; ?>
 </script>
-<?php
-$content   = ob_get_clean();
-$pageTitle = t('course.edit.title') . ' — ' . t('app.name');
-include __DIR__ . '/../../layouts/admin.php';

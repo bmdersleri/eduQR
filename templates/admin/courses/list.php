@@ -1,20 +1,3 @@
-<?php
-
-use EduQR\Container;
-use EduQR\Middleware\AuthMiddleware;
-use EduQR\Middleware\CsrfMiddleware;
-
-$instructor = AuthMiddleware::require();
-$csrfToken  = CsrfMiddleware::getToken();
-
-$service = Container::courseService();
-$page    = max(1, (int) ($_GET['page'] ?? 1));
-$result  = $service->listMyCourses((int) $instructor['id'], $page, 20);
-$courses = $result['data'];
-$meta    = $result['meta'];
-
-ob_start();
-?>
 <div class="eduqr-admin-hero mb-4">
     <div>
         <div class="eduqr-kicker mb-3">
@@ -118,7 +101,3 @@ document.querySelectorAll('.course-restore-btn').forEach((button) => {
     });
 });
 </script>
-<?php
-$content   = ob_get_clean();
-$pageTitle = t('course.list.title') . ' — ' . t('app.name');
-include __DIR__ . '/../../layouts/admin.php';

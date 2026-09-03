@@ -1,41 +1,3 @@
-<?php
-
-declare(strict_types=1);
-
-use EduQR\Container;
-use EduQR\Middleware\AuthMiddleware;
-use EduQR\Middleware\CsrfMiddleware;
-
-$instructor = AuthMiddleware::require();
-$csrfToken = CsrfMiddleware::getToken();
-$courseId = (int) ($p['id'] ?? 0);
-
-$reportService = Container::reportService();
-
-try {
-    $analytics = $reportService->buildCourseAnalytics($courseId, (int) $instructor['id']);
-} catch (\RuntimeException $e) {
-    $status = $e->getMessage() === 'course_not_found' ? 404 : 403;
-    http_response_code($status);
-    include __DIR__ . '/../../../templates/errors/' . $status . '.php';
-    exit;
-}
-
-$course = $analytics['course'];
-$summary = $analytics['summary'];
-$sessions = $analytics['sessions'];
-$questionTypeBreakdown = array_filter(
-    $analytics['question_type_breakdown'],
-    static fn (array $row): bool => (int) $row['count'] > 0
-);
-
-// FR-85: locale-aware percent — tr renders "%83,4", en renders "83.4%".
-$formatRate = static function (float $rate): string {
-    return fmt_percent($rate * 100);
-};
-
-ob_start();
-?>
 <div class="eduqr-admin-hero mb-4">
     <div>
         <div class="eduqr-kicker mb-3">
@@ -187,7 +149,3 @@ ob_start();
     <?php endforeach; ?>
 </div>
 <?php endif; ?>
-<?php
-$content = ob_get_clean();
-$pageTitle = htmlspecialchars(t('course.analytics.title'), ENT_QUOTES, 'UTF-8') . ' — ' . htmlspecialchars($course['title'], ENT_QUOTES, 'UTF-8');
-include __DIR__ . '/../../layouts/admin.php';
