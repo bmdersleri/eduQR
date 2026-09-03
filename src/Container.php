@@ -1,0 +1,313 @@
+<?php
+
+declare(strict_types=1);
+
+namespace EduQR;
+
+use EduQR\Contracts\AnswerRepositoryInterface;
+use EduQR\Contracts\AuditLogRepositoryInterface;
+use EduQR\Contracts\CourseRepositoryInterface;
+use EduQR\Contracts\LoginAttemptRepositoryInterface;
+use EduQR\Contracts\OpenTextThemeExtractionServiceInterface;
+use EduQR\Contracts\OptionRepositoryInterface;
+use EduQR\Contracts\ParticipantRepositoryInterface;
+use EduQR\Contracts\PasswordResetRepositoryInterface;
+use EduQR\Contracts\QuestionBankRepositoryInterface;
+use EduQR\Contracts\QuestionGenerationServiceInterface;
+use EduQR\Contracts\QuestionRepositoryInterface;
+use EduQR\Contracts\ReactionRepositoryInterface;
+use EduQR\Contracts\SessionRepositoryInterface;
+use EduQR\Contracts\UserRepositoryInterface;
+use EduQR\Repositories\AnswerRepository;
+use EduQR\Repositories\AuditLogRepository;
+use EduQR\Repositories\CourseRepository;
+use EduQR\Repositories\LoginAttemptRepository;
+use EduQR\Repositories\OptionRepository;
+use EduQR\Repositories\ParticipantRepository;
+use EduQR\Repositories\PasswordResetRepository;
+use EduQR\Repositories\QuestionBankRepository;
+use EduQR\Repositories\QuestionRepository;
+use EduQR\Repositories\ReactionRepository;
+use EduQR\Repositories\SessionRepository;
+use EduQR\Repositories\UserRepository;
+use EduQR\Services\AnswerService;
+use EduQR\Services\AuthService;
+use EduQR\Services\CourseService;
+use EduQR\Services\OpenTextThemeExtractionService;
+use EduQR\Services\ParticipantService;
+use EduQR\Services\PasswordResetService;
+use EduQR\Services\QuestionBankService;
+use EduQR\Services\QuestionGenerationService;
+use EduQR\Services\QuestionService;
+use EduQR\Services\ReactionService;
+use EduQR\Services\ReportService;
+use EduQR\Services\SessionService;
+
+/**
+ * The composition root: the one place a service or a repository is constructed.
+ *
+ * @requirement NFR-80
+ *
+ * Every collaborator has a named accessor with a concrete return type. There is
+ * deliberately no `get(string $id)` and no reflection-based autowiring — ADR-0007
+ * chose a hand-written map because an explicit map is greppable, and grep is the
+ * tool that survives a shared host without Xdebug. Adding a dependency to a
+ * service therefore changes exactly one line here.
+ *
+ * Nothing is built at class load. Each accessor resolves on first call and
+ * memoizes the result, so one request builds one object graph and a request that
+ * never touches the database never opens a connection. Memoizing is safe because
+ * services hold no request state and repositories hold only the shared PDO handed
+ * out by EduQR\Support\Database.
+ *
+ * Tests inject fakes through constructors — that is what the interfaces in
+ * src/Contracts/ are for. There is no set()/override method, because one would
+ * turn this composition root into a service locator.
+ */
+final class Container
+{
+    /**
+     * Memoized instances, keyed by accessor name.
+     *
+     * @var array<string,object>
+     */
+    private static array $instances = [];
+
+    /**
+     * Drop every memoized instance.
+     *
+     * For tests only. Production code resolves collaborators and never needs the
+     * graph torn down mid-request.
+     */
+    public static function reset(): void
+    {
+        self::$instances = [];
+    }
+
+    // ── Repositories ──────────────────────────────────────────────────────────
+
+    public static function answerRepository(): AnswerRepositoryInterface
+    {
+        /** @var AnswerRepositoryInterface */
+        return self::$instances['answerRepository'] ??= new AnswerRepository();
+    }
+
+    public static function auditLogRepository(): AuditLogRepositoryInterface
+    {
+        /** @var AuditLogRepositoryInterface */
+        return self::$instances['auditLogRepository'] ??= new AuditLogRepository();
+    }
+
+    public static function courseRepository(): CourseRepositoryInterface
+    {
+        /** @var CourseRepositoryInterface */
+        return self::$instances['courseRepository'] ??= new CourseRepository();
+    }
+
+    public static function loginAttemptRepository(): LoginAttemptRepositoryInterface
+    {
+        /** @var LoginAttemptRepositoryInterface */
+        return self::$instances['loginAttemptRepository'] ??= new LoginAttemptRepository();
+    }
+
+    public static function optionRepository(): OptionRepositoryInterface
+    {
+        /** @var OptionRepositoryInterface */
+        return self::$instances['optionRepository'] ??= new OptionRepository();
+    }
+
+    public static function participantRepository(): ParticipantRepositoryInterface
+    {
+        /** @var ParticipantRepositoryInterface */
+        return self::$instances['participantRepository'] ??= new ParticipantRepository();
+    }
+
+    public static function passwordResetRepository(): PasswordResetRepositoryInterface
+    {
+        /** @var PasswordResetRepositoryInterface */
+        return self::$instances['passwordResetRepository'] ??= new PasswordResetRepository();
+    }
+
+    public static function questionBankRepository(): QuestionBankRepositoryInterface
+    {
+        /** @var QuestionBankRepositoryInterface */
+        return self::$instances['questionBankRepository'] ??= new QuestionBankRepository();
+    }
+
+    public static function questionRepository(): QuestionRepositoryInterface
+    {
+        /** @var QuestionRepositoryInterface */
+        return self::$instances['questionRepository'] ??= new QuestionRepository();
+    }
+
+    public static function reactionRepository(): ReactionRepositoryInterface
+    {
+        /** @var ReactionRepositoryInterface */
+        return self::$instances['reactionRepository'] ??= new ReactionRepository();
+    }
+
+    public static function sessionRepository(): SessionRepositoryInterface
+    {
+        /** @var SessionRepositoryInterface */
+        return self::$instances['sessionRepository'] ??= new SessionRepository();
+    }
+
+    public static function userRepository(): UserRepositoryInterface
+    {
+        /** @var UserRepositoryInterface */
+        return self::$instances['userRepository'] ??= new UserRepository();
+    }
+
+    // ── Services ──────────────────────────────────────────────────────────────
+
+    public static function answerService(): AnswerService
+    {
+        /** @var AnswerService */
+        return self::$instances['answerService'] ??= new AnswerService(
+            self::answerRepository(),
+            self::questionRepository(),
+            self::sessionRepository(),
+            self::participantRepository(),
+            self::optionRepository(),
+        );
+    }
+
+    public static function authService(): AuthService
+    {
+        /** @var AuthService */
+        return self::$instances['authService'] ??= new AuthService(
+            self::userRepository(),
+            self::loginAttemptRepository(),
+        );
+    }
+
+    public static function courseService(): CourseService
+    {
+        /** @var CourseService */
+        return self::$instances['courseService'] ??= new CourseService(
+            self::courseRepository(),
+            self::userRepository(),
+        );
+    }
+
+    /**
+     * The LLM-backed theme extractor. Its credentials come from the environment,
+     * so it is built through its own ::fromConfig() factory.
+     */
+    public static function openTextThemeExtractionService(): OpenTextThemeExtractionServiceInterface
+    {
+        /** @var OpenTextThemeExtractionServiceInterface */
+        return self::$instances['openTextThemeExtractionService'] ??= OpenTextThemeExtractionService::fromConfig();
+    }
+
+    public static function participantService(): ParticipantService
+    {
+        /** @var ParticipantService */
+        return self::$instances['participantService'] ??= new ParticipantService(
+            self::participantRepository(),
+            self::sessionRepository(),
+        );
+    }
+
+    public static function passwordResetService(): PasswordResetService
+    {
+        /** @var PasswordResetService */
+        return self::$instances['passwordResetService'] ??= new PasswordResetService(
+            self::userRepository(),
+            self::passwordResetRepository(),
+        );
+    }
+
+    /**
+     * The question bank, optionally wired to a caller-supplied generator.
+     *
+     * Passing a generator returns a one-off graph rather than the shared one, so
+     * a test double never leaks into the instance the rest of the request sees.
+     */
+    public static function questionBankService(?QuestionGenerationServiceInterface $generator = null): QuestionBankService
+    {
+        if ($generator !== null) {
+            return self::buildQuestionBankService($generator);
+        }
+
+        /** @var QuestionBankService */
+        return self::$instances['questionBankService'] ??= self::buildQuestionBankService(
+            self::questionGenerationService(),
+        );
+    }
+
+    /**
+     * The LLM-backed question generator. Its credentials come from the
+     * environment, so it is built through its own ::fromConfig() factory.
+     */
+    public static function questionGenerationService(): QuestionGenerationServiceInterface
+    {
+        /** @var QuestionGenerationServiceInterface */
+        return self::$instances['questionGenerationService'] ??= QuestionGenerationService::fromConfig();
+    }
+
+    public static function questionService(): QuestionService
+    {
+        /** @var QuestionService */
+        return self::$instances['questionService'] ??= new QuestionService(
+            self::questionRepository(),
+            self::optionRepository(),
+            self::sessionRepository(),
+            self::courseRepository(),
+        );
+    }
+
+    public static function reactionService(): ReactionService
+    {
+        /** @var ReactionService */
+        return self::$instances['reactionService'] ??= new ReactionService(
+            self::reactionRepository(),
+            self::questionRepository(),
+            self::sessionRepository(),
+            self::participantRepository(),
+            self::courseRepository(),
+        );
+    }
+
+    /**
+     * ReportService takes an optional PDO handle and an optional theme extractor.
+     * Both are left at their defaults here, exactly as every call site did before
+     * the container existed: the service opens the shared connection itself and
+     * resolves the extractor only when an open-text question asks for themes.
+     */
+    public static function reportService(): ReportService
+    {
+        /** @var ReportService */
+        return self::$instances['reportService'] ??= new ReportService(
+            self::sessionRepository(),
+            self::questionRepository(),
+            self::optionRepository(),
+            self::courseRepository(),
+        );
+    }
+
+    public static function sessionService(): SessionService
+    {
+        /** @var SessionService */
+        return self::$instances['sessionService'] ??= new SessionService(
+            self::sessionRepository(),
+            self::courseRepository(),
+        );
+    }
+
+    // ── Private ───────────────────────────────────────────────────────────────
+
+    private static function buildQuestionBankService(
+        QuestionGenerationServiceInterface $generator
+    ): QuestionBankService {
+        return new QuestionBankService(
+            self::questionBankRepository(),
+            self::questionRepository(),
+            self::optionRepository(),
+            self::sessionRepository(),
+            self::courseRepository(),
+            self::questionService(),
+            $generator,
+        );
+    }
+}
