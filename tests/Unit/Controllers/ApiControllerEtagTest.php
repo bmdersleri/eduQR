@@ -114,18 +114,81 @@ final class ApiControllerEtagTest extends TestCase
     // ── What a 304 carries ────────────────────────────────────────────────────
 
     /**
-     * A 304 carries the ETag header and no body; a 200 carries both.
+     * A 304 carries the ETag, the terms the caller may keep it under, and no
+     * body.
      *
      * @requirement NFR-76
      */
-    public function testANotModifiedResponseIsTheEtagAndNothingElse(): void
+    public function testANotModifiedResponseIsTheEtagAndTheCachingTerms(): void
     {
         $etag = ApiController::etagFor('v1');
         $response = ApiController::notModifiedResponse($etag);
 
         self::assertSame(304, $response['status']);
-        self::assertSame(['ETag: ' . $etag], $response['headers']);
+        self::assertSame(
+            array_merge(['ETag: ' . $etag], ApiController::revalidationHeaders()),
+            $response['headers'],
+        );
         self::assertSame('', $response['body']);
+    }
+
+    // ── Why the caching terms are sent at all ─────────────────────────────────
+
+    /**
+     * `no-store` anywhere in a poll response makes the whole mechanism dead
+     * code: the browser keeps nothing, so it sends no `If-None-Match`, so the
+     * server is never asked a question it could answer 304.
+     *
+     * @requirement NFR-76
+     */
+    public function testThePollResponseNeverForbidsStoring(): void
+    {
+        $cacheControl = null;
+
+        foreach (ApiController::revalidationHeaders() as $header) {
+            if (stripos($header, 'Cache-Control:') === 0) {
+                $cacheControl = $header;
+            }
+        }
+
+        self::assertNotNull($cacheControl, 'A poll response must state its caching terms.');
+        self::assertStringNotContainsStringIgnoringCase('no-store', $cacheControl);
+        // Per-user data: storable by the browser that asked, by nothing between.
+        self::assertStringContainsString('private', $cacheControl);
+        // Every reuse is a revalidation, so a stored body is only ever shown
+        // again after this class has said 304.
+        self::assertStringContainsString('no-cache', $cacheControl);
+    }
+
+    /**
+     * The header this replaces, pinned so the reason survives.
+     *
+     * Four of the five polled endpoints authenticate, authentication starts a
+     * PHP session, and PHP's default `session.cache_limiter` sends `no-store`.
+     * If this default ever changes, the override above stops being load-bearing
+     * and this test says so.
+     *
+     * @requirement NFR-76
+     */
+    public function testPhpsSessionDefaultIsTheHeaderBeingOverridden(): void
+    {
+        self::assertSame('nocache', ini_get('session.cache_limiter'));
+    }
+
+    /**
+     * The 200 path sends the same terms as the 304 path.
+     *
+     * Asserted on the source because `json()` ends in `exit`. If a 200 were
+     * allowed to keep PHP's `no-store`, the browser would discard the very
+     * response whose `ETag` the next poll depends on.
+     *
+     * @requirement NFR-76
+     */
+    public function testTheTwoHundredPathAlsoSendsTheCachingTerms(): void
+    {
+        $json = self::methodBody('src/Controllers/ApiController.php', 'json');
+
+        self::assertStringContainsString('emitRevalidationHeaders', $json);
     }
 
     // ── The glue ──────────────────────────────────────────────────────────────

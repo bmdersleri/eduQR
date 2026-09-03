@@ -113,6 +113,7 @@ abstract class ApiController
 
         if ($this->etag !== null) {
             header('ETag: ' . $this->etag);
+            self::emitRevalidationHeaders();
         }
 
         echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
@@ -148,6 +149,7 @@ abstract class ApiController
         $response = self::notModifiedResponse($this->etag);
 
         http_response_code($response['status']);
+        header_remove('Pragma');
 
         foreach ($response['headers'] as $header) {
             header($header);
@@ -155,6 +157,48 @@ abstract class ApiController
 
         echo $response['body'];
         exit;
+    }
+
+    /**
+     * What a poll response must say about caching for a `304` to ever happen.
+     *
+     * Without this the mechanism above is unreachable in a browser. Four of the
+     * five polled endpoints authenticate, `AuthService` starts a PHP session to
+     * do it, and PHP's default `session.cache_limiter` is `nocache`, which sends
+     * `Cache-Control: no-store, no-cache, must-revalidate` plus a 1981 `Expires`
+     * and `Pragma: no-cache`. `no-store` forbids the browser from keeping the
+     * response at all, so it has no `ETag` to send back, so it never makes a
+     * conditional request, so the server never gets the chance to answer `304`.
+     *
+     * `private, no-cache` is what conditional revalidation of a per-user
+     * response actually asks for: keep it, and never reuse it without asking
+     * first. `private` keeps it out of shared caches — these bodies are one
+     * instructor's session data. `no-cache` makes every reuse a revalidation, so
+     * the only way a stored body is ever shown again is a `304` this class
+     * issued, which cannot outlive the caller's authorization because the
+     * version query re-runs the guard on every one of those requests.
+     *
+     * @return list<string>
+     */
+    public static function revalidationHeaders(): array
+    {
+        return [
+            'Cache-Control: private, no-cache',
+            'Expires: 0',
+        ];
+    }
+
+    /**
+     * Send them, and drop the `Pragma: no-cache` PHP set beside the header being
+     * replaced — some HTTP/1.0 caches read it as `no-store`.
+     */
+    private static function emitRevalidationHeaders(): void
+    {
+        header_remove('Pragma');
+
+        foreach (self::revalidationHeaders() as $header) {
+            header($header);
+        }
     }
 
     /**
@@ -199,8 +243,8 @@ abstract class ApiController
     }
 
     /**
-     * What a `304` is: the status, the `ETag` the caller may keep using, and no
-     * body at all.
+     * What a `304` is: the status, the `ETag` the caller may keep using, the
+     * caching terms under which they may keep it, and no body at all.
      *
      * Returned rather than sent so that the shape can be asserted without a
      * response being emitted — every terminal method here exits.
@@ -211,7 +255,7 @@ abstract class ApiController
     {
         return [
             'status' => 304,
-            'headers' => ['ETag: ' . $etag],
+            'headers' => array_merge(['ETag: ' . $etag], self::revalidationHeaders()),
             'body' => '',
         ];
     }
