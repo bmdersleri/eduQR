@@ -333,11 +333,14 @@ final class StudentController extends HtmlController
      * that a reload does not resubmit, and a duplicate redirects the same way
      * because the student has, from their point of view, already answered.
      *
-     * The `match` over `getMessage()` is the template's, unchanged. Since
-     * NFR-78 the services throw typed domain exceptions, but `DomainException`
-     * extends `\RuntimeException` and its `getMessage()` returns the error
-     * code, so both catches still select exactly what they selected before.
-     * Retyping them to `instanceof` checks is T-1131's job, not this move's.
+     * The `match` is over the thrown error code, which is what `getMessage()`
+     * returns on a `DomainException`. Under NFR-83 the answer-shape failures
+     * arrive here as `ValidationException` rather than
+     * `\InvalidArgumentException`, so the catch that used to single them out by
+     * type now names their codes instead. They all answer the same sentence
+     * they always did: a no-JS student gets one message for "that is not a
+     * usable answer to this question", not a field-by-field breakdown, because
+     * this form has no place to hang a `field` on.
      */
     private function submitNoJsAnswer(int $participantId, int $questionId, string $answeredUrl): string
     {
@@ -355,14 +358,15 @@ final class StudentController extends HtmlController
             $this->redirect($answeredUrl, 303);
         } catch (DuplicateAnswerException) {
             $this->redirect($answeredUrl, 303);
-        } catch (\InvalidArgumentException) {
-            return t('error.invalid_answer_shape');
         } catch (\RuntimeException $e) {
             return match ($e->getMessage()) {
                 'question_not_active' => t('error.question_closed'),
                 'session_paused' => t('error.session_paused'),
                 'session_closed' => t('error.session_closed'),
-                'invalid_option' => t('error.invalid_answer_shape'),
+                'invalid_option',
+                'invalid_answer_shape',
+                'required',
+                'text_too_long' => t('error.invalid_answer_shape'),
                 default => t('error.server_error'),
             };
         }

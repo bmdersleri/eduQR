@@ -53,9 +53,8 @@ final class AnswerService
      * @param  array      $body             Decoded JSON body: question_id, selected_option_id?, answer_text?
      * @return int                          New answer ID
      *
-     * @throws \InvalidArgumentException    Validation failure (400 / 422)
      * @throws DuplicateAnswerException     Already answered this question (409)
-     * @throws DomainException              Not-found / state errors (404 / 422)
+     * @throws DomainException              Validation, not-found and state errors (400 / 401 / 404 / 422)
      */
     public function submit(int $participantId, array $body): int
     {
@@ -68,7 +67,7 @@ final class AnswerService
         // ── 2. Resolve and validate question (T-705) ──────────────────────────
         $questionId = isset($body['question_id']) ? (int) $body['question_id'] : 0;
         if ($questionId <= 0) {
-            throw new \InvalidArgumentException('question_id:required');
+            throw new ValidationException('required', 400, 'missing_fields', 'question_id');
         }
 
         $question = $this->questions->findById($questionId);
@@ -134,8 +133,8 @@ final class AnswerService
     /**
      * Returns [?int $selectedOptionId, ?string $answerText] ready for insert.
      *
-     * @throws \InvalidArgumentException  shape mismatch or constraint violation
-     * @throws ValidationException       invalid_option (option not found / wrong question)
+     * @throws ValidationException  shape mismatch, constraint violation, or
+     *                              invalid_option (option not found / wrong question)
      */
     public function validateAnswerShape(array $question, array $body): array
     {
@@ -150,7 +149,7 @@ final class AnswerService
         }
 
         // Unreachable for known types, but guard anyway
-        throw new \InvalidArgumentException('answer:invalid_shape');
+        throw new ValidationException('invalid_answer_shape', 422, 'invalid_answer_shape');
     }
 
     // ── Private helpers ────────────────────────────────────────────────────────
@@ -162,7 +161,7 @@ final class AnswerService
     private function validateOptionAnswer(array $question, array $body): array
     {
         if (empty($body['selected_option_id'])) {
-            throw new \InvalidArgumentException('selected_option_id:required');
+            throw new ValidationException('required', 400, 'missing_fields', 'selected_option_id');
         }
 
         $optionId = (int) $body['selected_option_id'];
@@ -175,7 +174,7 @@ final class AnswerService
 
         // answer_text must be absent for option-based types
         if (! empty($body['answer_text'])) {
-            throw new \InvalidArgumentException('answer:invalid_shape');
+            throw new ValidationException('invalid_answer_shape', 422, 'invalid_answer_shape');
         }
 
         return [$optionId, null];
@@ -187,23 +186,23 @@ final class AnswerService
     private function validateOpenTextAnswer(array $body): array
     {
         if (! isset($body['answer_text'])) {
-            throw new \InvalidArgumentException('answer_text:required');
+            throw new ValidationException('required', 400, 'missing_fields', 'answer_text');
         }
 
         // Strip HTML tags and trim whitespace (SEC §10)
         $text = trim(strip_tags((string) $body['answer_text']));
 
         if ($text === '') {
-            throw new \InvalidArgumentException('answer_text:required');
+            throw new ValidationException('required', 400, 'missing_fields', 'answer_text');
         }
 
         if (mb_strlen($text, 'UTF-8') > self::MAX_OPEN_TEXT_LEN) {
-            throw new \InvalidArgumentException('answer_text:too_long');
+            throw new ValidationException('text_too_long', 400, 'validation_error', 'answer_text');
         }
 
         // selected_option_id must be absent for open_text
         if (! empty($body['selected_option_id'])) {
-            throw new \InvalidArgumentException('answer:invalid_shape');
+            throw new ValidationException('invalid_answer_shape', 422, 'invalid_answer_shape');
         }
 
         return [null, $text];

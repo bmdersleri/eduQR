@@ -44,8 +44,6 @@ final class AnswerController extends ApiController
             $this->error(409, 'duplicate_answer', t('error.duplicate_answer'));
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);
-        } catch (\InvalidArgumentException $e) {
-            $this->handleValidationException($e);
         }
 
         $this->json(201, [
@@ -74,17 +72,5 @@ final class AnswerController extends ApiController
         }
 
         return $id;
-    }
-
-    private function handleValidationException(\InvalidArgumentException $e): never
-    {
-        match ($e->getMessage()) {
-            'question_id:required' => $this->error(400, 'missing_fields', t('validation.required'), 'question_id'),
-            'selected_option_id:required' => $this->error(400, 'missing_fields', t('validation.required'), 'selected_option_id'),
-            'answer_text:required' => $this->error(400, 'missing_fields', t('validation.required'), 'answer_text'),
-            'answer_text:too_long' => $this->error(400, 'validation_error', t('validation.text_too_long'), 'answer_text'),
-            'answer:invalid_shape' => $this->error(422, 'invalid_answer_shape', t('error.invalid_answer_shape')),
-            default => $this->error(400, 'validation_error', t('common.error')),
-        };
     }
 }

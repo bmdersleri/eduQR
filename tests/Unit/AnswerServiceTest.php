@@ -10,6 +10,7 @@ use EduQR\Contracts\ParticipantRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Exceptions\DuplicateAnswerException;
+use EduQR\Exceptions\ValidationException;
 use EduQR\Services\AnswerService;
 use PDOException;
 use PHPUnit\Framework\TestCase;
@@ -125,12 +126,18 @@ class AnswerServiceTest extends TestCase
 
     public function testMissingOptionIdThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('selected_option_id:required');
-
         $service = $this->makeService();
         $question = ['id' => 99, 'question_type' => 'multiple_choice', 'session_id' => 10, 'status' => 'active'];
-        $service->validateAnswerShape($question, []);
+
+        try {
+            $service->validateAnswerShape($question, []);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('required', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('missing_fields', $e->getPublicCode());
+            $this->assertSame('selected_option_id', $e->getField());
+        }
     }
 
     public function testOptionNotBelongingToQuestionThrows(): void
@@ -148,15 +155,21 @@ class AnswerServiceTest extends TestCase
 
     public function testBothFieldsPopulatedForOptionTypeThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('answer:invalid_shape');
-
         $service = $this->makeService();
         $question = ['id' => 99, 'question_type' => 'multiple_choice', 'session_id' => 10, 'status' => 'active'];
-        $service->validateAnswerShape($question, [
-            'selected_option_id' => 5,
-            'answer_text' => 'should not be here',
-        ]);
+
+        try {
+            $service->validateAnswerShape($question, [
+                'selected_option_id' => 5,
+                'answer_text' => 'should not be here',
+            ]);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('invalid_answer_shape', $e->getErrorCode());
+            $this->assertSame(422, $e->getStatus());
+            $this->assertSame('invalid_answer_shape', $e->getPublicCode());
+            $this->assertNull($e->getField());
+        }
     }
 
     // ── T-702: validateAnswerShape — open_text ────────────────────────────────
@@ -176,22 +189,34 @@ class AnswerServiceTest extends TestCase
 
     public function testOpenTextEmptyThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('answer_text:required');
-
         $service = $this->makeService();
         $question = ['id' => 99, 'question_type' => 'open_text', 'session_id' => 10, 'status' => 'active'];
-        $service->validateAnswerShape($question, ['answer_text' => '   ']);
+
+        try {
+            $service->validateAnswerShape($question, ['answer_text' => '   ']);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('required', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('missing_fields', $e->getPublicCode());
+            $this->assertSame('answer_text', $e->getField());
+        }
     }
 
     public function testOpenTextTooLongThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('answer_text:too_long');
-
         $service = $this->makeService();
         $question = ['id' => 99, 'question_type' => 'open_text', 'session_id' => 10, 'status' => 'active'];
-        $service->validateAnswerShape($question, ['answer_text' => str_repeat('x', 2001)]);
+
+        try {
+            $service->validateAnswerShape($question, ['answer_text' => str_repeat('x', 2001)]);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('text_too_long', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('validation_error', $e->getPublicCode());
+            $this->assertSame('answer_text', $e->getField());
+        }
     }
 
     public function testOpenTextStripsTags(): void
@@ -210,15 +235,21 @@ class AnswerServiceTest extends TestCase
 
     public function testOpenTextWithOptionIdThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('answer:invalid_shape');
-
         $service = $this->makeService();
         $question = ['id' => 99, 'question_type' => 'open_text', 'session_id' => 10, 'status' => 'active'];
-        $service->validateAnswerShape($question, [
-            'answer_text' => 'some text',
-            'selected_option_id' => 5,
-        ]);
+
+        try {
+            $service->validateAnswerShape($question, [
+                'answer_text' => 'some text',
+                'selected_option_id' => 5,
+            ]);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('invalid_answer_shape', $e->getErrorCode());
+            $this->assertSame(422, $e->getStatus());
+            $this->assertSame('invalid_answer_shape', $e->getPublicCode());
+            $this->assertNull($e->getField());
+        }
     }
 
     // ── fill_in_the_blank — validateAnswerShape mirrors open_text (FR-31) ────────
@@ -236,12 +267,18 @@ class AnswerServiceTest extends TestCase
 
     public function testFillInTheBlankEmptyAnswerThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('answer_text:required');
-
         $service = $this->makeService();
         $question = ['id' => 99, 'question_type' => 'fill_in_the_blank', 'session_id' => 10, 'status' => 'active'];
-        $service->validateAnswerShape($question, ['answer_text' => '   ']);
+
+        try {
+            $service->validateAnswerShape($question, ['answer_text' => '   ']);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('required', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('missing_fields', $e->getPublicCode());
+            $this->assertSame('answer_text', $e->getField());
+        }
     }
 
     public function testSuccessfulFillInTheBlankSubmitReturnsId(): void
@@ -347,10 +384,16 @@ class AnswerServiceTest extends TestCase
 
     public function testMissingQuestionIdThrows(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('question_id:required');
-
         $service = $this->makeService();
-        $service->submit(1, []);
+
+        try {
+            $service->submit(1, []);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame('required', $e->getErrorCode());
+            $this->assertSame(400, $e->getStatus());
+            $this->assertSame('missing_fields', $e->getPublicCode());
+            $this->assertSame('question_id', $e->getField());
+        }
     }
 }
