@@ -9,6 +9,7 @@ use EduQR\Contracts\ParticipantRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Support\DeviceHash;
 use EduQR\Support\ProfanityFilter;
+use EduQR\Support\TextFold;
 
 final class ParticipantService
 {
@@ -89,12 +90,14 @@ final class ParticipantService
         return $this->participants->findBySessionAndDeviceHash((int) $session['id'], $deviceHash);
     }
 
-    /** Normalize a nickname: lowercase + trim + collapse internal whitespace. */
+    /**
+     * Normalize a nickname for duplicate detection: Turkish-correct case fold
+     * (NFR-77) + trim + collapse internal whitespace. Plain mb_strtolower()
+     * left "İsmail" and "ismail" looking like two different students.
+     */
     public static function normalize(string $nickname): string
     {
-        $normalized = mb_strtolower(trim($nickname), 'UTF-8');
-
-        return (string) preg_replace('/\s+/u', ' ', $normalized);
+        return TextFold::forComparisonNormalized($nickname);
     }
 
     /** Validate a raw nickname string. Throws InvalidArgumentException on failure. */

@@ -35,6 +35,39 @@ class ParticipantServiceTest extends TestCase
         $this->assertSame('şeyma', ParticipantService::normalize('ŞEYMA'));
     }
 
+    /**
+     * NFR-77: mb_strtolower('İ') emits "i" + U+0307 COMBINING DOT ABOVE, so
+     * "İsmail" and "ismail" used to normalize to two different strings and the
+     * same student could join twice under what reads as one nickname.
+     */
+    public function testNormalizeFoldsTurkishDottedCapitalI_NFR77(): void
+    {
+        $this->assertSame('ismail', ParticipantService::normalize('İsmail'));
+        $this->assertSame(
+            ParticipantService::normalize('ismail'),
+            ParticipantService::normalize('İsmail')
+        );
+        $this->assertStringNotContainsString("\u{0307}", ParticipantService::normalize('İsmail'));
+    }
+
+    /** NFR-77: the dotless I family folds onto the same key. */
+    public function testNormalizeFoldsTurkishDotlessI_NFR77(): void
+    {
+        $this->assertSame('irmak', ParticipantService::normalize('Irmak'));
+        $this->assertSame('irmak', ParticipantService::normalize('ırmak'));
+        $this->assertSame('irmak', ParticipantService::normalize('IRMAK'));
+    }
+
+    /** NFR-77: a duplicate that differs only in i-casing must be rejected. */
+    public function testJoinRejectsTurkishICasingDuplicate_NFR77(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('duplicate_nickname');
+
+        $service = $this->makeService(existingNickname: ParticipantService::normalize('İsmail'));
+        $service->join('ABCD23', 'ismail', null, '');
+    }
+
     // ── ProfanityFilter ────────────────────────────────────────────────────────
 
     public function testProfanityFilterDetectsExactMatch(): void

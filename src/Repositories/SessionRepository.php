@@ -6,6 +6,7 @@ namespace EduQR\Repositories;
 
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Support\Database;
+use EduQR\Support\TextFold;
 use PDO;
 
 final class SessionRepository implements SessionRepositoryInterface
@@ -124,7 +125,10 @@ final class SessionRepository implements SessionRepositoryInterface
         );
         foreach ($rows as $i => $pid) {
             $label = 'Participant ' . ($i + 1);
-            $upd->execute([$label, mb_strtolower($label), $pid]);
+            // Same fold as ParticipantService::normalize(), so the stored
+            // nickname_normalized keeps matching what duplicate detection
+            // computes (NFR-77).
+            $upd->execute([$label, TextFold::forComparisonNormalized($label), $pid]);
         }
 
         // Mark session as anonymized

@@ -10,6 +10,7 @@ use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Support\Database;
+use EduQR\Support\TextFold;
 use PDO;
 
 /**
@@ -416,10 +417,19 @@ final class ReportService
     private function buildWordCloud(array $answers, string $language): array
     {
         $counts = [];
-        $stopWords = array_fill_keys($this->wordCloudStopWords($language), true);
+        // NFR-77: fold the stop-word list with the same rule as the answers —
+        // Turkish stop words such as "için" and "mı" carry i-variants too.
+        $stopWords = array_fill_keys(
+            array_map(
+                static fn (string $word): string => TextFold::forComparison($word),
+                $this->wordCloudStopWords($language)
+            ),
+            true
+        );
 
         foreach ($answers as $row) {
-            $text = mb_strtolower(trim((string) ($row['text'] ?? $row['answer_text'] ?? '')), 'UTF-8');
+            // NFR-77: Turkish-correct fold, so "İlgi" and "ilgi" land in one bucket.
+            $text = TextFold::forComparison(trim((string) ($row['text'] ?? $row['answer_text'] ?? '')));
             if ($text === '') {
                 continue;
             }
@@ -802,10 +812,13 @@ final class ReportService
      */
     private static function giftTrueFalseFlag(array $option): ?string
     {
-        $value = mb_strtolower(trim((string) ($option['option_value'] ?? '')), 'UTF-8');
-        $text = mb_strtolower(trim((string) ($option['option_text'] ?? '')), 'UTF-8');
+        // NFR-77: both the instructor's option text and the token list are folded
+        // with the same rule — "hayır" and "HAYIR" must map onto the same token.
+        $value = TextFold::forComparison(trim((string) ($option['option_value'] ?? '')));
+        $text = TextFold::forComparison(trim((string) ($option['option_text'] ?? '')));
 
         foreach ([['T', ['yes', 'true', 'evet', 'doğru']], ['F', ['no', 'false', 'hayır', 'yanlış']]] as [$flag, $tokens]) {
+            $tokens = array_map(static fn (string $token): string => TextFold::forComparison($token), $tokens);
             if (in_array($value, $tokens, true) || in_array($text, $tokens, true)) {
                 return $flag;
             }
@@ -891,20 +904,47 @@ final class ReportService
     private function computeScores(int $sessionId, PDO $pdo): array
     {
         $stmt = $pdo->prepare(
-            'SELECT p.id AS participant_id, p.nickname, COUNT(o.id) AS score
-             FROM participants p
-             LEFT JOIN answers a ON a.participant_id = p.id
-             LEFT JOIN options o ON o.is_correct = 1 AND (
-                 o.id = a.selected_option_id
-                 OR (o.question_id = a.question_id AND a.answer_text IS NOT NULL
-                     AND LOWER(TRIM(a.answer_text)) = LOWER(TRIM(o.option_text)))
-             )
-             WHERE p.session_id = ?
-             GROUP BY p.id, p.nickname
-             ORDER BY score DESC'
+            'SELECT id AS participant_id, nickname
+             FROM participants
+             WHERE session_id = ?
+             ORDER BY id ASC'
         );
         $stmt->execute([$sessionId]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if ($rows === []) {
+            return [];
+        }
+
+        $correctOptions = $this->correctOptions($sessionId, $pdo);
+
+        $answersStmt = $pdo->prepare(
+            'SELECT a.participant_id, a.question_id, a.selected_option_id, a.answer_text
+             FROM answers a
+             INNER JOIN participants p ON p.id = a.participant_id
+             WHERE p.session_id = ?'
+        );
+        $answersStmt->execute([$sessionId]);
+
+        $points = [];
+        foreach ($answersStmt->fetchAll(PDO::FETCH_ASSOC) as $answer) {
+            $participantId = (int) $answer['participant_id'];
+            $points[$participantId] = ($points[$participantId] ?? 0)
+                + self::countCorrectMatches($answer, $correctOptions);
+        }
+
+        $rows = array_map(
+            static function (array $row) use ($points): array {
+                $row['score'] = $points[(int) $row['participant_id']] ?? 0;
+
+                return $row;
+            },
+            $rows
+        );
+
+        // Highest score first; ties keep join order so the ranking is stable.
+        usort($rows, static fn (array $a, array $b): int => $b['score'] <=> $a['score']
+            ?: (int) $a['participant_id'] <=> (int) $b['participant_id']);
 
         $scores = [];
         $rank = 0;
@@ -925,6 +965,87 @@ final class ReportService
         }
 
         return $scores;
+    }
+
+    /**
+     * Every is_correct option of every question in the session.
+     *
+     * @return array<int,array<int,array{id:int,text:string}>> keyed by question id
+     */
+    private function correctOptions(int $sessionId, PDO $pdo): array
+    {
+        $questionIds = array_map(
+            static fn (array $question): int => (int) $question['id'],
+            $this->questions->findBySession($sessionId)
+        );
+
+        if ($questionIds === []) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($questionIds), '?'));
+        $stmt = $pdo->prepare(
+            'SELECT id, question_id, option_text FROM options
+             WHERE is_correct = 1 AND question_id IN (' . $placeholders . ')'
+        );
+        $stmt->execute($questionIds);
+
+        $byQuestion = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $option) {
+            $byQuestion[(int) $option['question_id']][] = [
+                'id' => (int) $option['id'],
+                'text' => (string) $option['option_text'],
+            ];
+        }
+
+        return $byQuestion;
+    }
+
+    /**
+     * Counts the correct options one answer satisfies — a selected option id, or
+     * for fill_in_the_blank / typed answers a case-insensitive text match
+     * (FR-31, FR-92).
+     *
+     * The text comparison is folded in PHP rather than with SQL LOWER(), which
+     * this query used to do. SQL case folding is both engine-dependent and
+     * Turkish-incorrect: MySQL's LOWER('İ') under utf8mb4_unicode_ci yields
+     * "i" + U+0307 COMBINING DOT ABOVE, and SQLite's LOWER() is ASCII-only and
+     * leaves 'İ' untouched entirely. Either way a Turkish student who typed
+     * "İstanbul" against a correct answer of "istanbul" was marked wrong.
+     *
+     * Folding here rather than normalizing on write also means no stored column
+     * can go stale when an instructor edits the correct answer, and it puts the
+     * graded comparison on the path the tests actually exercise — SQLite-backed
+     * integration tests could never have caught the SQL-side bug (NFR-77).
+     *
+     * @param array<string,mixed>                        $answer
+     * @param array<int,array<int,array{id:int,text:string}>> $correctOptions
+     */
+    private static function countCorrectMatches(array $answer, array $correctOptions): int
+    {
+        $options = $correctOptions[(int) $answer['question_id']] ?? [];
+        if ($options === []) {
+            return 0;
+        }
+
+        $selectedId = $answer['selected_option_id'] === null ? null : (int) $answer['selected_option_id'];
+        $typed = trim((string) ($answer['answer_text'] ?? ''));
+        $typedKey = $typed === '' ? null : TextFold::forComparisonNormalized($typed);
+
+        $matches = 0;
+        foreach ($options as $option) {
+            if ($selectedId !== null && $selectedId === $option['id']) {
+                $matches++;
+
+                continue;
+            }
+
+            if ($typedKey !== null && $typedKey === TextFold::forComparisonNormalized($option['text'])) {
+                $matches++;
+            }
+        }
+
+        return $matches;
     }
 
     private function requireSession(int $sessionId, int $userId): array

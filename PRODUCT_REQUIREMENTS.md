@@ -247,6 +247,7 @@ See `I18N_SPEC.md` for the implementation contract.
 | NFR-74 | MUST | The repository MUST NOT contain passwords, API keys, database credentials, or other live secrets. Operational access notes MUST use an ignored local file; any committed secret MUST be rotated and removed from reachable Git history. |
 | NFR-75 | MUST | The app MUST run as a reproducible local container stack (PHP + MySQL) started with a single command, with no host-level PHP or MySQL installation required. Container configuration MUST NOT contain baked-in secrets; every credential comes from an ignored env file. |
 | NFR-76 | MUST | Live polling MUST be bounded in cost. A poll whose underlying state is unchanged MUST be answered `304 Not Modified` without recomputing aggregates; the student active-question poll MUST NOT build full result aggregation; and poll intervals MUST be read from configuration (`POLL_INTERVAL_*`) rather than hardcoded in templates. |
+| NFR-77 | MUST | Case-insensitive comparison of user-authored text MUST be correct for Turkish, where `i`/`İ` and `ı`/`I` do not fold under default PHP or SQL casing. Every such comparison MUST fold both sides with one shared rule, and the result MUST NOT vary with the active locale or the database engine, so that a correct answer is never scored wrong. |
 
 ---
 

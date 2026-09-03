@@ -12,7 +12,9 @@ final class ProfanityFilter
     public static function isProfane(string $word, string $locale, string $configDir): bool
     {
         $words = self::load($locale, $configDir);
-        $needle = mb_strtolower(trim($word), 'UTF-8');
+        // NFR-77: both sides are folded with the same Turkish-correct rule, so a
+        // banned word is still caught when typed with dotted/dotless I variants.
+        $needle = TextFold::forComparison(trim($word));
 
         foreach ($words as $banned) {
             // Exact match or contains the banned word as a substring
@@ -40,7 +42,7 @@ final class ProfanityFilter
                     if ($line === '' || str_starts_with($line, '#')) {
                         continue;
                     }
-                    $lines[] = mb_strtolower($line, 'UTF-8');
+                    $lines[] = TextFold::forComparison($line);
                 }
             }
 

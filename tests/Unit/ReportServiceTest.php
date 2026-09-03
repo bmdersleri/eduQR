@@ -492,6 +492,151 @@ class ReportServiceTest extends TestCase
         $this->assertSame(0, $byParticipant[2]); // incorrect
     }
 
+    /**
+     * NFR-77 / FR-92: a Turkish answer differing only in dotted/dotless I casing
+     * must score as correct. The old SQL LOWER(TRIM(...)) match could not do
+     * this: SQLite's LOWER() is ASCII-only and leaves 'İ' alone, and MySQL's
+     * yields "i" + U+0307, so neither matched a plain "i".
+     */
+    public function testTurkishDottedIAnswerScoresCorrect_NFR77(): void
+    {
+        $this->seedCorrectOption(1, 'istanbul');
+
+        $this->seedAnswer(1, 1, null, 'İstanbul');   // dotted capital I
+        $this->seedAnswer(2, 1, null, 'ISTANBUL');   // dotless capital I
+        $this->seedAnswer(3, 1, null, 'Ankara');     // genuinely different
+
+        $byParticipant = $this->scoresByParticipant($this->makeTurkishQuizService());
+
+        $this->assertSame(1, $byParticipant[1]);
+        $this->assertSame(1, $byParticipant[2]);
+        $this->assertSame(0, $byParticipant[3]);
+    }
+
+    /**
+     * NFR-77: the same fold applied to a Turkish correct answer — the instructor
+     * types the dotted form, the student types the plain one.
+     */
+    public function testTurkishDottedICorrectAnswerMatchesPlainTypedAnswer_NFR77(): void
+    {
+        $this->seedCorrectOption(1, 'İzmir');
+
+        $this->seedAnswer(1, 1, null, 'izmir');
+        $this->seedAnswer(2, 1, null, 'IZMIR');
+        $this->seedAnswer(3, 1, null, 'Bursa');
+
+        $byParticipant = $this->scoresByParticipant($this->makeTurkishQuizService());
+
+        $this->assertSame(1, $byParticipant[1]);
+        $this->assertSame(1, $byParticipant[2]);
+        $this->assertSame(0, $byParticipant[3]);
+    }
+
+    /**
+     * NFR-77: the Turkish-aware fold must not regress English. A naive Turkish
+     * fold maps I → ı, which would stop "MITOCHONDRIA" matching "mitochondria".
+     * The comparison must also not vary with the active locale.
+     */
+    public function testEnglishICasingStillScoresCorrect_NFR77(): void
+    {
+        $this->seedCorrectOption(1, 'mitochondria');
+
+        $this->seedAnswer(1, 1, null, 'MITOCHONDRIA');
+        $this->seedAnswer(2, 1, null, 'Mitochondria');
+        $this->seedAnswer(3, 1, null, 'ribosome');
+
+        $byParticipant = $this->scoresByParticipant($this->makeTurkishQuizService('en'));
+
+        $this->assertSame(1, $byParticipant[1]);
+        $this->assertSame(1, $byParticipant[2]);
+        $this->assertSame(0, $byParticipant[3]);
+    }
+
+    /** NFR-77: an answer that merely shares a prefix must still score wrong. */
+    public function testDifferentAnswerStillScoresWrong_NFR77(): void
+    {
+        $this->seedCorrectOption(1, 'İstanbul');
+
+        $this->seedAnswer(1, 1, null, 'İstanbulspor');
+        $this->seedAnswer(2, 1, null, '');
+        $this->seedAnswer(3, 1, null, 'İstanbul');
+
+        $byParticipant = $this->scoresByParticipant($this->makeTurkishQuizService());
+
+        $this->assertSame(0, $byParticipant[1]);
+        $this->assertSame(0, $byParticipant[2]);
+        $this->assertSame(1, $byParticipant[3]);
+    }
+
+    private function makeTurkishQuizService(string $language = 'tr'): ReportService
+    {
+        return $this->makeService(
+            questionRow: [
+                'id' => 1,
+                'session_id' => 10,
+                'question_type' => 'fill_in_the_blank',
+                'question_text' => 'Türkiye\'nin en kalabalık şehri ____.',
+                'status' => 'closed',
+                'show_results' => 1,
+            ],
+            sessionRow: [
+                'id' => 10, 'status' => 'closed', 'course_id' => 5,
+                'show_results_to_students' => 1, 'title' => 'Sınav',
+                'language' => $language, 'started_at' => null, 'closed_at' => null,
+                'anonymized' => 0, 'is_quiz' => 1,
+            ],
+        );
+    }
+
+    /** @return array<int,int> participant id → score */
+    private function scoresByParticipant(ReportService $service): array
+    {
+        $report = $service->buildReport(10, 99);
+        $this->assertArrayHasKey('scores', $report);
+
+        $byParticipant = [];
+        foreach ($report['scores'] as $row) {
+            $byParticipant[(int) $row['participant_id']] = (int) $row['score'];
+        }
+
+        return $byParticipant;
+    }
+
+    /**
+     * FR-66 / NFR-77: word-cloud grouping folds Turkish i-variants, so answers
+     * that differ only in i-casing land in one term rather than several.
+     */
+    public function testWordCloudGroupsTurkishICasingIntoOneTerm_NFR77(): void
+    {
+        $service = $this->makeService(
+            questionRow: [
+                'id' => 1,
+                'session_id' => 10,
+                'question_type' => 'open_text',
+                'question_text' => 'Ne öğrendin?',
+                'status' => 'closed',
+                'show_results' => 1,
+            ],
+            sessionRow: [
+                'id' => 10, 'status' => 'closed', 'course_id' => 5,
+                'show_results_to_students' => 1, 'title' => 'Ders',
+                'language' => 'tr', 'started_at' => null, 'closed_at' => null,
+                'anonymized' => 0,
+            ],
+        );
+
+        $this->seedAnswer(1, 1, null, 'İletişim');
+        $this->seedAnswer(2, 1, null, 'iletişim');
+        $this->seedAnswer(3, 1, null, 'İLETİŞİM');
+
+        $results = $service->getResults(10, 99, 1);
+        $cloud = $results[0]['word_cloud'] ?? [];
+
+        $terms = array_column($cloud, 'term');
+        $this->assertCount(1, $terms, 'i-casing variants must collapse into one term');
+        $this->assertSame(3, $cloud[0]['count']);
+    }
+
     // ── T-912: buildReport() — shape and counts ────────────────────────────────
 
     public function testBuildReportReturnsCorrectTopLevelShape(): void
