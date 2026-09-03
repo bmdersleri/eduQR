@@ -111,10 +111,6 @@ final class CourseController extends HtmlController
                 // server-side; this only decides what is drawn.
                 'isCourseOwner' => (int) $course['instructor_id'] === (int) $instructor['id'],
             ],
-            // The title is escaped here and again by the layout. That double
-            // escape predates this move and is preserved by it: undoing it
-            // changes the rendered bytes of every course whose title contains
-            // an ampersand or a quote, which is a change of its own.
             self::titleWithAppName($course['title']),
             self::LAYOUT_ADMIN,
         );

@@ -74,10 +74,6 @@ final class ProjectorController extends HtmlController
                 'joinUrl' => eduqr_url('/join/' . $sessionData['short_code']),
                 'qrUrl' => eduqr_path('/api/v1/sessions/' . $sessionId . '/qr.png?size=600'),
             ],
-            // The title is escaped here and again by the layout. That double
-            // escape predates this move and is preserved by it: undoing it
-            // changes the rendered bytes of every session whose title contains
-            // an ampersand or a quote, which is a change of its own.
             self::titleWithAppName($sessionData['title']),
             self::LAYOUT_PROJECTOR,
         );
@@ -119,7 +115,6 @@ final class ProjectorController extends HtmlController
                 'activeQ' => $activeQuestion,
                 'activeQId' => $activeQuestion !== null ? (int) $activeQuestion['id'] : 0,
             ],
-            // Escaped here and again by the layout, as above.
             self::titleWithAppName(t('results.title')),
             self::LAYOUT_PROJECTOR,
         );

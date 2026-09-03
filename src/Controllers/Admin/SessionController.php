@@ -71,8 +71,6 @@ final class SessionController extends HtmlController
                 'csrfToken' => CsrfMiddleware::getToken(),
                 'course' => $course,
             ],
-            // The one admin title that is not escaped twice: both halves are
-            // translated strings, and the layout escapes the result.
             self::titleWithAppName(t('session.new.title')),
             self::LAYOUT_ADMIN,
         );
@@ -109,7 +107,6 @@ final class SessionController extends HtmlController
                 'isPaused' => $session['status'] === 'paused',
                 'isClosed' => $session['status'] === 'closed',
             ],
-            // Escaped here and again by the layout; preserved, see CourseController.
             self::titleWithAppName($session['title']),
             self::LAYOUT_ADMIN,
         );
@@ -138,7 +135,6 @@ final class SessionController extends HtmlController
                 'sessionId' => $sessionId,
                 'questions' => $this->questions->findBySession($sessionId),
             ],
-            // A translated string, escaped, then escaped again by the layout.
             self::titleWithAppName(t('results.title')),
             self::LAYOUT_ADMIN,
         );
@@ -171,7 +167,6 @@ final class SessionController extends HtmlController
                 'summary' => $report['summary'],
                 'sessionId' => $sessionId,
             ],
-            // Doubly escaped, as on the results page.
             self::titleWithAppName(t('report.title')),
             self::LAYOUT_ADMIN,
         );

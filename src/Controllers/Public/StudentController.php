@@ -75,10 +75,6 @@ final class StudentController extends HtmlController
                 'session' => $session,
                 'shortCode' => $shortCode,
             ],
-            // The title is escaped here and again by the layout. That double
-            // escape predates this move and is preserved by it: undoing it
-            // changes the rendered bytes of every session whose title contains
-            // an ampersand or a quote, which is a change of its own.
             self::titleWithAppName($session['title']),
             self::LAYOUT_PUBLIC,
         );
@@ -110,7 +106,6 @@ final class StudentController extends HtmlController
                 'shortCode' => $shortCode,
                 'answeredQuestionId' => (int) ($_GET['answered_q'] ?? 0),
             ],
-            // Escaped here and again by the layout, as above.
             self::titleWithAppName(t('student.answer.submitted')),
             self::LAYOUT_PUBLIC,
         );
@@ -154,9 +149,6 @@ final class StudentController extends HtmlController
                 // here and handed over with everything else.
                 'totalQ' => \count($questions),
             ],
-            // The only one of these titles the template did not escape before
-            // handing it to the layout. Left unescaped so the rendered bytes do
-            // not change.
             self::titleWithAppName(t('student.batch.title')),
             self::LAYOUT_PUBLIC,
         );
@@ -230,7 +222,6 @@ final class StudentController extends HtmlController
                 'session' => $session,
                 'shortCode' => $shortCode,
             ],
-            // Escaped here and again by the layout, as above.
             self::titleWithAppName($session['title']),
             self::LAYOUT_PUBLIC,
         );
@@ -318,7 +309,6 @@ final class StudentController extends HtmlController
                 'qText' => htmlspecialchars($question['question_text'], ENT_QUOTES, 'UTF-8'),
                 'optionCount' => \count($options),
             ],
-            // Escaped here and again by the layout, as above.
             self::titleWithAppName($session['title']),
             self::LAYOUT_PUBLIC,
         );
