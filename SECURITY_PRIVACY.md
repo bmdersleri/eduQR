@@ -112,8 +112,18 @@ It is a **friction reducer, not a security control.** A determined student can c
 
 ## 6. Authorization
 
-- Instructors access **only their own** courses, and only sessions under those courses (`FR-14`).
-- Admins may access all courses and manage user accounts.
+- Instructors access **only** the courses they own or co-instruct, and only the sessions
+  under those courses (`FR-14`, `FR-97`). Access is resolved in one place —
+  `CourseRepository::roleFor()` — and every service asks it.
+- A user with the `admin` role reaches **every** course at co-instructor level (`FR-99`):
+  they can read the course, its sessions, questions, question bank, reports, analytics and
+  exports, and can author sessions and questions. Admin does **not** confer ownership:
+  archiving, restoring, deleting a course and managing its instructor list stay with the
+  row-level owner in `course_instructors`, and an admin attempting them is refused with
+  `403 forbidden`.
+- Admin elevation is **not** audited per read. Live pages poll (`NFR-76`), so one audit row
+  per elevated read would bury the audit log (`FR-91`); writes are audited exactly as any
+  instructor's writes are.
 - Reports require instructor authentication — there is **no public report URL** (`FR-74`).
 - Public student routes expose only the minimum session and question data needed.
 - Internal database IDs are not exposed where a short code or opaque token would do.

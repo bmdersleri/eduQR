@@ -264,6 +264,7 @@ Rules:
 - Like `courses.instructor_id`, `user_id` must reference an active `users` row whose `role = 'instructor'` (enforced in `CourseService::addInstructor()`; the FK only guarantees the row exists).
 - The unique key on `(course_id, user_id)` makes "already an instructor on this course" a database-level invariant, not just a service check.
 - `ON DELETE CASCADE` on both foreign keys: deleting a course or a user removes their access rows.
+- Absence of a row here means no access, **except** for a user whose `users.role` is `admin`: `CourseRepository::roleFor()` treats such a user as a co-instructor of every course, without ever writing a row for them (`FR-99`).
 
 ### 2.4 `sessions`
 

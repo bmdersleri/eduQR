@@ -441,6 +441,35 @@ class CourseServiceTest extends TestCase
         $this->assertSame(10, $instructors[0]['user_id']);
     }
 
+    // ── FR-99: elevation reaches the service as a co-instructor, never as owner ─
+
+    public function testElevatedAdminCanReadAnyCourse_FR99(): void
+    {
+        // 20 arrives as a co-instructor because roleFor() elevated the admin.
+        $this->assertSame(
+            'Test Course',
+            $this->makeService($this->repoWithCoInstructor())->getCourse(1, 20)['title']
+        );
+    }
+
+    public function testElevatedAdminCannotArchiveCourse_FR99(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('course_owner_only');
+        $this->makeService($this->repoWithCoInstructor())->archiveCourse(1, 20);
+    }
+
+    public function testElevatedAdminCannotManageInstructors_FR99(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('course_owner_only');
+        $service = $this->makeService(
+            $this->repoWithCoInstructor(),
+            $this->makeUsers(['new@example.org' => 30])
+        );
+        $service->addInstructor(1, 20, ['email' => 'new@example.org']);
+    }
+
     // ── Regression: access must not widen to unrelated instructors (FR-14) ─────
 
     public function testUnrelatedInstructorIsStillForbiddenOnRead_FR97(): void
