@@ -52,7 +52,7 @@ Starter files (drop into the repository as-is):
 | --- | --- |
 | `.gitignore` | Standard PHP/Node ignores. |
 | `.env.example` | All required environment variables. |
-| `database/schema.sql` | Reference schema; canonical SQL. |
+| `database/schema.sql` | Reference schema, derived from `database/migrations/*.sql`; the migrations are canonical (`bin/verify-migrations.sh`). |
 | `locales/en.json` | English UI strings, ~110 keys. |
 | `locales/tr.json` | Turkish UI strings, same keys. |
 
@@ -279,10 +279,13 @@ php -S localhost:8080 -t public/
 ```
 
 Verify that the migrations still produce the documented schema (needs Docker; uses a
-throwaway MySQL 8.4 container on port 3308 and never touches your database):
+throwaway MySQL 8.4 container on port 3308 and never touches your database). The script
+also needs `php` on `PATH`; if it isn't, point it at the binary with `PHP_BIN=`:
 
 ```bash
 bash bin/verify-migrations.sh
+# or, if php is not on PATH:
+PHP_BIN=/path/to/php bash bin/verify-migrations.sh
 ```
 
 Open `http://localhost:8080` in your browser. Default seeded credentials are in `bin/seed.php`; change them immediately on a real deployment.
