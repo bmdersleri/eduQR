@@ -102,6 +102,55 @@ Response includes a `meta` block:
 }
 ```
 
+### 1.9 Polled endpoints and `ETag`
+
+Five endpoints are polled on a timer rather than fetched once. Each answers
+`304 Not Modified` when the state behind it has not moved, and each derives its
+`ETag` from a **version query** — a query cheap enough that answering `304`
+costs less than building the body it replaces (NFR-76). A version query reads
+counts, maximum ids and timestamps only; it never joins to build a row set.
+
+| Endpoint | Polled by | Version query reads |
+| --- | --- | --- |
+| `GET /api/v1/sessions/{short_code}/active-question` | student wait, student answered, projector | the session's `status` and `updated_at`; the active question's `id`, `status`, `activated_at` and `updated_at` |
+| `GET /api/v1/sessions/{id}/results` | instructor results, projector | the question's `status` and `updated_at`; over its answers, `COUNT(*)`, `MAX(id)` and `SUM(is_hidden)` |
+| `GET /api/v1/sessions/{id}/participants/count` | instructor session detail | the count itself |
+| `GET /api/v1/sessions/{id}/reactions` | instructor session detail | over the question's reactions, `COUNT(*)` and `MAX(updated_at)` |
+| `GET /api/v1/sessions/{id}/questions` | instructor session detail | over the session's questions, `COUNT(*)` and `MAX(updated_at)` |
+
+Rules:
+
+- **`SUM(is_hidden)` is not optional on `/results`.** `answers` has no
+  `updated_at`, so hiding an answer (§5.6) changes what the endpoint returns
+  while leaving both `COUNT(*)` and `MAX(id)` where they were. A version that
+  omitted it would serve a stale `304` to a moderating instructor — the one
+  reader who must see the change immediately.
+- **Authorization runs before the `ETag` is compared.** A `304` is a cache
+  answer, not an authorization answer: a caller who may not read the resource
+  gets `403` or `404` whether or not their `If-None-Match` matches.
+- **The `ETag` covers only what the body carries.** `/active-question` returns
+  the same body to every participant today, so its version is not
+  participant-specific. Should `already_answered` ever become per-participant,
+  the participant id joins the version query in the same change.
+- A `304` carries the `ETag` header and no body. A `200` carries both.
+
+### 1.10 Poll intervals
+
+Intervals are configuration, not template constants (NFR-76). Four keys, one
+per screen, all in milliseconds:
+
+| Key | Default | Screen |
+| --- | --- | --- |
+| `POLL_INTERVAL_INSTRUCTOR_MS` | `2000` | `/admin/sessions/{id}/results` — the screen answers arrive on |
+| `POLL_INTERVAL_INSTRUCTOR_SESSION_MS` | `5000` | `/admin/sessions/{id}` — participant count, reactions and question list, on one timer |
+| `POLL_INTERVAL_STUDENT_MS` | `3000` | `/join/{short_code}/wait` and `/play/{short_code}/answered` |
+| `POLL_INTERVAL_PROJECTOR_MS` | `3000` | `/live/{short_code}/results` |
+
+The first two names are kept as `.env.example` already published them, which is
+why the bare `INSTRUCTOR` key means the results screen specifically. The
+defaults are the values the templates hardcoded before NFR-76, so a deployment
+that sets nothing polls exactly as it did.
+
 ---
 
 ## 2. Public Endpoints (no auth)

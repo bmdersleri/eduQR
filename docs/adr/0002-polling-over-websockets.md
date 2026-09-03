@@ -62,6 +62,12 @@ Both are addressed by **T-1123 / NFR-76** (bounded-cost polling: `304 Not Modifi
 state, a cheap active-question endpoint, and intervals actually read from configuration), which
 is expected to remove most of the load without touching the architecture.
 
+The shape of that answer is now specified in API_SPEC.md §1.9 and §1.10: five polled endpoints,
+each with a version query cheap enough that a `304` costs less than the body it replaces, and one
+interval key per screen. The two keys `.env.example` already declared are kept, and two more join
+them — the four hardcoded values map to four screens, not to two audiences, so collapsing them to
+the existing pair would have silently changed how often two of the screens poll.
+
 Revisit this ADR if a deployment genuinely needs to serve 500+ concurrent students, or if the
 project ever gains a Node runtime for another reason — at that point the trade-off changes.
 
