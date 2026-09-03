@@ -112,5 +112,16 @@ deciding which response is correct and publishing that decision. That is
 NFR-83 / T-1131.
 
 
+One construction site survived the composition root on purpose.
+`ReportService::extractThemes()` still falls back to
+`OpenTextThemeExtractionService::fromConfig()` when no extractor was injected,
+which is a service building a service and so an NFR-80 violation in its own
+right. Passing the extractor in from the container would make it eager for
+every report request, including the ones that never touch an open-text
+question. The split in NFR-82 gives theme extraction its own unit with its own
+interface, at which point the collaborator becomes a constructor parameter and
+the fallback disappears without the eagerness. Fixing it twice was not worth
+one line, so it waits for T-1130.
+
 Recording them here means the next person to read this file does not have to
 rediscover them to know they were seen.
