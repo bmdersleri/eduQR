@@ -144,19 +144,31 @@ double escape predates the move, and undoing it changes rendered bytes for
 every title containing an ampersand or a quote. Correcting it route by route
 would leave the codebase in a state where two neighbouring pages escape
 differently, which is harder to reason about than the bug. So it is written as
-NFR-84 / T-1132 and applied everywhere at once.
+NFR-84 / T-1132 and applied everywhere at once. T-1132 has since done that: the
+eleven controller-side escapes are gone, the layouts are the single escaping
+point, and `PageTitleEscapingTest` fails if either end changes — it renders
+each real layout and counts, and reads `render()`'s third argument to catch a
+controller that pre-escapes again.
 
-`/play/{short_code}/batch` is the exception that proves the rule: its title is
-a bare `t('student.batch.title')` with no escape at all. That is safe today
-because a locale string is not user input, but it means two neighbouring
-student pages already escape differently — which is the state T-1132 exists to
-end rather than to spread.
+`/play/{short_code}/batch` was the exception that proved the rule: its title
+was a bare `t('student.batch.title')` with no escape at all. That was safe,
+because a locale string is not user input, but it meant two neighbouring
+student pages escaped differently. It is now the shape every page has.
+
+A twelfth pre-escape turned up while fixing them, outside the eleven because it
+is not a title: `Admin\SessionController::joinUrl()` escaped the short code
+before concatenating it, and `admin/sessions/detail.php` escapes the whole URL
+again for both the href and the link text. Nothing ever rendered wrongly, only
+because a short code is `[A-Z0-9]`. It was fixed with the rest — a value that
+happens to contain no special characters is not a reason to escape it twice.
 
 While cataloguing them, one more asymmetry turned up among the panel five:
 `/admin/courses/{id}/analytics` ends its title with the course title rather
 than with `t('app.name')`, so it is the only page in the panel whose title bar
-does not identify the application. That is a product decision rather than a
-defect, and T-1132 is where it gets made.
+does not identify the application. T-1132 decided to keep it: no requirement
+says a title must end with the application name, and an instructor comparing
+two analytics tabs tells them apart by their course. `titleWithAppName()` is a
+convention, and this is the one page with a reason not to follow it.
 
 Recording them here means the next person to read this file does not have to
 rediscover them to know they were seen.

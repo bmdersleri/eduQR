@@ -115,7 +115,7 @@ final class CourseController extends HtmlController
             // escape predates this move and is preserved by it: undoing it
             // changes the rendered bytes of every course whose title contains
             // an ampersand or a quote, which is a change of its own.
-            self::titleWithAppName(htmlspecialchars($course['title'], ENT_QUOTES, 'UTF-8')),
+            self::titleWithAppName($course['title']),
             self::LAYOUT_ADMIN,
         );
     }
@@ -150,10 +150,9 @@ final class CourseController extends HtmlController
                 // FR-85: locale-aware percent — tr renders "%83,4", en renders "83.4%".
                 'formatRate' => static fn (float $rate): string => fmt_percent($rate * 100),
             ],
-            // Doubly escaped on both sides of the separator, and this one ends
-            // in the course title rather than the app name. Both preserved.
-            htmlspecialchars(t('course.analytics.title'), ENT_QUOTES, 'UTF-8')
-                . ' — ' . htmlspecialchars($course['title'], ENT_QUOTES, 'UTF-8'),
+            // The one title that ends in the course rather than the app name,
+            // deliberately: two analytics tabs are told apart by their course.
+            t('course.analytics.title') . ' — ' . $course['title'],
             self::LAYOUT_ADMIN,
         );
     }

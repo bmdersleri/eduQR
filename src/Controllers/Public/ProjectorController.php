@@ -78,7 +78,7 @@ final class ProjectorController extends HtmlController
             // escape predates this move and is preserved by it: undoing it
             // changes the rendered bytes of every session whose title contains
             // an ampersand or a quote, which is a change of its own.
-            self::titleWithAppName(htmlspecialchars($sessionData['title'], ENT_QUOTES, 'UTF-8')),
+            self::titleWithAppName($sessionData['title']),
             self::LAYOUT_PROJECTOR,
         );
     }
@@ -120,7 +120,7 @@ final class ProjectorController extends HtmlController
                 'activeQId' => $activeQuestion !== null ? (int) $activeQuestion['id'] : 0,
             ],
             // Escaped here and again by the layout, as above.
-            self::titleWithAppName(htmlspecialchars(t('results.title'), ENT_QUOTES, 'UTF-8')),
+            self::titleWithAppName(t('results.title')),
             self::LAYOUT_PROJECTOR,
         );
     }

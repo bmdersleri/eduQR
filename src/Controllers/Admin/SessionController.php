@@ -110,7 +110,7 @@ final class SessionController extends HtmlController
                 'isClosed' => $session['status'] === 'closed',
             ],
             // Escaped here and again by the layout; preserved, see CourseController.
-            self::titleWithAppName(htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8')),
+            self::titleWithAppName($session['title']),
             self::LAYOUT_ADMIN,
         );
     }
@@ -139,7 +139,7 @@ final class SessionController extends HtmlController
                 'questions' => $this->questions->findBySession($sessionId),
             ],
             // A translated string, escaped, then escaped again by the layout.
-            self::titleWithAppName(htmlspecialchars(t('results.title'), ENT_QUOTES, 'UTF-8')),
+            self::titleWithAppName(t('results.title')),
             self::LAYOUT_ADMIN,
         );
     }
@@ -172,7 +172,7 @@ final class SessionController extends HtmlController
                 'sessionId' => $sessionId,
             ],
             // Doubly escaped, as on the results page.
-            self::titleWithAppName(htmlspecialchars(t('report.title'), ENT_QUOTES, 'UTF-8')),
+            self::titleWithAppName(t('report.title')),
             self::LAYOUT_ADMIN,
         );
     }
@@ -182,13 +182,14 @@ final class SessionController extends HtmlController
     /**
      * The address a student types or scans.
      *
-     * The short code is escaped before it is concatenated, exactly as the
-     * template did it: the result is printed into both an href and a QR payload,
-     * and pre-escaping it here is what those two uses expect.
+     * Unescaped, like every other value a controller hands a template. This
+     * used to pre-escape the short code on the theory that its two uses in
+     * `admin/sessions/detail.php` expected it that way; they do not — the
+     * template escapes `$joinUrl` again for both the href and the link text.
+     * Nothing rendered differently only because a short code is `[A-Z0-9]`.
      */
     private function joinUrl(string $shortCode): string
     {
-        return rtrim(Config::get('APP_URL', ''), '/')
-            . '/join/' . htmlspecialchars($shortCode, ENT_QUOTES, 'UTF-8');
+        return rtrim(Config::get('APP_URL', ''), '/') . '/join/' . $shortCode;
     }
 }

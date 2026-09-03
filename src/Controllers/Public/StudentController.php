@@ -79,7 +79,7 @@ final class StudentController extends HtmlController
             // escape predates this move and is preserved by it: undoing it
             // changes the rendered bytes of every session whose title contains
             // an ampersand or a quote, which is a change of its own.
-            self::titleWithAppName(htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8')),
+            self::titleWithAppName($session['title']),
             self::LAYOUT_PUBLIC,
         );
     }
@@ -111,7 +111,7 @@ final class StudentController extends HtmlController
                 'answeredQuestionId' => (int) ($_GET['answered_q'] ?? 0),
             ],
             // Escaped here and again by the layout, as above.
-            self::titleWithAppName(htmlspecialchars(t('student.answer.submitted'), ENT_QUOTES, 'UTF-8')),
+            self::titleWithAppName(t('student.answer.submitted')),
             self::LAYOUT_PUBLIC,
         );
     }
@@ -231,7 +231,7 @@ final class StudentController extends HtmlController
                 'shortCode' => $shortCode,
             ],
             // Escaped here and again by the layout, as above.
-            self::titleWithAppName(htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8')),
+            self::titleWithAppName($session['title']),
             self::LAYOUT_PUBLIC,
         );
     }
@@ -319,7 +319,7 @@ final class StudentController extends HtmlController
                 'optionCount' => \count($options),
             ],
             // Escaped here and again by the layout, as above.
-            self::titleWithAppName(htmlspecialchars($session['title'], ENT_QUOTES, 'UTF-8')),
+            self::titleWithAppName($session['title']),
             self::LAYOUT_PUBLIC,
         );
     }
