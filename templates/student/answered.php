@@ -41,6 +41,7 @@
 <script>
 const SHORT_CODE          = <?= json_encode($shortCode) ?>;
 const ANSWERED_QUESTION_ID = <?= $answeredQuestionId ?>;
+const POLL_INTERVAL_MS = <?= $pollIntervalMs ?>;
 
 function extractActiveQuestion(payload) {
     if (!payload || !payload.success || !payload.data) {
@@ -76,5 +77,5 @@ async function pollForNextQuestion() {
 }
 
 pollForNextQuestion();
-setInterval(pollForNextQuestion, 3000);
+setInterval(pollForNextQuestion, POLL_INTERVAL_MS);
 </script>

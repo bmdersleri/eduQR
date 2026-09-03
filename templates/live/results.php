@@ -75,6 +75,7 @@ const MSG_ANSWER_COUNT = <?= json_encode(t('results.answer_count')) ?>;
 const MSG_NO_ACTIVE    = <?= json_encode(t('question.no_active')) ?>;
 const MSG_WORD_CLOUD   = <?= json_encode(t('results.word_cloud')) ?>;
 const MSG_WORD_EMPTY   = <?= json_encode(t('results.word_cloud.empty')) ?>;
+const POLL_INTERVAL_MS = <?= $pollIntervalMs ?>;
 
 function extractActiveQuestion(payload) {
     if (!payload || !payload.success || !payload.data) {
@@ -256,7 +257,7 @@ function escHtml(s) {
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// Poll every 3 seconds (FR-54)
+// Poll on the configured interval (FR-54, NFR-76)
 pollResults();
-setInterval(pollResults, 3000);
+setInterval(pollResults, POLL_INTERVAL_MS);
 </script>

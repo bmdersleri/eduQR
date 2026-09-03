@@ -49,6 +49,7 @@
 
 <script>
 const SHORT_CODE = <?= json_encode($shortCode) ?>;
+const POLL_INTERVAL_MS = <?= $pollIntervalMs ?>;
 
 function extractActiveQuestion(payload) {
     if (!payload || !payload.success || !payload.data) {
@@ -74,5 +75,5 @@ async function pollActiveQuestion() {
 }
 
 pollActiveQuestion();
-setInterval(pollActiveQuestion, 3000);
+setInterval(pollActiveQuestion, POLL_INTERVAL_MS);
 </script>

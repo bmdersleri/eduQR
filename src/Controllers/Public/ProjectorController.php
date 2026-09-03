@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Public;
 
+use EduQR\Config;
 use EduQR\Container;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
@@ -114,9 +115,28 @@ final class ProjectorController extends HtmlController
                 'shortCode' => $shortCode,
                 'activeQ' => $activeQuestion,
                 'activeQId' => $activeQuestion !== null ? (int) $activeQuestion['id'] : 0,
+                'pollIntervalMs' => $this->pollIntervalMs(),
             ],
             self::titleWithAppName(t('results.title')),
             self::LAYOUT_PROJECTOR,
         );
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * How often the projector re-reads the results, in milliseconds (NFR-76,
+     * API_SPEC.md §1.10).
+     *
+     * The wall has a key of its own rather than sharing the student one: the
+     * two happen to poll at the same rate today, and a room that wants its
+     * projector calmer than thirty phones should be able to say so without
+     * slowing the phones down. The default is the 3000 the template hardcoded.
+     *
+     * @requirement NFR-76
+     */
+    private function pollIntervalMs(): int
+    {
+        return Config::int('POLL_INTERVAL_PROJECTOR_MS', 3000);
     }
 }

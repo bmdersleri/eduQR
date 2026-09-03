@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Public;
 
+use EduQR\Config;
 use EduQR\Container;
 use EduQR\Contracts\AnswerRepositoryInterface;
 use EduQR\Contracts\OptionRepositoryInterface;
@@ -74,6 +75,7 @@ final class StudentController extends HtmlController
             [
                 'session' => $session,
                 'shortCode' => $shortCode,
+                'pollIntervalMs' => $this->pollIntervalMs(),
             ],
             self::titleWithAppName($session['title']),
             self::LAYOUT_PUBLIC,
@@ -105,6 +107,7 @@ final class StudentController extends HtmlController
                 'session' => $session,
                 'shortCode' => $shortCode,
                 'answeredQuestionId' => (int) ($_GET['answered_q'] ?? 0),
+                'pollIntervalMs' => $this->pollIntervalMs(),
             ],
             self::titleWithAppName(t('student.answer.submitted')),
             self::LAYOUT_PUBLIC,
@@ -315,6 +318,23 @@ final class StudentController extends HtmlController
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * How often a student's phone asks whether the next question is up, in
+     * milliseconds (NFR-76, API_SPEC.md §1.10).
+     *
+     * One key covers both screens a student waits on. They ask the same
+     * endpoint the same question, and a room in which the wait screen and the
+     * answered screen polled at different rates would be a room where the speed
+     * of the next question depended on whether you had answered the last one.
+     * The default is the 3000 both templates hardcoded.
+     *
+     * @requirement NFR-76
+     */
+    private function pollIntervalMs(): int
+    {
+        return Config::int('POLL_INTERVAL_STUDENT_MS', 3000);
+    }
 
     /**
      * Handle the no-JS form POST and return the message to draw above the form.

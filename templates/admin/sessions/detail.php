@@ -283,6 +283,7 @@ const IS_CLOSED   = <?= $isClosed ? 'true' : 'false' ?>;
 const IS_QUIZ     = <?= (bool) $session['is_quiz'] ? 'true' : 'false' ?>;
 const MSG_CONFIRM = <?= json_encode(t('common.confirm')) ?>;
 const MSG_SERVER  = <?= json_encode(t('error.server_error')) ?>;
+const POLL_INTERVAL_MS = <?= $pollIntervalMs ?>;
 const L = {
     draft:       <?= json_encode(t('question.status.draft')) ?>,
     active:      <?= json_encode(t('question.status.active')) ?>,
@@ -494,7 +495,7 @@ async function refreshLive() {
 
 refreshLive();
 <?php if (!$isClosed): ?>
-setInterval(refreshLive, 5000);
+setInterval(refreshLive, POLL_INTERVAL_MS);
 <?php endif; ?>
 
 // ── Question manager ──────────────────────────────────────────────────────────

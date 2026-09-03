@@ -87,6 +87,7 @@ const MSG_HIDDEN_BADGE = <?= json_encode(t('results.answer.hidden_badge')) ?>;
 const MSG_ANSWERS      = <?= json_encode(t('results.answer_count', ['{count}' => ''])) ?>;
 const MSG_WORD_CLOUD   = <?= json_encode(t('results.word_cloud')) ?>;
 const MSG_WORD_EMPTY   = <?= json_encode(t('results.word_cloud.empty')) ?>;
+const POLL_INTERVAL_MS = <?= $pollIntervalMs ?>;
 
 let chart          = null;
 let currentQId     = <?= $questions ? (int) $questions[0]['id'] : 0 ?>;
@@ -294,10 +295,10 @@ async function toggleHide(answerId, currentlyHidden, li, btn, badge) {
     }
 }
 
-// ── Polling every 2 s (FR-50, NFR-02) ──────────────────────────────────────────
+// ── Polling on the configured interval (FR-50, NFR-02, NFR-76) ────────────────
 function startPolling() {
     fetchResults();
-    pollTimer = setInterval(fetchResults, 2000);
+    pollTimer = setInterval(fetchResults, POLL_INTERVAL_MS);
 }
 
 startPolling();
