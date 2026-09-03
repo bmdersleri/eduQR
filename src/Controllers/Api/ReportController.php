@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace EduQR\Controllers\Api;
 
 use EduQR\Container;
+use EduQR\Contracts\ExportServiceInterface;
 use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Services\ReportService;
@@ -18,10 +19,12 @@ use EduQR\Services\ReportService;
 final class ReportController extends ApiController
 {
     private ReportService $report;
+    private ExportServiceInterface $exports;
 
     public function __construct()
     {
         $this->report = Container::reportService();
+        $this->exports = Container::exportService();
     }
 
     // ── GET /api/v1/sessions/{id}/report ──────────────────────────────────────
@@ -178,7 +181,7 @@ final class ReportController extends ApiController
         $user = AuthMiddleware::require();
 
         try {
-            $data = $this->report->buildGiftExport($sessionId, (int) $user['id']);
+            $data = $this->exports->buildGiftExport($sessionId, (int) $user['id']);
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);
         }
@@ -201,7 +204,7 @@ final class ReportController extends ApiController
         $anonymize = filter_var($_GET['anonymize'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         try {
-            $data = $this->report->buildGradebook($sessionId, (int) $user['id'], $anonymize);
+            $data = $this->exports->buildGradebook($sessionId, (int) $user['id'], $anonymize);
         } catch (\RuntimeException $e) {
             $this->handleRuntimeException($e);
         }
