@@ -37,6 +37,10 @@ interface CourseRepositoryInterface
      * The user's role on the course: 'owner', 'co_instructor', or null when the
      * user has no access. This is the single authorization primitive; every
      * course-derived permission check in the application goes through it.
+     *
+     * A user whose users.role is 'admin' resolves to 'co_instructor' on every
+     * course they are not listed on, so an admin can read and author everywhere
+     * but never passes an owner-only check (FR-99).
      */
     public function roleFor(int $courseId, int $userId): ?string;
 

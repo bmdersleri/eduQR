@@ -148,7 +148,21 @@ final class CourseRepository implements CourseRepositoryInterface
         $stmt->execute([$courseId, $userId]);
         $role = $stmt->fetchColumn();
 
-        return $role === false ? null : (string) $role;
+        if ($role !== false) {
+            return (string) $role;
+        }
+
+        // An admin reaches every course at co-instructor level, and never as its
+        // owner — archiving and the instructor list stay with the owner. [FR-99]
+        return $this->isAdmin($userId) ? 'co_instructor' : null;
+    }
+
+    private function isAdmin(int $userId): bool
+    {
+        $stmt = $this->pdo->prepare("SELECT 1 FROM users WHERE id = ? AND role = 'admin' LIMIT 1");
+        $stmt->execute([$userId]);
+
+        return $stmt->fetchColumn() !== false;
     }
 
     public function listInstructors(int $courseId): array
