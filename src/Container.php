@@ -6,6 +6,7 @@ namespace EduQR;
 
 use EduQR\Contracts\AnswerRepositoryInterface;
 use EduQR\Contracts\AuditLogRepositoryInterface;
+use EduQR\Contracts\CourseAnalyticsServiceInterface;
 use EduQR\Contracts\CourseRepositoryInterface;
 use EduQR\Contracts\ExportServiceInterface;
 use EduQR\Contracts\LoginAttemptRepositoryInterface;
@@ -35,6 +36,7 @@ use EduQR\Repositories\SessionRepository;
 use EduQR\Repositories\UserRepository;
 use EduQR\Services\AnswerService;
 use EduQR\Services\AuthService;
+use EduQR\Services\CourseAnalyticsService;
 use EduQR\Services\CourseService;
 use EduQR\Services\ExportService;
 use EduQR\Services\OpenTextThemeExtractionService;
@@ -185,6 +187,21 @@ final class Container
         return self::$instances['authService'] ??= new AuthService(
             self::userRepository(),
             self::loginAttemptRepository(),
+        );
+    }
+
+    /**
+     * Course-level analytics (NFR-82). The only reporting unit built without a
+     * connection: it reads through the session repository and the report unit,
+     * so resolving it opens nothing on its own.
+     */
+    public static function courseAnalyticsService(): CourseAnalyticsServiceInterface
+    {
+        /** @var CourseAnalyticsServiceInterface */
+        return self::$instances['courseAnalyticsService'] ??= new CourseAnalyticsService(
+            self::sessionRepository(),
+            self::courseRepository(),
+            self::reportBuilder(),
         );
     }
 
