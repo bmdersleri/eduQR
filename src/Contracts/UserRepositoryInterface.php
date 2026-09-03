@@ -8,6 +8,9 @@ interface UserRepositoryInterface
 {
     public function findByEmail(string $email): ?array;
 
+    /** The row behind a live session, `is_active` included (NFR-87). */
+    public function findById(int $id): ?array;
+
     public function create(
         string $email,
         string $passwordHash,

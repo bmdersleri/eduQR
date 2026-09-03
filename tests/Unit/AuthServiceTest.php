@@ -35,6 +35,17 @@ final class AuthServiceTest extends TestCase
                 return null;
             }
 
+            public function findById(int $id): ?array
+            {
+                foreach ($this->store as $u) {
+                    if ((int) $u['id'] === $id) {
+                        return $u;
+                    }
+                }
+
+                return null;
+            }
+
             public function create(string $e, string $h, string $n, string $r, string $l): int
             {
                 return 999;

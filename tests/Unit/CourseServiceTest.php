@@ -175,6 +175,23 @@ class CourseServiceTest extends TestCase
                 ], $this->overrides[$email] ?? []);
             }
 
+            public function findById(int $id): ?array
+            {
+                foreach ($this->usersByEmail as $email => $userId) {
+                    if ((int) $userId === $id) {
+                        return array_merge([
+                            'id' => $id,
+                            'email' => $email,
+                            'display_name' => 'User ' . $id,
+                            'role' => 'instructor',
+                            'is_active' => 1,
+                        ], $this->overrides[$email] ?? []);
+                    }
+                }
+
+                return null;
+            }
+
             public function create(string $email, string $passwordHash, string $displayName, string $role, string $preferredLanguage): int
             {
                 return 0;

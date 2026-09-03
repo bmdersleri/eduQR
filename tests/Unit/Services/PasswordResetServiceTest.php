@@ -36,6 +36,15 @@ final class PasswordResetServiceTest extends TestCase
                 return mb_strtolower(trim($email)) === $this->user['email'] ? $this->user : null;
             }
 
+            public function findById(int $id): ?array
+            {
+                if ($this->user === null) {
+                    return null;
+                }
+
+                return (int) $this->user['id'] === $id ? $this->user : null;
+            }
+
             public function create(string $email, string $passwordHash, string $displayName, string $role, string $preferredLanguage): int
             {
                 return 1;

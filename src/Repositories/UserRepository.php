@@ -32,6 +32,21 @@ final class UserRepository implements UserRepositoryInterface
         return $row === false ? null : $row;
     }
 
+    public function findById(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT id, email, display_name, role,
+                    preferred_language, is_active
+               FROM users
+              WHERE id = ?
+              LIMIT 1'
+        );
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $row;
+    }
+
     public function create(
         string $email,
         string $passwordHash,
