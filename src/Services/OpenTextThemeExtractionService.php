@@ -6,6 +6,7 @@ namespace EduQR\Services;
 
 use EduQR\Config;
 use EduQR\Contracts\OpenTextThemeExtractionServiceInterface;
+use EduQR\Exceptions\ValidationException;
 
 final class OpenTextThemeExtractionService implements OpenTextThemeExtractionServiceInterface
 {
@@ -49,6 +50,8 @@ final class OpenTextThemeExtractionService implements OpenTextThemeExtractionSer
     public function extractThemes(string $questionText, array $answers, string $language): array
     {
         if (trim($this->apiUrl) === '') {
+            // Infrastructure failure, not a domain one (NFR-78): the provider is
+            // unreachable or unconfigured. Published as 503.
             throw new \RuntimeException('llm_unavailable');
         }
 
@@ -74,17 +77,19 @@ final class OpenTextThemeExtractionService implements OpenTextThemeExtractionSer
 
         $response = $this->sendRequest($this->apiUrl, $payload);
         if (($response['status'] ?? 0) < 200 || ($response['status'] ?? 0) >= 300) {
+            // Infrastructure failure, not a domain one (NFR-78): the provider is
+            // unreachable or unconfigured. Published as 503.
             throw new \RuntimeException('llm_unavailable');
         }
 
         $decoded = json_decode((string) ($response['body'] ?? ''), true);
         if (! is_array($decoded)) {
-            throw new \RuntimeException('invalid_llm_response');
+            throw new ValidationException('invalid_llm_response');
         }
 
         if (array_key_exists('themes', $decoded)) {
             if (! is_array($decoded['themes'])) {
-                throw new \RuntimeException('invalid_llm_response');
+                throw new ValidationException('invalid_llm_response');
             }
 
             return $this->normalizeThemeRows($decoded['themes']);
@@ -243,7 +248,7 @@ TXT;
 
         $decoded = json_decode($content, true);
         if (! is_array($decoded) || ! isset($decoded['themes']) || ! is_array($decoded['themes'])) {
-            throw new \RuntimeException('invalid_llm_response');
+            throw new ValidationException('invalid_llm_response');
         }
 
         return $this->normalizeThemeRows($decoded['themes']);
@@ -258,7 +263,7 @@ TXT;
         $themes = [];
         foreach ($rows as $row) {
             if (! is_array($row)) {
-                throw new \RuntimeException('invalid_llm_response');
+                throw new ValidationException('invalid_llm_response');
             }
             $themes[] = $this->normalizeTheme($row);
         }
@@ -276,36 +281,36 @@ TXT;
         $summary = trim((string) ($row['summary'] ?? ''));
 
         if ($title === '' || mb_strlen($title, 'UTF-8') > self::MAX_THEME_TITLE_LEN) {
-            throw new \RuntimeException('invalid_llm_response');
+            throw new ValidationException('invalid_llm_response');
         }
         if ($summary === '' || mb_strlen($summary, 'UTF-8') > self::MAX_THEME_SUMMARY_LEN) {
-            throw new \RuntimeException('invalid_llm_response');
+            throw new ValidationException('invalid_llm_response');
         }
 
         $keywordsRaw = $row['keywords'] ?? [];
         if (! is_array($keywordsRaw) || $keywordsRaw === []) {
-            throw new \RuntimeException('invalid_llm_response');
+            throw new ValidationException('invalid_llm_response');
         }
 
         $keywords = [];
         foreach ($keywordsRaw as $keyword) {
             $value = trim((string) $keyword);
             if ($value === '' || mb_strlen($value, 'UTF-8') > self::MAX_KEYWORD_LEN) {
-                throw new \RuntimeException('invalid_llm_response');
+                throw new ValidationException('invalid_llm_response');
             }
             $keywords[] = $value;
         }
 
         $examplesRaw = $row['example_answers'] ?? [];
         if (! is_array($examplesRaw)) {
-            throw new \RuntimeException('invalid_llm_response');
+            throw new ValidationException('invalid_llm_response');
         }
 
         $exampleAnswers = [];
         foreach ($examplesRaw as $example) {
             $value = trim((string) $example);
             if ($value === '' || mb_strlen($value, 'UTF-8') > self::MAX_EXAMPLE_LEN) {
-                throw new \RuntimeException('invalid_llm_response');
+                throw new ValidationException('invalid_llm_response');
             }
             $exampleAnswers[] = $value;
         }

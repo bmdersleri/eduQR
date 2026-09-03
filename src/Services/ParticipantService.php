@@ -7,6 +7,10 @@ namespace EduQR\Services;
 use EduQR\Config;
 use EduQR\Contracts\ParticipantRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
+use EduQR\Exceptions\ConflictException;
+use EduQR\Exceptions\DomainException;
+use EduQR\Exceptions\NotFoundException;
+use EduQR\Exceptions\ValidationException;
 use EduQR\Support\DeviceHash;
 use EduQR\Support\ProfanityFilter;
 use EduQR\Support\TextFold;
@@ -26,29 +30,29 @@ final class ParticipantService
      * Join a session by short code.
      *
      * @return array{participant_id: int, session_short_code: string, nickname: string}
-     * @throws \RuntimeException  session_not_found | session_closed | session_paused | duplicate_nickname | profane_nickname
+     * @throws DomainException  session_not_found | session_closed | session_paused | duplicate_nickname | profane_nickname
      * @throws \InvalidArgumentException  nickname:required | nickname:too_long | nickname:invalid_chars
      */
     public function join(string $shortCode, string $rawNickname, ?string $deviceCookieId, string $userAgent): array
     {
         $session = $this->sessions->findByShortCode($shortCode);
         if ($session === null) {
-            throw new \RuntimeException('session_not_found');
+            throw new NotFoundException('session_not_found');
         }
 
         // T-508: reject closed or paused sessions
         if ($session['status'] === 'closed') {
-            throw new \RuntimeException('session_closed');
+            throw new ValidationException('session_closed', 410);
         }
         if ($session['status'] === 'paused') {
-            throw new \RuntimeException('session_paused');
+            throw new ValidationException('session_paused', 410);
         }
 
         $nickname = $this->validateNickname($rawNickname, $session['language'] ?? 'en');
         $nicknameNormalized = self::normalize($nickname);
 
         if ($this->participants->existsByNicknameNormalized((int) $session['id'], $nicknameNormalized)) {
-            throw new \RuntimeException('duplicate_nickname');
+            throw new ConflictException('duplicate_nickname', 409, null, 'nickname');
         }
 
         $deviceHash = null;
@@ -121,7 +125,7 @@ final class ParticipantService
         // FR-43: profanity filter
         $configDir = Config::get('PROFANITY_DIR', dirname(__DIR__, 2) . '/config/profanity');
         if (ProfanityFilter::isProfane($trimmed, $locale, $configDir)) {
-            throw new \RuntimeException('profane_nickname');
+            throw new ValidationException('profane_nickname', 400, null, 'nickname');
         }
 
         return $trimmed;

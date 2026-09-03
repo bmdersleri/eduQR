@@ -9,6 +9,10 @@ use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\ParticipantRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
+use EduQR\Exceptions\DomainException;
+use EduQR\Exceptions\ForbiddenException;
+use EduQR\Exceptions\NotFoundException;
+use EduQR\Exceptions\ValidationException;
 use PDOException;
 
 /**
@@ -49,14 +53,14 @@ final class AnswerService
      *
      * @throws \InvalidArgumentException    Validation failure (400 / 422)
      * @throws DuplicateAnswerException     Already answered this question (409)
-     * @throws \RuntimeException            Not-found / state errors (404 / 422)
+     * @throws DomainException              Not-found / state errors (404 / 422)
      */
     public function submit(int $participantId, array $body): int
     {
         // ── 1. Resolve and validate participant (T-704) ────────────────────────
         $participant = $this->participants->findById($participantId);
         if ($participant === null) {
-            throw new \RuntimeException('participant_not_found');
+            throw new NotFoundException('participant_not_found', 401, 'not_joined');
         }
 
         // ── 2. Resolve and validate question (T-705) ──────────────────────────
@@ -67,29 +71,29 @@ final class AnswerService
 
         $question = $this->questions->findById($questionId);
         if ($question === null) {
-            throw new \RuntimeException('question_not_found');
+            throw new NotFoundException('question_not_found');
         }
 
         if ($question['status'] !== 'active') {
-            throw new \RuntimeException('question_not_active');
+            throw new ValidationException('question_not_active', 422, 'question_closed');
         }
 
         // ── 3. Resolve and validate session (T-705) ───────────────────────────
         $session = $this->sessions->findById((int) $question['session_id']);
         if ($session === null) {
-            throw new \RuntimeException('session_not_found');
+            throw new NotFoundException('session_not_found');
         }
 
         if ($session['status'] !== 'active') {
             // Distinguish paused vs closed for better UX messages
             $code = $session['status'] === 'paused' ? 'session_paused' : 'session_closed';
 
-            throw new \RuntimeException($code);
+            throw new ValidationException($code);
         }
 
         // ── 4. Participant belongs to the question's session (T-704) ──────────
         if ((int) $participant['session_id'] !== (int) $session['id']) {
-            throw new \RuntimeException('forbidden');
+            throw new ForbiddenException('forbidden');
         }
 
         // ── 5. Validate answer shape per question type (T-702, T-706, T-707) ──
@@ -129,7 +133,7 @@ final class AnswerService
      * Returns [?int $selectedOptionId, ?string $answerText] ready for insert.
      *
      * @throws \InvalidArgumentException  shape mismatch or constraint violation
-     * @throws \RuntimeException          invalid_option (option not found / wrong question)
+     * @throws ValidationException       invalid_option (option not found / wrong question)
      */
     public function validateAnswerShape(array $question, array $body): array
     {
@@ -164,7 +168,7 @@ final class AnswerService
         // Verify option belongs to this question (T-706)
         $option = $this->options->findById($optionId);
         if ($option === null || (int) $option['question_id'] !== (int) $question['id']) {
-            throw new \RuntimeException('invalid_option');
+            throw new ValidationException('invalid_option');
         }
 
         // answer_text must be absent for option-based types

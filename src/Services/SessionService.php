@@ -6,6 +6,11 @@ namespace EduQR\Services;
 
 use EduQR\Contracts\CourseRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
+use EduQR\Exceptions\ConflictException;
+use EduQR\Exceptions\DomainException;
+use EduQR\Exceptions\ForbiddenException;
+use EduQR\Exceptions\NotFoundException;
+use EduQR\Exceptions\ValidationException;
 use EduQR\Support\ShortCode;
 use EduQR\Support\Url;
 
@@ -27,11 +32,11 @@ final class SessionService
     {
         $course = $this->courses->findById($courseId);
         if ($course === null) {
-            throw new \RuntimeException('course_not_found');
+            throw new NotFoundException('course_not_found');
         }
         // Owner or co-instructor (FR-97).
         if ($this->courses->roleFor($courseId, $instructorId) === null) {
-            throw new \RuntimeException('forbidden');
+            throw new ForbiddenException('forbidden');
         }
 
         $title = $this->validateTitle($data['title'] ?? null);
@@ -60,13 +65,13 @@ final class SessionService
     {
         $session = $this->sessions->findById($id);
         if ($session === null) {
-            throw new \RuntimeException('session_not_found');
+            throw new NotFoundException('session_not_found');
         }
         $courseId = (int) $session['course_id'];
         $course = $this->courses->findById($courseId);
         // Owner or co-instructor (FR-97).
         if ($course === null || $this->courses->roleFor($courseId, $instructorId) === null) {
-            throw new \RuntimeException('forbidden');
+            throw new ForbiddenException('forbidden');
         }
 
         return $session;
@@ -77,10 +82,10 @@ final class SessionService
         $code = strtoupper(trim($code));
         $session = $this->sessions->findByShortCode($code);
         if ($session === null) {
-            throw new \RuntimeException('session_not_found');
+            throw new NotFoundException('session_not_found');
         }
         if ($session['status'] === 'closed') {
-            throw new \RuntimeException('session_closed');
+            throw new ValidationException('session_closed', 410);
         }
 
         $course = $this->courses->findById((int) $session['course_id']);
@@ -132,7 +137,7 @@ final class SessionService
     {
         $session = $this->getSession($id, $instructorId);
         if ($session['status'] !== 'active') {
-            throw new \RuntimeException('invalid_state_transition');
+            throw new ValidationException('invalid_state_transition');
         }
         $this->sessions->update($id, [
             'status' => 'paused',
@@ -144,7 +149,7 @@ final class SessionService
     {
         $session = $this->getSession($id, $instructorId);
         if ($session['status'] !== 'paused') {
-            throw new \RuntimeException('invalid_state_transition');
+            throw new ValidationException('invalid_state_transition');
         }
         $this->sessions->update($id, [
             'status' => 'active',
@@ -156,7 +161,7 @@ final class SessionService
     {
         $session = $this->getSession($id, $instructorId);
         if ($session['status'] === 'closed') {
-            throw new \RuntimeException('invalid_state_transition');
+            throw new ValidationException('invalid_state_transition');
         }
         $this->sessions->update($id, [
             'status' => 'closed',
@@ -180,13 +185,13 @@ final class SessionService
      * Replaces nicknames with "Participant 1", "Participant 2", … in join order.
      * Sets sessions.anonymized = 1.
      *
-     * @throws \RuntimeException  session_not_found | forbidden | already_anonymized
+     * @throws DomainException  session_not_found | forbidden | already_anonymized
      */
     public function anonymizeSession(int $id, int $instructorId): void
     {
         $session = $this->getSession($id, $instructorId);
         if ((bool) $session['anonymized']) {
-            throw new \RuntimeException('already_anonymized');
+            throw new ConflictException('already_anonymized');
         }
         $this->sessions->anonymize($id);
     }
@@ -197,7 +202,7 @@ final class SessionService
      * Marks the session for deletion by setting delete_requested_at = NOW().
      * bin/cleanup.php hard-deletes after a 7-day grace period.
      *
-     * @throws \RuntimeException  session_not_found | forbidden
+     * @throws DomainException  session_not_found | forbidden
      */
     public function requestDeletion(int $id, int $instructorId): void
     {
@@ -250,6 +255,9 @@ final class SessionService
             }
         }
 
+        // Not a domain exception (NFR-78): ten collisions in a row means the code
+        // space is saturated, which is an internal capacity failure. It is not in
+        // the API_SPEC.md §7 table and surfaces as 500.
         throw new \RuntimeException('short_code_exhausted');
     }
 }

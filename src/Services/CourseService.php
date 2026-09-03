@@ -6,6 +6,10 @@ namespace EduQR\Services;
 
 use EduQR\Contracts\CourseRepositoryInterface;
 use EduQR\Contracts\UserRepositoryInterface;
+use EduQR\Exceptions\ConflictException;
+use EduQR\Exceptions\DomainException;
+use EduQR\Exceptions\ForbiddenException;
+use EduQR\Exceptions\NotFoundException;
 
 /**
  * Business logic for course management.
@@ -16,8 +20,8 @@ use EduQR\Contracts\UserRepositoryInterface;
  *   getCourse()    — owner OR co_instructor. The read/write choke point.
  *   requireOwner() — owner only. Archive, restore, and instructor management.
  *
- * Both throw RuntimeException('course_not_found') when no such course exists
- * and RuntimeException('forbidden') when the caller lacks the needed role.
+ * Both throw NotFoundException('course_not_found') when no such course exists
+ * and ForbiddenException('forbidden') when the caller lacks the needed role.
  *
  * Validation failures throw \InvalidArgumentException with message format
  * "field:error_key" (e.g. "title:required") so the controller can build a
@@ -60,18 +64,18 @@ final class CourseService
     /**
      * Returns the course if the caller owns or co-instructs it (FR-97).
      *
-     * @throws \RuntimeException('course_not_found') if no such course
-     * @throws \RuntimeException('forbidden') if the caller has no role on it
+     * @throws NotFoundException  if no such course
+     * @throws ForbiddenException if the caller has no role on it
      */
     public function getCourse(int $id, int $instructorId): array
     {
         $course = $this->courses->findById($id);
 
         if ($course === null) {
-            throw new \RuntimeException('course_not_found');
+            throw new NotFoundException('course_not_found');
         }
         if ($this->courses->roleFor($id, $instructorId) === null) {
-            throw new \RuntimeException('forbidden');
+            throw new ForbiddenException('forbidden');
         }
 
         return $course;
@@ -88,23 +92,23 @@ final class CourseService
      * legitimately see the course — gets the more precise 'course_owner_only'.
      * Both surface as HTTP 403 with the `forbidden` error code.
      *
-     * @throws \RuntimeException('course_not_found'|'forbidden'|'course_owner_only')
+     * @throws DomainException course_not_found | forbidden | course_owner_only
      */
     public function requireOwner(int $id, int $instructorId): array
     {
         $course = $this->courses->findById($id);
 
         if ($course === null) {
-            throw new \RuntimeException('course_not_found');
+            throw new NotFoundException('course_not_found');
         }
 
         $role = $this->courses->roleFor($id, $instructorId);
 
         if ($role === null) {
-            throw new \RuntimeException('forbidden');
+            throw new ForbiddenException('forbidden');
         }
         if ($role !== self::ROLE_OWNER) {
-            throw new \RuntimeException('course_owner_only');
+            throw new ForbiddenException('course_owner_only', 403, 'forbidden');
         }
 
         return $course;
@@ -126,7 +130,7 @@ final class CourseService
         return $this->courses->create($instructorId, $title, $code, $semester, $description, $lang);
     }
 
-    /** @throws \RuntimeException on access failure; \InvalidArgumentException on validation */
+    /** @throws DomainException on access failure; \InvalidArgumentException on validation */
     public function updateCourse(int $id, int $instructorId, array $data): void
     {
         $this->getCourse($id, $instructorId);
@@ -157,7 +161,7 @@ final class CourseService
     /**
      * Owner only (FR-97).
      *
-     * @throws \RuntimeException on access failure
+     * @throws DomainException on access failure
      */
     public function archiveCourse(int $id, int $instructorId): void
     {
@@ -168,13 +172,13 @@ final class CourseService
     /**
      * Owner only (FR-97).
      *
-     * @throws \RuntimeException on access or state failure
+     * @throws DomainException on access or state failure
      */
     public function restoreCourse(int $id, int $instructorId): void
     {
         $course = $this->requireOwner($id, $instructorId);
         if ($course['status'] !== 'archived') {
-            throw new \RuntimeException('invalid_course_state');
+            throw new ConflictException('invalid_course_state');
         }
 
         $this->courses->restore($id);
@@ -185,7 +189,7 @@ final class CourseService
     /**
      * Visible to the owner and to co-instructors.
      *
-     * @throws \RuntimeException course_not_found | forbidden
+     * @throws DomainException course_not_found | forbidden
      */
     public function listInstructors(int $courseId, int $userId): array
     {
@@ -212,7 +216,7 @@ final class CourseService
      * @return array{user_id:int,role:string}
      *
      * @throws \InvalidArgumentException email:required | email:invalid
-     * @throws \RuntimeException course_not_found | forbidden
+     * @throws DomainException course_not_found | forbidden
      *                           | instructor_not_found | already_course_instructor
      */
     public function addInstructor(int $courseId, int $ownerId, array $data): array
@@ -228,14 +232,14 @@ final class CourseService
         if ($user === null
             || ($user['role'] ?? null) !== 'instructor'
             || ! (bool) ($user['is_active'] ?? 1)) {
-            throw new \RuntimeException('instructor_not_found');
+            throw new NotFoundException('instructor_not_found');
         }
 
         $userId = (int) $user['id'];
 
         // Covers both "already a co-instructor" and "this is the owner".
         if ($this->courses->roleFor($courseId, $userId) !== null) {
-            throw new \RuntimeException('already_course_instructor');
+            throw new ConflictException('already_course_instructor');
         }
 
         $this->courses->addInstructor($courseId, $userId, self::ROLE_CO_INSTRUCTOR);
@@ -249,7 +253,7 @@ final class CourseService
      *
      * Owner only.
      *
-     * @throws \RuntimeException course_not_found | forbidden
+     * @throws DomainException course_not_found | forbidden
      *                           | cannot_remove_course_owner | course_instructor_not_found
      */
     public function removeInstructor(int $courseId, int $ownerId, int $userId): void
@@ -259,14 +263,14 @@ final class CourseService
         $role = $this->courses->roleFor($courseId, $userId);
 
         if ($role === null) {
-            throw new \RuntimeException('course_instructor_not_found');
+            throw new NotFoundException('course_instructor_not_found');
         }
         if ($role === self::ROLE_OWNER) {
-            throw new \RuntimeException('cannot_remove_course_owner');
+            throw new ConflictException('cannot_remove_course_owner');
         }
 
         if (! $this->courses->removeInstructor($courseId, $userId)) {
-            throw new \RuntimeException('course_instructor_not_found');
+            throw new NotFoundException('course_instructor_not_found');
         }
     }
 

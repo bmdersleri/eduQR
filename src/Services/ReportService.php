@@ -9,6 +9,10 @@ use EduQR\Contracts\OpenTextThemeExtractionServiceInterface;
 use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
+use EduQR\Exceptions\DomainException;
+use EduQR\Exceptions\ForbiddenException;
+use EduQR\Exceptions\NotFoundException;
+use EduQR\Exceptions\ValidationException;
 use EduQR\Support\Database;
 use EduQR\Support\TextFold;
 use PDO;
@@ -40,7 +44,7 @@ final class ReportService
     /**
      * Returns aggregated results that an instructor can always see.
      *
-     * @throws \RuntimeException  session_not_found | forbidden | question_not_found
+     * @throws DomainException  session_not_found | forbidden | question_not_found
      */
     public function getResults(int $sessionId, int $userId, ?int $questionId): array
     {
@@ -52,7 +56,7 @@ final class ReportService
         } else {
             $q = $this->questions->findById($questionId);
             if ($q === null || (int) $q['session_id'] !== $sessionId) {
-                throw new \RuntimeException('question_not_found');
+                throw new NotFoundException('question_not_found');
             }
             $qs = [$q];
         }
@@ -67,17 +71,17 @@ final class ReportService
     /**
      * Returns results only when the session AND question both allow it.
      *
-     * @throws \RuntimeException  session_not_found | results_hidden | question_not_found
+     * @throws DomainException  session_not_found | results_hidden | question_not_found
      */
     public function getStudentResults(string $shortCode, ?int $questionId): array
     {
         $session = $this->sessions->findByShortCode($shortCode);
         if ($session === null) {
-            throw new \RuntimeException('session_not_found');
+            throw new NotFoundException('session_not_found');
         }
 
         if ((bool) ($session['exam_mode'] ?? false) || ! (bool) $session['show_results_to_students']) {
-            throw new \RuntimeException('results_hidden');
+            throw new ForbiddenException('results_hidden');
         }
 
         if ($questionId === null) {
@@ -85,7 +89,7 @@ final class ReportService
         } else {
             $q = $this->questions->findById($questionId);
             if ($q === null || (int) $q['session_id'] !== (int) $session['id']) {
-                throw new \RuntimeException('question_not_found');
+                throw new NotFoundException('question_not_found');
             }
             $qs = [$q];
         }
@@ -108,7 +112,7 @@ final class ReportService
     {
         $question = $this->questions->findById($questionId);
         if ($question === null) {
-            throw new \RuntimeException('question_not_found');
+            throw new NotFoundException('question_not_found');
         }
 
         $session = $this->sessions->findById((int) $question['session_id']) ?? ['language' => 'en'];
@@ -151,13 +155,14 @@ final class ReportService
     /**
      * Builds a set of AI-assisted themes from the visible open-text answers of a question.
      *
-     * @throws \RuntimeException question_not_found | question_not_open_text | forbidden | llm_unavailable | invalid_llm_response
+     * @throws DomainException  question_not_found | question_not_open_text | forbidden | invalid_llm_response
+     * @throws \RuntimeException llm_unavailable — an infrastructure failure, not a domain one
      */
     public function extractThemes(int $questionId, int $userId): array
     {
         $question = $this->requireQuestion($questionId, $userId);
         if (($question['question_type'] ?? '') !== 'open_text') {
-            throw new \RuntimeException('question_not_open_text');
+            throw new ValidationException('question_not_open_text');
         }
 
         $answers = $this->openTextAnswers($questionId, false);
@@ -280,7 +285,7 @@ final class ReportService
      * Builds a complete post-session report.
      *
      * @param  bool $anonymize  Replace nicknames with "Participant N" (FR-70)
-     * @throws \RuntimeException  session_not_found | forbidden
+     * @throws DomainException  session_not_found | forbidden
      */
     public function buildReport(int $sessionId, int $userId, bool $anonymize = false): array
     {
@@ -518,7 +523,7 @@ final class ReportService
     /**
      * Builds a course-level analytics view across every session in the course.
      *
-     * @throws \RuntimeException course_not_found | forbidden
+     * @throws DomainException course_not_found | forbidden
      */
     public function buildCourseAnalytics(int $courseId, int $userId): array
     {
@@ -620,7 +625,7 @@ final class ReportService
      *
      * @requirement FR-98
      * @return array{session_id:int,gift:string,question_count:int,downgraded_count:int}
-     * @throws \RuntimeException session_not_found | course_not_found | forbidden
+     * @throws DomainException session_not_found | course_not_found | forbidden
      */
     public function buildGiftExport(int $sessionId, int $userId): array
     {
@@ -662,7 +667,7 @@ final class ReportService
      *
      * @requirement FR-98
      * @return array{session_id:int,max_score:int,rows:array<int,array{nickname:string,score:int,max_score:int,percentage:float}>}
-     * @throws \RuntimeException session_not_found | course_not_found | forbidden
+     * @throws DomainException session_not_found | course_not_found | forbidden
      */
     public function buildGradebook(int $sessionId, int $userId, bool $anonymize = false): array
     {
@@ -1052,7 +1057,7 @@ final class ReportService
     {
         $session = $this->sessions->findById($sessionId);
         if ($session === null) {
-            throw new \RuntimeException('session_not_found');
+            throw new NotFoundException('session_not_found');
         }
         $this->requireCourse((int) $session['course_id'], $userId);
 
@@ -1063,11 +1068,11 @@ final class ReportService
     {
         $course = $this->courses->findById($courseId);
         if ($course === null) {
-            throw new \RuntimeException('course_not_found');
+            throw new NotFoundException('course_not_found');
         }
         // Owner or co-instructor (FR-97).
         if ($this->courses->roleFor($courseId, $userId) === null) {
-            throw new \RuntimeException('forbidden');
+            throw new ForbiddenException('forbidden');
         }
 
         return $course;
@@ -1080,7 +1085,7 @@ final class ReportService
     {
         $question = $this->questions->findById($questionId);
         if ($question === null) {
-            throw new \RuntimeException('question_not_found');
+            throw new NotFoundException('question_not_found');
         }
 
         $this->requireSession((int) $question['session_id'], $userId);

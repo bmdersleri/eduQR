@@ -9,6 +9,10 @@ use EduQR\Contracts\ParticipantRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\ReactionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
+use EduQR\Exceptions\DomainException;
+use EduQR\Exceptions\ForbiddenException;
+use EduQR\Exceptions\NotFoundException;
+use EduQR\Exceptions\ValidationException;
 
 /**
  * Phase 11 — Student comprehension reactions (T-1105, FR-48)
@@ -50,7 +54,7 @@ final class ReactionService
      * @return string                 The stored reaction value
      *
      * @throws \InvalidArgumentException  Validation failure (400 / 422)
-     * @throws \RuntimeException          Not-found / state errors (404 / 422)
+     * @throws DomainException          Not-found / state errors (404 / 422)
      *
      * @requirement FR-48
      */
@@ -59,7 +63,7 @@ final class ReactionService
         // ── 1. Resolve and validate participant ───────────────────────────────
         $participant = $this->participants->findById($participantId);
         if ($participant === null) {
-            throw new \RuntimeException('participant_not_found');
+            throw new NotFoundException('participant_not_found', 401, 'not_joined');
         }
 
         // ── 2. Resolve and validate question ──────────────────────────────────
@@ -70,28 +74,28 @@ final class ReactionService
 
         $question = $this->questions->findById($questionId);
         if ($question === null) {
-            throw new \RuntimeException('question_not_found');
+            throw new NotFoundException('question_not_found');
         }
 
         if ($question['status'] !== 'active') {
-            throw new \RuntimeException('question_not_active');
+            throw new ValidationException('question_not_active', 422, 'question_closed');
         }
 
         // ── 3. Resolve and validate session ───────────────────────────────────
         $session = $this->sessions->findById((int) $question['session_id']);
         if ($session === null) {
-            throw new \RuntimeException('session_not_found');
+            throw new NotFoundException('session_not_found');
         }
 
         if ($session['status'] !== 'active') {
             $code = $session['status'] === 'paused' ? 'session_paused' : 'session_closed';
 
-            throw new \RuntimeException($code);
+            throw new ValidationException($code);
         }
 
         // ── 4. Participant belongs to the question's session ──────────────────
         if ((int) $participant['session_id'] !== (int) $session['id']) {
-            throw new \RuntimeException('forbidden');
+            throw new ForbiddenException('forbidden');
         }
 
         // ── 5. Validate the reaction value ────────────────────────────────────
@@ -116,7 +120,7 @@ final class ReactionService
      *
      * @return list<array{question_id:int,got_it:int,lost:int}>
      *
-     * @throws \RuntimeException  session_not_found | course_not_found | forbidden
+     * @throws DomainException  session_not_found | course_not_found | forbidden
      *
      * @requirement FR-48
      */
@@ -173,17 +177,17 @@ final class ReactionService
     {
         $session = $this->sessions->findById($sessionId);
         if ($session === null) {
-            throw new \RuntimeException('session_not_found');
+            throw new NotFoundException('session_not_found');
         }
 
         $courseId = (int) $session['course_id'];
         $course = $this->courses->findById($courseId);
         if ($course === null) {
-            throw new \RuntimeException('course_not_found');
+            throw new NotFoundException('course_not_found');
         }
         // Owner or co-instructor (FR-97).
         if ($this->courses->roleFor($courseId, $userId) === null) {
-            throw new \RuntimeException('forbidden');
+            throw new ForbiddenException('forbidden');
         }
 
         return $session;

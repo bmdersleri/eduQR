@@ -7,6 +7,7 @@ namespace EduQR\Services;
 use EduQR\Config;
 use EduQR\Contracts\PasswordResetRepositoryInterface;
 use EduQR\Contracts\UserRepositoryInterface;
+use EduQR\Exceptions\ValidationException;
 
 final class PasswordResetService
 {
@@ -82,11 +83,11 @@ final class PasswordResetService
 
         $row = $this->resets->findByTokenHash(hash('sha256', $token));
         if ($row === null || ! empty($row['used_at'])) {
-            throw new \RuntimeException('invalid_reset_token');
+            throw new ValidationException('invalid_reset_token', 400, null, 'token');
         }
 
         if (strtotime((string) $row['expires_at']) < time()) {
-            throw new \RuntimeException('invalid_reset_token');
+            throw new ValidationException('invalid_reset_token', 400, null, 'token');
         }
 
         $this->users->updatePassword((int) $row['user_id'], AuthService::hashPassword($password));

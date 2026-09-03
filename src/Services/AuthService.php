@@ -7,6 +7,8 @@ namespace EduQR\Services;
 use EduQR\Config;
 use EduQR\Contracts\LoginAttemptRepositoryInterface;
 use EduQR\Contracts\UserRepositoryInterface;
+use EduQR\Exceptions\ForbiddenException;
+use EduQR\Exceptions\NotFoundException;
 
 final class AuthService
 {
@@ -33,7 +35,7 @@ final class AuthService
 
     /**
      * Attempt instructor login. Returns the user row on success.
-     * Throws \RuntimeException with a stable error code on failure:
+     * Throws a typed domain exception carrying a stable error code on failure:
      *   'too_many_attempts' | 'invalid_credentials'
      */
     public function login(string $email, string $password): array
@@ -41,7 +43,7 @@ final class AuthService
         $email = mb_strtolower(trim($email));
 
         if ($this->isRateLimited($email)) {
-            throw new \RuntimeException('too_many_attempts');
+            throw new ForbiddenException('too_many_attempts', 429);
         }
 
         $user = $this->users->findByEmail($email);
@@ -51,7 +53,7 @@ final class AuthService
         if (! $valid || $user === null || ! (bool) $user['is_active']) {
             $this->attempts->record($email, $this->ipHash(), false);
 
-            throw new \RuntimeException('invalid_credentials');
+            throw new NotFoundException('invalid_credentials', 401);
         }
 
         if (password_needs_rehash($user['password_hash'], PASSWORD_BCRYPT, ['cost' => self::BCRYPT_COST])) {

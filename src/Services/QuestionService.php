@@ -8,6 +8,9 @@ use EduQR\Contracts\CourseRepositoryInterface;
 use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
+use EduQR\Exceptions\ForbiddenException;
+use EduQR\Exceptions\NotFoundException;
+use EduQR\Exceptions\ValidationException;
 
 final class QuestionService
 {
@@ -79,7 +82,7 @@ final class QuestionService
         $question = $this->requireQuestion($questionId, $userId);
 
         if ($question['status'] !== 'draft') {
-            throw new \RuntimeException('question_not_draft');
+            throw new ValidationException('question_not_draft', 422, 'invalid_state_transition');
         }
 
         $fields = [];
@@ -118,7 +121,7 @@ final class QuestionService
         $question = $this->requireQuestion($questionId, $userId);
 
         if ($question['status'] !== 'draft') {
-            throw new \RuntimeException('question_not_draft');
+            throw new ValidationException('question_not_draft', 422, 'invalid_state_transition');
         }
 
         $this->questions->update($questionId, [
@@ -133,15 +136,15 @@ final class QuestionService
         $question = $this->requireQuestion($questionId, $userId);
 
         if ($question['status'] === 'closed') {
-            throw new \RuntimeException('invalid_state_transition');
+            throw new ValidationException('invalid_state_transition');
         }
 
         $session = $this->sessions->findById((int) $question['session_id']);
         if ($session === null) {
-            throw new \RuntimeException('session_not_found');
+            throw new NotFoundException('session_not_found');
         }
         if ($session['status'] !== 'active') {
-            throw new \RuntimeException('session_not_active');
+            throw new ValidationException('session_not_active');
         }
 
         $this->questions->activate($questionId, (int) $question['session_id']);
@@ -154,7 +157,7 @@ final class QuestionService
         $question = $this->requireQuestion($questionId, $userId);
 
         if ($question['status'] !== 'active') {
-            throw new \RuntimeException('invalid_state_transition');
+            throw new ValidationException('invalid_state_transition');
         }
 
         $this->questions->close($questionId);
@@ -167,7 +170,7 @@ final class QuestionService
         $question = $this->requireQuestion($questionId, $userId);
 
         if ($question['status'] !== 'draft') {
-            throw new \RuntimeException('question_not_draft');
+            throw new ValidationException('question_not_draft', 422, 'invalid_state_transition');
         }
 
         if (! empty($question['image_path']) && $this->isManagedImagePath($question['image_path'])) {
@@ -213,10 +216,10 @@ final class QuestionService
     {
         $session = $this->sessions->findByShortCode($shortCode);
         if ($session === null) {
-            throw new \RuntimeException('session_not_found');
+            throw new NotFoundException('session_not_found');
         }
         if ($session['status'] === 'closed') {
-            throw new \RuntimeException('session_closed');
+            throw new ValidationException('session_closed', 410);
         }
 
         $question = $this->questions->findActiveBySessionCode($shortCode);
@@ -248,13 +251,13 @@ final class QuestionService
     {
         $session = $this->sessions->findById($sessionId);
         if ($session === null) {
-            throw new \RuntimeException('session_not_found');
+            throw new NotFoundException('session_not_found');
         }
         $courseId = (int) $session['course_id'];
         $course = $this->courses->findById($courseId);
         // Owner or co-instructor (FR-97).
         if ($course === null || $this->courses->roleFor($courseId, $userId) === null) {
-            throw new \RuntimeException('forbidden');
+            throw new ForbiddenException('forbidden');
         }
 
         return $session;
@@ -264,7 +267,7 @@ final class QuestionService
     {
         $question = $this->questions->findById($questionId);
         if ($question === null) {
-            throw new \RuntimeException('question_not_found');
+            throw new NotFoundException('question_not_found');
         }
         $this->requireSession((int) $question['session_id'], $userId);
 

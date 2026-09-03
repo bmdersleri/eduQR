@@ -10,6 +10,8 @@ use EduQR\Contracts\QuestionBankRepositoryInterface;
 use EduQR\Contracts\QuestionGenerationServiceInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
+use EduQR\Exceptions\ForbiddenException;
+use EduQR\Exceptions\NotFoundException;
 
 final class QuestionBankService
 {
@@ -106,7 +108,7 @@ final class QuestionBankService
         $requestedIds = array_values(array_filter(array_map('intval', $bankQuestionIds), static fn (int $id): bool => $id > 0));
         $items = $this->bankItems->findByIds((int) $session['course_id'], $requestedIds);
         if (count($items) !== count($requestedIds)) {
-            throw new \RuntimeException('question_bank_not_found');
+            throw new NotFoundException('question_bank_not_found');
         }
 
         $byId = [];
@@ -117,7 +119,7 @@ final class QuestionBankService
         $ids = [];
         foreach ($requestedIds as $bankId) {
             if (! isset($byId[$bankId])) {
-                throw new \RuntimeException('question_bank_not_found');
+                throw new NotFoundException('question_bank_not_found');
             }
 
             $ids[] = $this->questionService->create($sessionId, $userId, $byId[$bankId]['question']);
@@ -136,11 +138,11 @@ final class QuestionBankService
     {
         $course = $this->courses->findById($courseId);
         if ($course === null) {
-            throw new \RuntimeException('course_not_found');
+            throw new NotFoundException('course_not_found');
         }
         // Owner or co-instructor (FR-97).
         if ($this->courses->roleFor($courseId, $userId) === null) {
-            throw new \RuntimeException('forbidden');
+            throw new ForbiddenException('forbidden');
         }
 
         return $course;
@@ -153,7 +155,7 @@ final class QuestionBankService
     {
         $session = $this->sessions->findById($sessionId);
         if ($session === null) {
-            throw new \RuntimeException('session_not_found');
+            throw new NotFoundException('session_not_found');
         }
         $this->requireCourse((int) $session['course_id'], $userId);
 
@@ -167,7 +169,7 @@ final class QuestionBankService
     {
         $question = $this->questions->findById($questionId);
         if ($question === null) {
-            throw new \RuntimeException('question_not_found');
+            throw new NotFoundException('question_not_found');
         }
         $this->requireSession((int) $question['session_id'], $userId);
 
