@@ -6,6 +6,7 @@ namespace EduQR\Http;
 
 use EduQR\Controllers\ApiController;
 use EduQR\Exceptions\DomainException;
+use EduQR\Support\Url;
 
 /**
  * Decides how a failure that escaped every controller is answered. [NFR-85]
@@ -18,7 +19,14 @@ final class FailureResponse
 {
     private const API_PREFIX = '/api/v1/';
 
-    /** True when the caller asked for an API route and therefore expects the envelope. */
+    /**
+     * True when the caller asked for an API route and therefore expects the
+     * envelope.
+     *
+     * Strips the deployment base path the same way {@see Router::dispatch()}
+     * does before testing the prefix — a subfolder mount (NFR-15) must not
+     * make an API request fall through to the HTML branch. [NFR-85]
+     */
     public static function wantsJson(?string $requestUri): bool
     {
         if ($requestUri === null || $requestUri === '') {
@@ -26,8 +34,11 @@ final class FailureResponse
         }
 
         $path = parse_url($requestUri, PHP_URL_PATH);
+        if (! is_string($path)) {
+            return false;
+        }
 
-        return is_string($path) && str_starts_with($path, self::API_PREFIX);
+        return str_starts_with(Url::stripBasePath($path), self::API_PREFIX);
     }
 
     private const FATAL_TYPES = [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR];

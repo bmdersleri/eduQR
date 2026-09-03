@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Http;
 
+use EduQR\Config;
 use EduQR\Exceptions\NotFoundException;
 use EduQR\Http\FailureResponse;
 use EduQR\I18n\I18nService;
+use EduQR\Support\Url;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 final class FailureResponseTest extends TestCase
 {
@@ -16,10 +19,46 @@ final class FailureResponseTest extends TestCase
         // Pin the locale so the envelope contains predictable messages
         I18nService::init(dirname(__DIR__, 3) . '/locales', 'en');
     }
+
+    /**
+     * Mirrors UrlTest::withAppUrl() — swaps Config::$data for the duration of
+     * the callback and restores it afterwards, resetting Url's memoized base
+     * path on both sides of the swap.
+     */
+    private function withAppUrl(string $appUrl, callable $callback): mixed
+    {
+        $ref = new ReflectionClass(Config::class);
+        $data = $ref->getProperty('data');
+        $loaded = $ref->getProperty('loaded');
+
+        $originalData = $data->getValue();
+        $originalLoaded = $loaded->getValue();
+
+        Url::reset();
+        $data->setValue(null, array_merge($originalData, ['APP_URL' => $appUrl]));
+
+        try {
+            return $callback();
+        } finally {
+            $data->setValue(null, $originalData);
+            $loaded->setValue(null, $originalLoaded);
+            Url::reset();
+        }
+    }
+
     public function test_api_paths_want_json_NFR85(): void
     {
         $this->assertTrue(FailureResponse::wantsJson('/api/v1/courses'));
         $this->assertTrue(FailureResponse::wantsJson('/api/v1/sessions/12?since=4'));
+    }
+
+    public function test_api_paths_under_a_configured_base_path_want_json_NFR85_NFR15(): void
+    {
+        $this->withAppUrl('http://example.test/eduqr', function (): void {
+            $this->assertTrue(FailureResponse::wantsJson('/eduqr/api/v1/courses'));
+            $this->assertTrue(FailureResponse::wantsJson('/eduqr/api/v1/sessions/12?since=4'));
+            $this->assertFalse(FailureResponse::wantsJson('/eduqr/admin/courses'));
+        });
     }
 
     public function test_html_paths_do_not_want_json_NFR85(): void
