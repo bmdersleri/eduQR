@@ -4,23 +4,22 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Container;
+use EduQR\Contracts\AuditLogRepositoryInterface;
 use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
-use EduQR\Repositories\AuditLogRepository;
-use EduQR\Repositories\CourseRepository;
-use EduQR\Repositories\UserRepository;
 use EduQR\Services\CourseService;
 
 final class CourseController extends ApiController
 {
     private CourseService $service;
-    private AuditLogRepository $auditLog;
+    private AuditLogRepositoryInterface $auditLog;
 
     public function __construct()
     {
-        $this->service = new CourseService(new CourseRepository(), new UserRepository());
-        $this->auditLog = new AuditLogRepository();
+        $this->service = Container::courseService();
+        $this->auditLog = Container::auditLogRepository();
     }
 
     // ── GET /api/v1/courses ────────────────────────────────────────────────────

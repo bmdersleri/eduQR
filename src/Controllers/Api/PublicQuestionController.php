@@ -4,11 +4,8 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Container;
 use EduQR\Controllers\ApiController;
-use EduQR\Repositories\CourseRepository;
-use EduQR\Repositories\OptionRepository;
-use EduQR\Repositories\QuestionRepository;
-use EduQR\Repositories\SessionRepository;
 use EduQR\Services\QuestionService;
 
 final class PublicQuestionController extends ApiController
@@ -17,12 +14,7 @@ final class PublicQuestionController extends ApiController
 
     public function __construct()
     {
-        $this->service = new QuestionService(
-            new QuestionRepository(),
-            new OptionRepository(),
-            new SessionRepository(),
-            new CourseRepository(),
-        );
+        $this->service = Container::questionService();
     }
 
     // ── GET /api/v1/sessions/{short_code}/active-question ─────────────────────

@@ -4,15 +4,11 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Container;
 use EduQR\Contracts\AuditLogRepositoryInterface;
 use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
-use EduQR\Repositories\AuditLogRepository;
-use EduQR\Repositories\CourseRepository;
-use EduQR\Repositories\OptionRepository;
-use EduQR\Repositories\QuestionRepository;
-use EduQR\Repositories\SessionRepository;
 use EduQR\Services\QuestionService;
 
 final class QuestionController extends ApiController
@@ -24,13 +20,8 @@ final class QuestionController extends ApiController
         ?QuestionService $service = null,
         ?AuditLogRepositoryInterface $auditLog = null
     ) {
-        $this->service = $service ?? new QuestionService(
-            new QuestionRepository(),
-            new OptionRepository(),
-            new SessionRepository(),
-            new CourseRepository(),
-        );
-        $this->auditLog = $auditLog ?? new AuditLogRepository();
+        $this->service = $service ?? Container::questionService();
+        $this->auditLog = $auditLog ?? Container::auditLogRepository();
     }
 
     // ── GET /api/v1/sessions/{id}/questions ───────────────────────────────────

@@ -4,14 +4,10 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Container;
 use EduQR\Controllers\ApiController;
 use EduQR\Exceptions\DuplicateAnswerException;
 use EduQR\Middleware\RateLimitMiddleware;
-use EduQR\Repositories\AnswerRepository;
-use EduQR\Repositories\OptionRepository;
-use EduQR\Repositories\ParticipantRepository;
-use EduQR\Repositories\QuestionRepository;
-use EduQR\Repositories\SessionRepository;
 use EduQR\Services\AnswerService;
 
 /**
@@ -25,13 +21,7 @@ final class AnswerController extends ApiController
 
     public function __construct()
     {
-        $this->service = new AnswerService(
-            new AnswerRepository(),
-            new QuestionRepository(),
-            new SessionRepository(),
-            new ParticipantRepository(),
-            new OptionRepository(),
-        );
+        $this->service = Container::answerService();
     }
 
     // ── POST /api/v1/answers ──────────────────────────────────────────────────

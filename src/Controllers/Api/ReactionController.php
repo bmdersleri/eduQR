@@ -4,14 +4,10 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Container;
 use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\RateLimitMiddleware;
-use EduQR\Repositories\CourseRepository;
-use EduQR\Repositories\ParticipantRepository;
-use EduQR\Repositories\QuestionRepository;
-use EduQR\Repositories\ReactionRepository;
-use EduQR\Repositories\SessionRepository;
 use EduQR\Services\ReactionService;
 
 /**
@@ -29,13 +25,7 @@ final class ReactionController extends ApiController
 
     public function __construct(?ReactionService $service = null)
     {
-        $this->service = $service ?? new ReactionService(
-            new ReactionRepository(),
-            new QuestionRepository(),
-            new SessionRepository(),
-            new ParticipantRepository(),
-            new CourseRepository(),
-        );
+        $this->service = $service ?? Container::reactionService();
     }
 
     // ── POST /api/v1/reactions ────────────────────────────────────────────────

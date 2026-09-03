@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Container;
+use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
-use EduQR\Repositories\CourseRepository;
-use EduQR\Repositories\OptionRepository;
-use EduQR\Repositories\QuestionRepository;
-use EduQR\Repositories\SessionRepository;
 use EduQR\Services\QuestionService;
 
 final class QuestionImageController extends ApiController
@@ -21,17 +19,12 @@ final class QuestionImageController extends ApiController
     private const ALLOWED_EXTS = ['jpg', 'jpeg', 'png'];
 
     private QuestionService $service;
-    private QuestionRepository $questions;
+    private QuestionRepositoryInterface $questions;
 
     public function __construct()
     {
-        $this->questions = new QuestionRepository();
-        $this->service = new QuestionService(
-            $this->questions,
-            new OptionRepository(),
-            new SessionRepository(),
-            new CourseRepository(),
-        );
+        $this->questions = Container::questionRepository();
+        $this->service = Container::questionService();
     }
 
     // ── POST /api/v1/questions/{id}/image ─────────────────────────────────────
@@ -141,12 +134,12 @@ final class QuestionImageController extends ApiController
 
     private function authorise(int $sessionId, int $userId): void
     {
-        $sessionRepo = new SessionRepository();
+        $sessionRepo = Container::sessionRepository();
         $session = $sessionRepo->findById($sessionId);
         if ($session === null) {
             $this->error(404, 'session_not_found', t('error.session_not_found'));
         }
-        $courseRepo = new CourseRepository();
+        $courseRepo = Container::courseRepository();
         $courseId = (int) $session['course_id'];
         $course = $courseRepo->findById($courseId);
         // Owner or co-instructor (FR-97).

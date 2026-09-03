@@ -4,40 +4,25 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Container;
 use EduQR\Contracts\QuestionGenerationServiceInterface;
 use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
-use EduQR\Repositories\CourseRepository;
-use EduQR\Repositories\OptionRepository;
-use EduQR\Repositories\QuestionBankRepository;
-use EduQR\Repositories\QuestionRepository;
-use EduQR\Repositories\SessionRepository;
 use EduQR\Services\QuestionBankService;
-use EduQR\Services\QuestionGenerationService;
-use EduQR\Services\QuestionService;
 
 final class QuestionBankController extends ApiController
 {
     private QuestionBankService $service;
 
+    /**
+     * A caller-supplied generator is threaded through the container so the whole
+     * graph is still assembled in one place; passing null takes the configured
+     * one.
+     */
     public function __construct(?QuestionGenerationServiceInterface $generator = null)
     {
-        $questionRepo = new QuestionRepository();
-        $optionRepo = new OptionRepository();
-        $sessionRepo = new SessionRepository();
-        $courseRepo = new CourseRepository();
-        $questionService = new QuestionService($questionRepo, $optionRepo, $sessionRepo, $courseRepo);
-
-        $this->service = new QuestionBankService(
-            new QuestionBankRepository(),
-            $questionRepo,
-            $optionRepo,
-            $sessionRepo,
-            $courseRepo,
-            $questionService,
-            $generator ?? QuestionGenerationService::fromConfig(),
-        );
+        $this->service = Container::questionBankService($generator);
     }
 
     // ── GET /api/v1/courses/{id}/question-bank ───────────────────────────────

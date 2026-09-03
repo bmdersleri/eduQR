@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Container;
 use EduQR\Controllers\ApiController;
-use EduQR\Repositories\CourseRepository;
-use EduQR\Repositories\SessionRepository;
 use EduQR\Services\SessionService;
 
 final class PublicSessionController extends ApiController
@@ -15,7 +14,7 @@ final class PublicSessionController extends ApiController
 
     public function __construct()
     {
-        $this->service = new SessionService(new SessionRepository(), new CourseRepository());
+        $this->service = Container::sessionService();
     }
 
     // ── GET /api/v1/public/sessions/{short_code} ──────────────────────────────

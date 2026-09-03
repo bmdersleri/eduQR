@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Container;
 use EduQR\Contracts\AuditLogRepositoryInterface;
 use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
-use EduQR\Repositories\AuditLogRepository;
 
 /**
  * Phase 11 — Audit Log Viewer API (T-1112, FR-91)
@@ -20,7 +20,7 @@ final class AuditLogController extends ApiController
 
     public function __construct(?AuditLogRepositoryInterface $repo = null)
     {
-        $this->repo = $repo ?? new AuditLogRepository();
+        $this->repo = $repo ?? Container::auditLogRepository();
     }
 
     // ── GET /api/v1/audit-logs ────────────────────────────────────────────────

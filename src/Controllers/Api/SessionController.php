@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Container;
+use EduQR\Contracts\AuditLogRepositoryInterface;
 use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
-use EduQR\Repositories\AuditLogRepository;
-use EduQR\Repositories\CourseRepository;
-use EduQR\Repositories\SessionRepository;
 use EduQR\Services\SessionService;
 use EduQR\Support\Url;
 use Endroid\QrCode\Builder\Builder;
@@ -20,12 +19,12 @@ use Endroid\QrCode\Writer\PngWriter;
 final class SessionController extends ApiController
 {
     private SessionService $service;
-    private AuditLogRepository $auditLog;
+    private AuditLogRepositoryInterface $auditLog;
 
     public function __construct()
     {
-        $this->service = new SessionService(new SessionRepository(), new CourseRepository());
-        $this->auditLog = new AuditLogRepository();
+        $this->service = Container::sessionService();
+        $this->auditLog = Container::auditLogRepository();
     }
 
     // ── POST /api/v1/courses/{id}/sessions ────────────────────────────────────

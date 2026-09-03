@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Container;
 use EduQR\Controllers\ApiController;
 use EduQR\Middleware\AuthMiddleware;
-use EduQR\Repositories\CourseRepository;
-use EduQR\Repositories\OptionRepository;
-use EduQR\Repositories\QuestionRepository;
-use EduQR\Repositories\SessionRepository;
 use EduQR\Services\ReportService;
 
 /**
@@ -24,12 +21,7 @@ final class ResultsController extends ApiController
 
     public function __construct()
     {
-        $this->service = new ReportService(
-            new SessionRepository(),
-            new QuestionRepository(),
-            new OptionRepository(),
-            new CourseRepository(),
-        );
+        $this->service = Container::reportService();
     }
 
     // ── GET /api/v1/sessions/{id}/results (instructor) ────────────────────────

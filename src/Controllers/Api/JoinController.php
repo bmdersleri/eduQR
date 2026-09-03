@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Container;
 use EduQR\Controllers\ApiController;
 use EduQR\Middleware\RateLimitMiddleware;
-use EduQR\Repositories\ParticipantRepository;
-use EduQR\Repositories\SessionRepository;
 use EduQR\Services\ParticipantService;
 
 final class JoinController extends ApiController
@@ -16,10 +15,7 @@ final class JoinController extends ApiController
 
     public function __construct()
     {
-        $this->service = new ParticipantService(
-            new ParticipantRepository(),
-            new SessionRepository(),
-        );
+        $this->service = Container::participantService();
     }
 
     // ── POST /api/v1/sessions/{short_code}/join ───────────────────────────────

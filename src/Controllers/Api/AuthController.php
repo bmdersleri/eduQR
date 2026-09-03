@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace EduQR\Controllers\Api;
 
+use EduQR\Container;
+use EduQR\Contracts\AuditLogRepositoryInterface;
 use EduQR\Controllers\ApiController;
 use EduQR\Exceptions\DomainException;
 use EduQR\Middleware\AuthMiddleware;
 use EduQR\Middleware\CsrfMiddleware;
-use EduQR\Repositories\AuditLogRepository;
-use EduQR\Repositories\LoginAttemptRepository;
-use EduQR\Repositories\PasswordResetRepository;
-use EduQR\Repositories\UserRepository;
 use EduQR\Services\AuthService;
 use EduQR\Services\PasswordResetService;
 
@@ -19,13 +17,13 @@ final class AuthController extends ApiController
 {
     private AuthService $auth;
     private PasswordResetService $passwordResets;
-    private AuditLogRepository $auditLog;
+    private AuditLogRepositoryInterface $auditLog;
 
     public function __construct()
     {
-        $this->auth = new AuthService(new UserRepository(), new LoginAttemptRepository());
-        $this->passwordResets = new PasswordResetService(new UserRepository(), new PasswordResetRepository());
-        $this->auditLog = new AuditLogRepository();
+        $this->auth = Container::authService();
+        $this->passwordResets = Container::passwordResetService();
+        $this->auditLog = Container::auditLogRepository();
     }
 
     // ── POST /api/v1/auth/login ────────────────────────────────────────────────
