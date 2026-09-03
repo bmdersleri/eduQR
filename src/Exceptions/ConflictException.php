@@ -8,7 +8,7 @@ namespace EduQR\Exceptions;
  * The request conflicts with current state: the thing it would create already
  * exists, or the thing it would do has already been done.
  *
- * Not final: `EduQR\Services\DuplicateAnswerException` extends it so that the
+ * Not final: `EduQR\Exceptions\DuplicateAnswerException` extends it so that the
  * catch sites naming that class keep working.
  *
  * @requirement NFR-78

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace EduQR\Controllers\Api;
 
 use EduQR\Controllers\ApiController;
+use EduQR\Exceptions\DuplicateAnswerException;
 use EduQR\Middleware\RateLimitMiddleware;
 use EduQR\Repositories\AnswerRepository;
 use EduQR\Repositories\OptionRepository;
@@ -12,7 +13,6 @@ use EduQR\Repositories\ParticipantRepository;
 use EduQR\Repositories\QuestionRepository;
 use EduQR\Repositories\SessionRepository;
 use EduQR\Services\AnswerService;
-use EduQR\Services\DuplicateAnswerException;
 
 /**
  * POST /api/v1/answers — student submits an answer (T-703)

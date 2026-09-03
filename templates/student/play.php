@@ -5,13 +5,13 @@
  * T-710: no-JS fallback via plain HTML form POST
  */
 
+use EduQR\Exceptions\DuplicateAnswerException;
 use EduQR\Repositories\AnswerRepository;
 use EduQR\Repositories\OptionRepository;
 use EduQR\Repositories\ParticipantRepository;
 use EduQR\Repositories\QuestionRepository;
 use EduQR\Repositories\SessionRepository;
 use EduQR\Services\AnswerService;
-use EduQR\Services\DuplicateAnswerException;
 
 $shortCode = $p['short_code'] ?? '';
 

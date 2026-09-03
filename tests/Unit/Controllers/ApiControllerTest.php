@@ -7,11 +7,11 @@ namespace EduQR\Tests\Unit\Controllers;
 use EduQR\Controllers\ApiController;
 use EduQR\Exceptions\AuthenticationException;
 use EduQR\Exceptions\ConflictException;
+use EduQR\Exceptions\DuplicateAnswerException;
 use EduQR\Exceptions\ForbiddenException;
 use EduQR\Exceptions\NotFoundException;
 use EduQR\Exceptions\UpstreamServiceException;
 use EduQR\Exceptions\ValidationException;
-use EduQR\Services\DuplicateAnswerException;
 use PHPUnit\Framework\TestCase;
 
 /**

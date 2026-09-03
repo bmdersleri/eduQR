@@ -11,6 +11,7 @@ use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
 use EduQR\Exceptions\AuthenticationException;
 use EduQR\Exceptions\DomainException;
+use EduQR\Exceptions\DuplicateAnswerException;
 use EduQR\Exceptions\ForbiddenException;
 use EduQR\Exceptions\NotFoundException;
 use EduQR\Exceptions\ValidationException;

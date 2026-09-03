@@ -9,8 +9,8 @@ use EduQR\Contracts\OptionRepositoryInterface;
 use EduQR\Contracts\ParticipantRepositoryInterface;
 use EduQR\Contracts\QuestionRepositoryInterface;
 use EduQR\Contracts\SessionRepositoryInterface;
+use EduQR\Exceptions\DuplicateAnswerException;
 use EduQR\Services\AnswerService;
-use EduQR\Services\DuplicateAnswerException;
 use PDOException;
 use PHPUnit\Framework\TestCase;
 
