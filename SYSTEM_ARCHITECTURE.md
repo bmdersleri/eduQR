@@ -95,12 +95,50 @@ Documented as the upgrade path, **not** part of MVP work:
 | Layer | Owns | Does Not Own |
 | --- | --- | --- |
 | Front controller | URL parsing, dispatch, error envelope, global middleware | Business logic |
-| Web routes / controllers | HTML rendering, form handling | JSON output |
+| Container | Object graph construction — the only place a service or repository is instantiated | Business rules, HTTP concerns |
+| Web routes / controllers | Auth, view-model preparation, HTML status codes | JSON output, SQL, business rules |
+| Templates | Escaping and rendering the view model handed to them | Auth, service resolution, SQL, status codes, exception handling |
 | API routes / controllers | JSON output, status codes, error envelope, **input validation** | Templating, business rules |
 | Middleware | Cross-cutting concerns (auth, CSRF, i18n, rate limit) | Domain logic |
 | Services | Business rules, validation that involves multiple tables | SQL strings |
 | Repositories | Prepared SQL, one class per table | Business rules, HTML |
 | Database | Persistence, constraints, indexes | Application logic |
+
+### 2.2 Composition Rules
+
+Three rules make the table above enforceable rather than aspirational. ADR-0007
+records why they were needed and what it cost to add them late.
+
+- **One composition root (NFR-80).** `EduQR\Container` builds every service and
+  repository. `new SomeService(...)` outside the container is a layering violation,
+  wherever it appears — controller, template, test helper, or `bin/` script. Tests
+  may still inject a fake through a constructor directly; that is what the
+  interfaces in `src/Contracts/` are for.
+
+- **Typed domain errors (NFR-78).** Services throw the exception types in §9. A
+  service MUST NOT signal failure by putting a code in a generic exception message.
+
+- **Controllers for every route (NFR-81).** A template is reached only through a
+  controller, which has already authenticated the request and prepared its data. If
+  a template needs a value, the controller passes it; the template does not go and
+  fetch it.
+
+### 2.3 Reporting Decomposition
+
+`ReportService` accumulated five unrelated jobs. Under NFR-82 they live in
+`src/Services/Reporting/`, each behind its own interface in `src/Contracts/`:
+
+| Unit | Answers | Consumers |
+| --- | --- | --- |
+| `ResultsService` | What are the current aggregates for this question or session? | live instructor view, projector, gated student view |
+| `ReportBuilder` | What did this finished session look like, as a document? | report page, PDF, CSV, HTML export |
+| `CourseAnalyticsService` | How has this course trended across its sessions? | course analytics page |
+| `ExportService` | Render this session in an external format (Moodle GIFT, gradebook CSV). | LMS export endpoints (FR-98) |
+| `ScoringService` | What did each participant score, and which options were correct? | used by the three above; never called from a controller |
+
+`ScoringService` is the only shared dependency among them, and is the single place
+Turkish-correct answer folding is applied (NFR-77) — splitting it out is what stops
+that rule from being re-implemented per report format.
 
 ---
 
@@ -172,18 +210,26 @@ eduqr/
 ├── src/
 │   ├── Bootstrap.php
 │   ├── Config.php
+│   ├── Container.php         # composition root — the only place services are built
 │   ├── Router.php
 │   ├── Controllers/
-│   │   ├── Admin/
-│   │   ├── Api/
-│   │   └── Public/
+│   │   ├── Admin/            # HTML routes behind auth
+│   │   ├── Api/              # all extend Controllers/ApiController.php
+│   │   ├── Public/           # HTML routes reachable without a login
+│   │   └── ApiController.php # shared envelope, body decoding, error mapping
+│   ├── Exceptions/           # typed domain errors — see §9.1
+│   │   ├── DomainException.php
+│   │   ├── NotFoundException.php
+│   │   ├── ForbiddenException.php
+│   │   ├── ValidationException.php
+│   │   └── ConflictException.php
 │   ├── Services/
 │   │   ├── AuthService.php
 │   │   ├── CourseService.php
 │   │   ├── SessionService.php
 │   │   ├── QuestionService.php
 │   │   ├── AnswerService.php
-│   │   ├── ReportService.php
+│   │   ├── Reporting/        # split out of ReportService — see §2.3
 │   │   ├── ParticipantService.php
 │   │   └── I18nService.php
 │   ├── Repositories/
@@ -421,10 +467,26 @@ Production MUST NOT commit `.env`. `composer install` should fail loud if `.env`
 | Layer | Strategy |
 | --- | --- |
 | Repository | Throw on SQL error. Never swallow. |
-| Service | Catch repo exceptions, translate to domain exceptions (`SessionNotFoundException`, `DuplicateNicknameException`, `AlreadyAnsweredException`). |
-| Controller | Catch domain exceptions, return appropriate HTTP status + localized message via the error envelope. |
+| Service | Catch repo exceptions, translate to one of the four domain exceptions below. |
+| Controller | Let domain exceptions reach the shared mapper in `ApiController`; do not catch them to build a response by hand. |
 | Middleware | Convert any unhandled exception to a 500 with a localized generic message; log details server-side. |
 | Global | Uncaught exceptions logged with stack trace; user sees a generic localized error page (status 500). |
+
+### 9.1 Domain Exception Types
+
+All four extend `EduQR\Exceptions\DomainException` and carry the machine-readable
+error code published in `API_SPEC.md` §12 — never a human-readable sentence, which
+belongs in `locales/` and is resolved at the HTTP boundary.
+
+| Type | HTTP | Meaning | Example code |
+| --- | --- | --- | --- |
+| `NotFoundException` | 404 | The addressed entity does not exist, or the caller may not know that it does | `course_not_found` |
+| `ForbiddenException` | 403 | The entity exists and the caller is known, but is not permitted | `course_owner_only` |
+| `ValidationException` | 422 | The request was understood and rejected on its contents; carries per-field detail | `validation_failed` |
+| `ConflictException` | 409 | The request conflicts with current state | `already_answered` |
+
+A service MUST NOT throw `\RuntimeException` with a code in its message. The HTTP
+layer maps by exception type; message text is not part of any contract.
 
 See the canonical error-code list in `API_SPEC.md` §12.
 

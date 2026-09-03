@@ -324,6 +324,11 @@ Not part of the MVP. Each item must be escalated to the human owner before work 
 [ ] T-1123  Bounded-cost live polling (ETag/304, configurable intervals)                    [NFR-76]
 [x] T-1124  Turkish correctness pass: dotted/dotless I case folding, hardcoded-string sweep, tr.json review queue [NFR-77, FR-80, FR-85]
 [x] T-1125  Public /privacy route and notice page — the student-page link existed but 404'd [FR-75, NFR-31]
+[ ] T-1126  Typed domain exceptions replace RuntimeException magic strings                  [NFR-78]
+[ ] T-1127  Shared API controller base: one envelope, one body decoder, one error mapper    [NFR-79]
+[ ] T-1128  Service container — remove inline `new Service(new Repository())` wiring        [NFR-80]
+[ ] T-1129  Admin/Public controllers for HTML routes; templates render only                 [NFR-81]
+[ ] T-1130  Split ReportService into Results / Report / Analytics / Export / Scoring        [NFR-82]
 ```
 
 ---

@@ -248,6 +248,11 @@ See `I18N_SPEC.md` for the implementation contract.
 | NFR-75 | MUST | The app MUST run as a reproducible local container stack (PHP + MySQL) started with a single command, with no host-level PHP or MySQL installation required. Container configuration MUST NOT contain baked-in secrets; every credential comes from an ignored env file. |
 | NFR-76 | MUST | Live polling MUST be bounded in cost. A poll whose underlying state is unchanged MUST be answered `304 Not Modified` without recomputing aggregates; the student active-question poll MUST NOT build full result aggregation; and poll intervals MUST be read from configuration (`POLL_INTERVAL_*`) rather than hardcoded in templates. |
 | NFR-77 | MUST | Case-insensitive comparison of user-authored text MUST be correct for Turkish, where `i`/`İ` and `ı`/`I` do not fold under default PHP or SQL casing. Every such comparison MUST fold both sides with one shared rule, and the result MUST NOT vary with the active locale or the database engine, so that a correct answer is never scored wrong. |
+| NFR-78 | MUST | A service MUST signal a domain failure by throwing a typed exception, not by throwing a generic exception carrying a magic string. Each failure class (not found, forbidden, validation, conflict) MUST have exactly one exception type, and that type MUST carry the stable machine-readable error code the API contract already publishes, so the HTTP layer maps a failure by its type rather than by comparing message text. |
+| NFR-79 | MUST | Every JSON API response MUST be produced by one shared implementation: success envelope, error envelope, request-body decoding, and the mapping from a domain failure to an HTTP status code. A controller MUST NOT define its own copy of that logic, so a status code or envelope shape cannot drift between endpoints. |
+| NFR-80 | MUST | Object graph construction MUST happen in one place. No controller, template, script, or service may construct a repository or another service inline; each collaborator MUST be resolved from the shared container. Adding a dependency to a service MUST therefore change one wiring definition rather than every call site. |
+| NFR-81 | MUST | An HTML route MUST be handled by a controller, exactly as an API route is. A template MUST receive prepared data and render it; a template MUST NOT authenticate the request, resolve services, query a repository, decide an HTTP status code, or handle a domain exception. |
+| NFR-82 | MUST | A service class MUST have a single reporting responsibility. Live result aggregation, session report assembly, course analytics, external-format export, and score computation MUST be separately addressable units with their own interfaces, so each can be understood, tested, and changed without loading the others. |
 
 ---
 
@@ -255,16 +260,18 @@ See `I18N_SPEC.md` for the implementation contract.
 
 These are explicitly **not** in scope for the MVP and any agent asked to implement them must escalate to the human owner before starting:
 
-- LMS integration (Moodle, Canvas, etc.)
 - Native mobile applications
-- Real-time WebSockets / Socket.IO
+- Real-time WebSockets / Socket.IO — closed, see `docs/adr/0002-polling-over-websockets.md`
 - Advanced AI analysis
-- Quiz mode with grading
 - Gamification (badges, points, leaderboards)
 - Multi-tenant institutional management
 - Payment / subscription
 - Public sign-up
-- Multi-instructor course ownership
+
+Three items previously listed here have since been specified and shipped, and are no
+longer out of scope: LMS export (FR-98), quiz mode with scoring (FR-30, FR-31), and
+multi-instructor course ownership (FR-97). Note that FR-98 covers export files only —
+the system still MUST NOT push data to an LMS itself.
 
 ---
 
