@@ -134,37 +134,27 @@ final class Bootstrap
         });
 
         // ── Home ──────────────────────────────────────────────────────────────
-        $router->get('/', function (array $p) use ($projectRoot): void {
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/home.php';
+        $router->get('/', function (array $p): void {
+            (new Controllers\Public\PageController())->home();
         });
 
         // ── Privacy notice (public, no auth, no session) ──────────────────────
         // Linked from templates/partials/privacy-notice.php on every student page.
         $router->get('/privacy', function (array $p): void {
-            http_response_code(200);
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/privacy.php';
+            (new Controllers\Public\PageController())->privacy();
         });
 
         // ── Auth ──────────────────────────────────────────────────────────────
         $router->get('/login', function (array $p): void {
-            http_response_code(200);
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/auth/login.php';
+            (new Controllers\Public\AuthPageController())->login();
         });
 
         $router->get('/forgot-password', function (array $p): void {
-            http_response_code(200);
-            header('Content-Type: text/html; charset=utf-8');
-            include __DIR__ . '/../templates/auth/forgot.php';
+            (new Controllers\Public\AuthPageController())->forgotPassword();
         });
 
         $router->get('/reset-password/{token}', function (array $p): void {
-            http_response_code(200);
-            header('Content-Type: text/html; charset=utf-8');
-            $token = $p['token'];
-            include __DIR__ . '/../templates/auth/reset.php';
+            (new Controllers\Public\AuthPageController())->resetPassword((string) $p['token']);
         });
 
         // ── Admin ─────────────────────────────────────────────────────────────

@@ -1,10 +1,3 @@
-<?php
-use EduQR\Middleware\CsrfMiddleware;
-
-$token = (string) ($token ?? '');
-ob_start();
-$csrfToken = CsrfMiddleware::getToken();
-?>
 <div class="row justify-content-center align-items-stretch g-4 py-4 py-lg-5">
     <div class="col-12 col-lg-5 d-none d-lg-block">
         <div class="eduqr-hero h-100">
@@ -106,7 +99,3 @@ $csrfToken = CsrfMiddleware::getToken();
     });
 }());
 </script>
-<?php
-$content = ob_get_clean();
-$pageTitle = t('auth.reset.confirm_title') . ' — ' . t('app.name');
-include __DIR__ . '/../layouts/public.php';

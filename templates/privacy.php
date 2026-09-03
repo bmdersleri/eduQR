@@ -1,6 +1,6 @@
 <?php
 // Full privacy notice — public page linked from every student-facing screen [FR-75, NFR-31]
-ob_start();
+// Rendered by Controllers\Public\PageController::privacy().
 ?>
 <div class="row justify-content-center">
     <div class="col-12 col-md-10 col-lg-8 col-xl-7">
@@ -60,7 +60,3 @@ ob_start();
         </div>
     </div>
 </div>
-<?php
-$content   = ob_get_clean();
-$pageTitle = t('privacy.page.title') . ' — ' . t('app.name');
-include __DIR__ . '/layouts/public.php';

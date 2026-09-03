@@ -1,6 +1,3 @@
-<?php
-ob_start();
-?>
 <div class="row align-items-center justify-content-center g-4 g-lg-5 py-4 py-lg-5">
     <div class="col-12 col-lg-6">
         <div class="eduqr-hero h-100">
@@ -69,7 +66,3 @@ ob_start();
         </div>
     </div>
 </div>
-<?php
-$content   = ob_get_clean();
-$pageTitle = t('app.name') . ' — ' . t('app.subtitle');
-include __DIR__ . '/layouts/public.php';
