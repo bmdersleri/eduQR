@@ -65,3 +65,6 @@ composer.phar
 .agykit.conf
 /.playwright-mcp/
 /join-*.png
+
+# Serena MCP local index and config
+/.serena/
