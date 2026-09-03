@@ -115,8 +115,8 @@ counts, maximum ids and timestamps only; it never joins to build a row set.
 | `GET /api/v1/sessions/{short_code}/active-question` | student wait, student answered, projector | the session's `status` and `updated_at`; the active question's `id`, `status`, `activated_at` and `updated_at` |
 | `GET /api/v1/sessions/{id}/results` | instructor results, projector | the question's `status` and `updated_at`; over its answers, `COUNT(*)`, `MAX(id)` and `SUM(is_hidden)` |
 | `GET /api/v1/sessions/{id}/participants/count` | instructor session detail | the count itself |
-| `GET /api/v1/sessions/{id}/reactions` | instructor session detail | over the question's reactions, `COUNT(*)` and `MAX(updated_at)` |
-| `GET /api/v1/sessions/{id}/questions` | instructor session detail | over the session's questions, `COUNT(*)` and `MAX(updated_at)` |
+| `GET /api/v1/sessions/{id}/reactions` | instructor session detail | over the session's reactions, `COUNT(*)` and `MAX(updated_at)`; plus the `/questions` version below |
+| `GET /api/v1/sessions/{id}/questions` | instructor session detail | over the session's questions, `COUNT(*)` and `MAX(updated_at)`; over their options, `COUNT(*)` and `MAX(id)` |
 
 Rules:
 
@@ -132,6 +132,25 @@ Rules:
   the same body to every participant today, so its version is not
   participant-specific. Should `already_answered` ever become per-participant,
   the participant id joins the version query in the same change.
+- **The options read on `/questions` is not caution.** Editing only a
+  question's choices (§4.3) replaces its option rows without writing the
+  question row, and `questions.updated_at` is `ON UPDATE CURRENT_TIMESTAMP`, so
+  such an edit moves neither the count nor the maximum. Options are deleted and
+  recreated rather than edited in place, so their `COUNT(*)` and `MAX(id)` both
+  move whenever any of them does.
+- **`/reactions` is scoped to the session and folds in `/questions`.** The
+  endpoint aggregates every question in the session and emits a zeroed
+  `got_it`/`lost` row for questions nobody has reacted to, so adding a question
+  changes the response while leaving the reactions table untouched.
+- **A poll response must be storable.** `304` is unreachable unless the browser
+  kept the `200` that carried the `ETag`, and PHP's session handling sends
+  `Cache-Control: no-store` by default on every authenticated response. Polled
+  endpoints therefore send `Cache-Control: private, no-cache` and no `Pragma`:
+  storable by the browser that asked, by nothing in between, and never reused
+  without revalidating.
+- **`MAX(updated_at)` has one-second granularity.** Two edits within the same
+  second that leave the row count unchanged share a version. This is a property
+  of `DATETIME`, and it is why the options read uses `MAX(id)` instead.
 - A `304` carries the `ETag` header and no body. A `200` carries both.
 
 ### 1.10 Poll intervals
