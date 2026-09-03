@@ -260,6 +260,15 @@ final class AuthServiceTest extends TestCase
                 'preferred_language' => 'en',
                 'is_active' => '1',
             ],
+            [
+                // No `is_active` key at all — a row shape the repository contract
+                // never promises to omit, but which must not be read as active.
+                'id' => 4,
+                'email' => 'instructor4@example.com',
+                'display_name' => 'Instructor Four',
+                'role' => 'instructor',
+                'preferred_language' => 'en',
+            ],
         ];
     }
 
@@ -289,6 +298,14 @@ final class AuthServiceTest extends TestCase
         $svc = new AuthService($this->makeUserRepo($this->reauthenticateUsers()), $this->makeAttemptRepo(0));
 
         $this->assertNull($svc->reauthenticate(['id' => 999]));
+    }
+
+    public function testReauthenticateReturnsNullWhenIsActiveKeyIsMissing(): void
+    {
+        // Row 4 has no `is_active` key: a missing flag must not be read as active.
+        $svc = new AuthService($this->makeUserRepo($this->reauthenticateUsers()), $this->makeAttemptRepo(0));
+
+        $this->assertNull($svc->reauthenticate(['id' => 4]));
     }
 
     public function testReauthenticateReturnsNullAndSkipsTheRepositoryWithoutAnId(): void
